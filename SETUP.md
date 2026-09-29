@@ -98,8 +98,10 @@ window.EDGEBOOK_CONFIG = {
 
 1. **SQL:** Supabase → **SQL Editor** → `supabase/002_trial.sql` (бұрын іске қоспаған болсаңыз) және `supabase/003_ai_coach.sql` мазмұнын қойып, **Run** басыңыз.
 2. **Anthropic кілт:** [console.anthropic.com](https://console.anthropic.com) → **Billing** бөлімінде баланс толтырыңыз → **API Keys → Create Key**.
+   *Тегін нұсқа:* Anthropic орнына [aistudio.google.com](https://aistudio.google.com) сайтынан Gemini кілтін алыңыз (**Get API key**).
 3. **Құпиялар:** Supabase → **Edge Functions → Secrets** бөліміне мыналарды қосыңыз:
-   - `ANTHROPIC_API_KEY` — жаңа кілт (міндетті)
+   - `ANTHROPIC_API_KEY` — Claude кілті, **немесе** тегін нұсқа үшін `GEMINI_API_KEY` (екеуі де тұрса, Claude қолданылады)
+   - `GEMINI_MODEL` — міндетті емес, әдепкісі `gemini-2.5-flash`
    - `AI_MODEL` — міндетті емес. Әдепкісі `claude-opus-5-5` (ең ақылдысы). Арзанырақ болсын десеңіз, `claude-haiku-4-5` қойыңыз.
    - `AI_MONTHLY_LIMIT` — бір пайдаланушыға айына берілетін сұрақ саны (әдепкісі `100`)
 4. **Функция:** Supabase → **Edge Functions → Deploy a new function → Via Editor** → атын `coach` деп қойыңыз → `supabase/functions/coach/index.ts` мазмұнын қойып, **Deploy** басыңыз.

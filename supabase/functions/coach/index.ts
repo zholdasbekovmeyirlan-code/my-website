@@ -1,8 +1,11 @@
 // EntryX — AI coach (Supabase Edge Function, Deno).
-// Secrets (Supabase → Edge Functions → Secrets):
-//   ANTHROPIC_API_KEY   required — never put it in the browser
+// Secrets (Supabase → Edge Functions → Secrets) — set ONE provider key:
+//   ANTHROPIC_API_KEY   Claude (paid, best quality). Used when present.
+//   GEMINI_API_KEY      Google Gemini free tier (aistudio.google.com). Used when no Anthropic key is set.
 //   AI_MODEL            optional, default "claude-opus-5-5" (e.g. "claude-haiku-4-5" to cut cost)
+//   GEMINI_MODEL        optional, default "gemini-2.5-flash"
 //   AI_MONTHLY_LIMIT    optional, default 100 questions per user per month
+// Never put either key in the browser.
 // SUPABASE_URL and SUPABASE_ANON_KEY are provided by Supabase automatically.
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -13,7 +16,43 @@ const MONTHLY_LIMIT = Number(Deno.env.get("AI_MONTHLY_LIMIT") ?? "100");
 const FALLBACK_MODELS = ["claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"];
 const EFFORT_MODELS = [...FALLBACK_MODELS, "claude-fable-5", "claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-5", "claude-sonnet-4-6"];
 
-const anthropic = new Anthropic(); // reads ANTHROPIC_API_KEY
+const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
+const anthropic = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY }) : null;
+
+type Answer = { reply: string; truncated: boolean; refused: boolean };
+class UpstreamError extends Error {
+  constructor(public code: "busy" | "server_key" | "bad_model_request" | "upstream", public status = 0, detail = "") { super(detail || code); }
+}
+
+async function askGemini(system: string, journal: string, messages: { role: "user" | "assistant"; content: string }[]): Promise<Answer> {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY! },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system + "\n\n" + journal }] },
+      contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
+    }),
+  });
+  if (!res.ok) {
+    const detail = (await res.text()).slice(0, 300);
+    if (res.status === 429 || res.status === 503) throw new UpstreamError("busy", res.status, detail);
+    if (res.status === 401 || res.status === 403) throw new UpstreamError("server_key", res.status, detail);
+    if (res.status === 400 || res.status === 404) throw new UpstreamError("bad_model_request", res.status, detail);
+    throw new UpstreamError("upstream", res.status, detail);
+  }
+  // deno-lint-ignore no-explicit-any
+  const data: any = await res.json();
+  const cand = data?.candidates?.[0];
+  if (data?.promptFeedback?.blockReason || !cand || cand.finishReason === "SAFETY" || cand.finishReason === "PROHIBITED_CONTENT") {
+    return { reply: "", truncated: false, refused: true };
+  }
+  // deno-lint-ignore no-explicit-any
+  const reply = (cand.content?.parts ?? []).filter((p: any) => typeof p.text === "string" && !p.thought).map((p: any) => p.text).join("").trim();
+  return { reply, truncated: cand.finishReason === "MAX_TOKENS", refused: false };
+}
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -67,35 +106,49 @@ Deno.serve(async (req) => {
   if (used === -2) return json({ error: "not_pro" }, 403);
   if (used === -1) return json({ error: "limit", limit: MONTHLY_LIMIT }, 429);
 
-  const params: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming = {
-    model: MODEL,
-    max_tokens: 16000,
-    system: [
-      { type: "text", text: SYSTEM },
-      // The journal snapshot is identical for every question in a chat session → cache it.
-      { type: "text", text: `<lang>${lang}</lang>\n<journal>\n${context}\n</journal>`, cache_control: { type: "ephemeral" } },
-    ],
-    messages,
-  };
-  if (EFFORT_MODELS.includes(MODEL)) params.output_config = { effort: "medium" };
-  if (FALLBACK_MODELS.includes(MODEL)) {
-    params.betas = ["server-side-fallback-2026-07-01"];
-    params.fallbacks = "default";
+  if (!anthropic && !GEMINI_KEY) {
+    await sb.rpc("ai_refund");
+    return json({ error: "server_key" }, 500);
   }
+  const journal = `<lang>${lang}</lang>\n<journal>\n${context}\n</journal>`;
 
   try {
-    const response = await anthropic.beta.messages.create(params);
-    if (response.stop_reason === "refusal") {
-      return json({ reply: null, refused: true, used, limit: MONTHLY_LIMIT });
+    let answer: Answer;
+    if (anthropic) {
+      const params: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming = {
+        model: MODEL,
+        max_tokens: 16000,
+        system: [
+          { type: "text", text: SYSTEM },
+          // The journal snapshot is identical for every question in a chat session → cache it.
+          { type: "text", text: journal, cache_control: { type: "ephemeral" } },
+        ],
+        messages,
+      };
+      if (EFFORT_MODELS.includes(MODEL)) params.output_config = { effort: "medium" };
+      if (FALLBACK_MODELS.includes(MODEL)) {
+        params.betas = ["server-side-fallback-2026-07-01"];
+        params.fallbacks = "default";
+      }
+      const response = await anthropic.beta.messages.create(params);
+      answer = {
+        refused: response.stop_reason === "refusal",
+        truncated: response.stop_reason === "max_tokens",
+        reply: response.content
+          .filter((b): b is Anthropic.Beta.Messages.BetaTextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join("\n")
+          .trim(),
+      };
+    } else {
+      answer = await askGemini(SYSTEM, journal, messages as { role: "user" | "assistant"; content: string }[]);
     }
-    const reply = response.content
-      .filter((b): b is Anthropic.Beta.Messages.BetaTextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
-    return json({ reply, truncated: response.stop_reason === "max_tokens", used, limit: MONTHLY_LIMIT });
+    if (answer.refused) return json({ reply: null, refused: true, used, limit: MONTHLY_LIMIT });
+    return json({ reply: answer.reply, truncated: answer.truncated, used, limit: MONTHLY_LIMIT });
   } catch (error) {
     await sb.rpc("ai_refund");
+    console.error(error);
+    if (error instanceof UpstreamError) return json({ error: error.code, status: error.status }, error.code === "busy" ? 503 : 502);
     if (error instanceof Anthropic.RateLimitError) return json({ error: "busy" }, 503);
     if (error instanceof Anthropic.AuthenticationError) return json({ error: "server_key" }, 500);
     if (error instanceof Anthropic.BadRequestError) return json({ error: "bad_model_request", detail: error.message }, 500);

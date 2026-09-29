@@ -46,14 +46,19 @@
   </div>
 
   <div class="step warn">
-    <h2><span class="n">3</span> Anthropic кілт → Supabase Secrets</h2>
-    <p><b>console.anthropic.com</b> → Billing (баланс толтыру) → <b>API Keys → Create Key</b>.</p>
-    <p>Supabase → <b>Edge Functions → Secrets</b> → <b>Add new secret</b>:</p>
+    <h2><span class="n">3</span> AI кілт → Supabase Secrets</h2>
+    <p><b>А) ТЕГІН — Google Gemini</b> (сынап көру үшін)</p>
     <ul>
-      <li>Name: <code class="k">ANTHROPIC_API_KEY</code> · Value: сіздің кілтіңіз</li>
-      <li>(міндетті емес) <code class="k">AI_MODEL</code> = <code class="k">claude-haiku-4-5</code> (арзан әрі жылдам)</li>
+      <li><b>aistudio.google.com</b> → Google аккаунтпен кіріңіз → <b>Get API key</b> → <b>Create API key</b> → кілтті көшіріңіз (<code class="k">AIza...</code> деп басталады).</li>
+      <li>Supabase → <b>Edge Functions → Secrets</b>: Name <code class="k">GEMINI_API_KEY</code> · Value: кілтіңіз → <b>Save</b>.</li>
     </ul>
-    <p>⚠️ Кілтті ешкімге жібермеңіз, оны тек осы жерге қойыңыз.</p>
+    <p><b>Ә) АҚЫЛЫ — Claude</b> (сапасы жоғары, кейін ауысуға болады)</p>
+    <ul>
+      <li><b>console.anthropic.com</b> → Billing → <b>API Keys → Create Key</b>.</li>
+      <li>Name <code class="k">ANTHROPIC_API_KEY</code> · Value: кілтіңіз. Қаласаңыз <code class="k">AI_MODEL</code> = <code class="k">claude-haiku-4-5</code> қосыңыз.</li>
+      <li>Екі кілт те тұрса, Claude қолданылады.</li>
+    </ul>
+    <p>⚠️ Кілтті ешкімге жібермеңіз, оны тек Supabase-ке қойыңыз.</p>
   </div>
 
   <div class="step">
