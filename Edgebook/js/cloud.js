@@ -40,9 +40,19 @@
     on(fn) { this._subs.push(fn); },
     emit() { this._subs.forEach(fn => { try { fn(this); } catch (e) { console.error(e); } }); },
 
-    get isPro() {
+    get isPaid() {
       const p = this.profile;
       return !!(this.user && p && p.plan === 'pro' && (!p.plan_until || new Date(p.plan_until) > new Date()));
+    },
+    get isTrial() {
+      const p = this.profile;
+      return !!(this.user && p && !this.isPaid && p.trial_until && new Date(p.trial_until) > new Date());
+    },
+    get isPro() { return this.isPaid || this.isTrial; },
+    get trialDaysLeft() {
+      const p = this.profile;
+      if (!this.isTrial) return 0;
+      return Math.max(1, Math.ceil((new Date(p.trial_until) - new Date()) / 864e5));
     },
 
     async init() {
@@ -78,7 +88,7 @@
 
     async refreshProfile() {
       if (!this.user) return null;
-      const { data, error } = await this._client.from('profiles').select('plan, plan_until, email').eq('id', this.user.id).maybeSingle();
+      const { data, error } = await this._client.from('profiles').select('*').eq('id', this.user.id).maybeSingle();
       if (!error) this.profile = data || { plan: 'free' };
       this.emit();
       return this.profile;

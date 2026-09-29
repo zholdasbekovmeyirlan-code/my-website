@@ -47,9 +47,9 @@
       pr_monthly: 'Айлық', pr_yearly: 'Жылдық', pr_per_free: 'мәңгі', pr_per_month: '/ ай', pr_per_year: '/ жыл', pr_save: 'Жылдық төлемде {p}% үнемдейсіз',
       pr_free_desc: 'Жеке трейдерге қажеттің бәрі. Деректер тек сіздің браузеріңізде.', pr_free_cta: 'Тегін бастау', pr_popular: 'Ең танымал',
       pf_1: 'Шексіз мәмілелер', pf_2: 'Толық аналитика және инсайттар', pf_3: 'P&L күнтізбесі және күнделік', pf_4: 'Скриншоттар, тегтер, эмоциялар', pf_5: 'JSON / CSV экспорт',
-      pr_pro_desc: 'Кәсіби трейдерге арналған: бір журнал — барлық құрылғыда.', pr_pro_cta: 'Pro-ға өту',
-      pp_0: 'Free-дегі барлық мүмкіндік', pp_1: 'Барлық құрылғыда бұлттық синхрондау', pp_2: 'Бұлтта автоматты сақтық көшірме',
-      pp_3: 'Брокерден импорт (Binance, Bybit, MT5 CSV)', pp_4: 'AI коуч — жақында', pp_5: 'PDF есептер және prop firm трекері — жақында',
+      pr_pro_desc: 'Кәсіби трейдерге арналған. Тіркелгенде 7 күн тегін — ұнаса ғана жалғастырасыз.', pr_pro_cta: '7 күн тегін сынау',
+      pp_0: 'Free-дегі барлық мүмкіндік', pp_1: '🛡 Тәуекел қорғаушысы — кек саудасын тоқтатады', pp_2: '🏆 Prop firm трекері (FTMO т.б.)',
+      pp_3: '📸 P&L карточкасы — Instagram, Telegram үшін', pp_4: 'Брокерден импорт және барлық құрылғыда синхрондау', pp_5: 'AI коуч және PDF есептер — жақында',
       faq_title: 'Жиі қойылатын<br><em>сұрақтар</em>',
       q1: 'Деректерім қайда сақталады?', a1: 'Free нұсқада — тек сіздің браузеріңізде. Pro нұсқада — қосымша қорғалған бұлтта, оны тек сіз ғана оқи аласыз.',
       q2: 'Тіркелу керек пе?', a2: 'Иә, бірақ 30 секунд қана: Google, GitHub немесе email арқылы. Free нұсқада мәмілелеріңіз осы құрылғыда сақталады, ал Pro оларды барлық құрылғыға синхрондайды.',
@@ -57,7 +57,7 @@
       q4: 'Басқа құрылғыға қалай көшіремін?', a4: 'Pro-да бәрі автоматты синхрондалады. Free-де: Баптаулар → Сақтық көшірме (JSON), содан кейін жаңа құрылғыда «Көшірмені қалпына келтіру».',
       q5: 'Телефонда жұмыс істей ме?', a5: 'Иә. Интерфейс телефонға толық бейімделген: төменгі навигация және ыңғайлы формалар.',
       fc_title: 'Келесі мәмілеңізді<br><em>жазыңыз</em>.', fc_sub: 'Бір айдан кейін өз саудаңызды мүлде басқаша көресіз.',
-      foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.', l_terms: 'Шарттар', l_privacy: 'Құпиялылық', l_refund: 'Қайтару'
+      foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.', l_terms: 'Шарттар', l_privacy: 'Құпиялылық', l_refund: 'Төлем шарттары'
     },
     en: {
       nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
@@ -100,9 +100,9 @@
       pr_monthly: 'Monthly', pr_yearly: 'Yearly', pr_per_free: 'forever', pr_per_month: '/ month', pr_per_year: '/ year', pr_save: 'Save {p}% with yearly billing',
       pr_free_desc: 'Everything a solo trader needs. Your data stays in your browser.', pr_free_cta: 'Start for free', pr_popular: 'Most popular',
       pf_1: 'Unlimited trades', pf_2: 'Full analytics & insights', pf_3: 'P&L calendar & journal', pf_4: 'Screenshots, tags, emotions', pf_5: 'JSON / CSV export',
-      pr_pro_desc: 'For serious traders: one journal, on every device.', pr_pro_cta: 'Go Pro',
-      pp_0: 'Everything in Free', pp_1: 'Cloud sync across all devices', pp_2: 'Automatic cloud backups',
-      pp_3: 'Broker import (Binance, Bybit, MT5 CSV)', pp_4: 'AI coach — coming soon', pp_5: 'PDF reports & prop firm tracker — coming soon',
+      pr_pro_desc: 'For serious traders. 7 days free when you sign up — keep it only if you love it.', pr_pro_cta: 'Try 7 days free',
+      pp_0: 'Everything in Free', pp_1: '🛡 Risk guard — stops revenge trading', pp_2: '🏆 Prop firm tracker (FTMO & more)',
+      pp_3: '📸 P&L share cards for Instagram & Telegram', pp_4: 'Broker import and sync across all devices', pp_5: 'AI coach & PDF reports — coming soon',
       faq_title: 'Frequently asked<br><em>questions</em>',
       q1: 'Where is my data stored?', a1: 'On Free, only in your browser. On Pro, also in a protected cloud that only you can read.',
       q2: 'Do I need an account?', a2: 'Yes, but it takes 30 seconds with Google, GitHub or email. On Free your trades are stored on this device; Pro syncs them across all your devices.',
@@ -110,7 +110,7 @@
       q4: 'How do I move to another device?', a4: 'On Pro it syncs automatically. On Free: Settings → Backup (JSON), then “Restore backup” on the new device.',
       q5: 'Does it work on mobile?', a5: 'Yes. The interface is fully adapted to phones, with bottom navigation and touch-friendly forms.',
       fc_title: 'Log your<br><em>next trade</em>.', fc_sub: 'A month from now, you will see your trading completely differently.',
-      foot: 'Crafted for traders.', foot_disc: 'Not financial advice.', l_terms: 'Terms', l_privacy: 'Privacy', l_refund: 'Refunds'
+      foot: 'Crafted for traders.', foot_disc: 'Not financial advice.', l_terms: 'Terms', l_privacy: 'Privacy', l_refund: 'Payment terms'
     }
   };
 

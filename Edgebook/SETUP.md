@@ -24,6 +24,7 @@ Pro нұсқасы үш сервисті қажет етеді: **Supabase** (а
 1. https://supabase.com → **Start your project** → GitHub арқылы кіріңіз.
 2. **New project**: атауы `edgebook`, құпиясөз ойлап табыңыз, аймақ — **Frankfurt** (Қазақстанға жақын).
 3. Сол жақ мәзір → **SQL Editor** → **New query** → `supabase/schema.sql` файлының ішіндегісін толық қойып → **Run**.
+   Сосын дәл солай `supabase/002_trial.sql` файлын да іске қосыңыз (7 күн тегін Pro сынағы).
 4. **Authentication → URL Configuration**:
    - *Site URL*: сайтыңыздың мекенжайы (мысалы `https://edgebook.netlify.app`).
    - *Redirect URLs*: `https://edgebook.netlify.app/app.html`
