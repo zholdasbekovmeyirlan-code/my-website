@@ -7,6 +7,10 @@ window.EDGEBOOK_CONFIG = {
   supabaseUrl: 'https://cxxlikhearnbirqnnhmn.supabase.co',
   supabaseAnonKey: 'sb_publishable_zGsLEZl74dyA8JxHsGtzuQ_Nw8ey75p',
 
+  // Social sign-in buttons. Each must also be enabled in Supabase → Authentication → Providers.
+  // Supported here: 'google', 'github', 'apple'
+  oauthProviders: ['google', 'github'],
+
   // Lemon Squeezy → Store → Products → Share (checkout links for each variant)
   checkout: {
     monthly: '',

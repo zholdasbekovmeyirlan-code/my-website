@@ -954,3 +954,9 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .acc-sync small { color: var(--text-3); font-size: 12px; }
 .confirm-ic.gold { color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 900px) { .acc-grid { grid-template-columns: 1fr; } }
+
+.social { display: grid; gap: 8px; }
+.social-btn { width: 100%; height: 44px; justify-content: center; gap: 10px; font-weight: 600; }
+.social-btn svg { flex: none; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--text-3); font-size: 12px; margin: 4px 0; }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
