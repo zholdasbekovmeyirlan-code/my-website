@@ -65,6 +65,7 @@
     <h2><span class="n">4</span> Edge Function: <code class="k">coach</code></h2>
     <p>Supabase → <b>Edge Functions</b> → <b>Deploy a new function</b> → <b>Via Editor</b> → атын <code class="k">coach</code> деп қойыңыз → редактордағы барлық кодты өшіріп, мынаны қойыңыз → <b>Deploy</b>.</p>
     <div class="bar"><button data-src="supabase/functions/coach/index.ts">Көшіру</button><span class="meta"></span></div>
+    <p>Тексеру: қойған соң редактордың 1-жолында <code class="k">// EntryX — AI coach</code> тұруы керек. Supabase-тің <code class="k">// Setup type definitions</code> деп басталатын ескі үлгісі толық өшірілуі керек.</p>
     <pre data-show="supabase/functions/coach/index.ts">Жүктеліп жатыр…</pre>
   </div>
 </div>
@@ -82,11 +83,16 @@
     let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
     ta.remove(); return ok;
   }
-  document.querySelectorAll('button[data-src]').forEach(b => b.addEventListener('click', async () => {
-    let text;
-    try { text = await get(b.dataset.src); } catch (e) { b.textContent = 'Қате, қайталаңыз'; return; }
-    let ok = false;
-    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = fallbackCopy(text); }
+  const texts = {};
+  document.querySelectorAll('button[data-src]').forEach(b => {
+    get(b.dataset.src).then(t => { texts[b.dataset.src] = t; }).catch(() => {});
+  });
+  // Safari only allows copying synchronously inside the click, so no awaits before the copy.
+  document.querySelectorAll('button[data-src]').forEach(b => b.addEventListener('click', () => {
+    const text = texts[b.dataset.src];
+    if (!text) { b.textContent = 'Жүктеліп жатыр, қайта басыңыз'; return; }
+    let ok = fallbackCopy(text);
+    if (!ok && navigator.clipboard) { navigator.clipboard.writeText(text).catch(() => {}); ok = true; }
     if (!ok) {  // last resort: select the text so the user can copy manually
       const pre = b.closest('.step').querySelector('pre'); const r = document.createRange(); r.selectNodeContents(pre);
       const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Белгіленді, енді Ctrl+C басыңыз'; return;
