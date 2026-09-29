@@ -1030,6 +1030,12 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .lp-foot .lp-logo .wordmark { font-size: 14px; }
 
 /* ---------- Pro: rules, share card, welcome ---------- */
+.side-card-empty { margin-top: 8px; font-size: 12px; color: var(--text-3); line-height: 1.5; }
+.side-card-empty a { display: block; margin-top: 4px; color: var(--accent); font-weight: 600; }
+.side-card-empty a:hover { text-decoration: underline; }
+.empty-actions .empty-actions { flex-basis: 100%; }
+.start-bal { flex-basis: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin-bottom: 18px; text-align: left; }
+.start-bal .field { width: 220px; }
 .pill-btn { cursor: pointer; font-weight: 600; color: var(--text); border-color: var(--accent-line); background: var(--accent-soft); transition: transform .15s var(--ease), box-shadow .2s; }
 .pill-btn .ic { color: var(--accent); }
 .pill-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -10px var(--accent); }
