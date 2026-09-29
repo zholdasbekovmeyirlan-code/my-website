@@ -400,6 +400,7 @@
       '<select class="select" data-filter="status">' + opt('all', q.status, t('all_status')) + ['win', 'loss', 'be', 'open'].map(s => opt(s, q.status, t('st_' + s))).join('') + '</select>' +
       '<select class="select" data-filter="setup">' + opt('all', q.setup, t('all_setups')) + setups.map(s => opt(s, q.setup, s)).join('') + '</select>' +
       '<div class="spacer"></div>' +
+      '<button class="btn btn-ghost" data-action="import">' + icon('upload') + t('import') + (Cloud.enabled && !Cloud.isPro ? ' <b class="pro-badge">PRO</b>' : '') + '</button>' +
       '<button class="btn btn-ghost" data-action="export-csv">' + icon('download') + 'CSV</button>' +
       '</div>' +
       '<div class="summary-strip">' +
@@ -656,6 +657,7 @@
       '<div class="card"><div class="card-head"><div><h3>' + t('data') + '</h3><p>' + t('data_sub', { n: Store.state.trades.length, kb: (bytes / 1024).toFixed(0) }) + '</p></div></div>' +
       '<div class="data-actions">' +
       dataBtn('download', t('export_json'), t('export_json_sub'), 'export-json') +
+      dataBtn('upload', t('import'), t('imp_formats'), 'import') +
       dataBtn('upload', t('import_json'), t('import_json_sub'), 'import-json') +
       dataBtn('download', t('export_csv'), t('export_csv_sub'), 'export-csv') +
       dataBtn('sparkle', t('load_demo'), t('load_demo_sub'), 'seed') +
@@ -933,11 +935,92 @@
       k.map(r => '<li><span>' + r[1] + '</span><kbd>' + r[0] + '</kbd></li>').join('') + '</ul></div>', 'sm');
   }
 
+  /* ---------- broker CSV import (Pro) ---------- */
+  function proUpsell(featureKey) {
+    openModal('<div class="confirm"><div class="confirm-ic gold">' + icon('sparkle') + '</div><h3>' + t('pro_feature', { f: t(featureKey) }) + '</h3><p>' + t('pro_feature_text') + '</p>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" data-close>' + t('cancel') + '</button><a class="btn btn-primary" href="#/settings" data-close>' + t('see_pro') + '</a></div></div>', 'sm');
+  }
+
+  function importDialog() {
+    if (Cloud.enabled && !Cloud.isPro) { proUpsell('pro_f3'); return; }
+    const F = Importer.FIELDS;
+    let parsed = null, map = {}, invert = false, clearDemo = !!S().demo, result = null;
+    openModal('<div class="modal-head"><div><div class="eyebrow">PRO</div><h2 class="display">' + t('imp_title') + '</h2></div><button class="icon-btn" data-close aria-label="close">' + icon('x') + '</button></div>' +
+      '<div class="modal-body" id="impBody"></div><div class="modal-foot" id="impFoot"></div>', 'lg');
+    const body = $('#impBody'), foot = $('#impFoot');
+
+    function step1() {
+      body.innerHTML = '<label class="imp-drop" id="impDrop">' + icon('upload') + '<b>' + t('imp_drop') + '</b><small>' + t('imp_formats') + '</small><input type="file" accept=".csv,.txt,text/csv" id="impFile" hidden/></label>' +
+        '<div class="imp-help"><h4>' + t('imp_how') + '</h4><ul><li>' + t('imp_h_binance') + '</li><li>' + t('imp_h_bybit') + '</li><li>' + t('imp_h_mt') + '</li><li>' + t('imp_h_any') + '</li></ul></div>';
+      foot.innerHTML = '<div class="spacer"></div><button class="btn btn-ghost" data-close>' + t('cancel') + '</button>';
+      const drop = $('#impDrop');
+      $('#impFile').addEventListener('change', e => { if (e.target.files[0]) read(e.target.files[0]); });
+      drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+      drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); if (e.dataTransfer.files[0]) read(e.dataTransfer.files[0]); });
+    }
+    function read(file) {
+      const r = new FileReader();
+      r.onload = () => {
+        parsed = Importer.parseCSV(r.result);
+        if (!parsed.headers.length || !parsed.rows.length) { toast(t('imp_empty'), 'err'); return; }
+        map = Importer.guessMapping(parsed.headers);
+        step2();
+      };
+      r.readAsText(file);
+    }
+    function step2() {
+      result = Importer.toTrades(parsed, map, { invertSide: invert, existing: clearDemo ? [] : Store.state.trades });
+      const first = parsed.rows[0] || [];
+      const missing = F.filter(f => f.req && map[f.key] == null);
+      const opts = sel => '<option value="">—</option>' + parsed.headers.map((h, i) => '<option value="' + i + '"' + (sel === i ? ' selected' : '') + '>' + esc(h || '#' + (i + 1)) + '</option>').join('');
+      const grid = F.map(f => '<label class="imp-field' + (f.req && map[f.key] == null ? ' bad' : '') + '"><span>' + t('imp_f_' + f.key) + (f.req ? ' <i>*</i>' : '') + '</span>' +
+        '<select class="select" data-map="' + f.key + '">' + opts(map[f.key]) + '</select>' +
+        '<small class="mono">' + (map[f.key] != null ? esc(String(first[map[f.key]] || '').slice(0, 28)) : '') + '</small></label>').join('');
+      const prev = result.trades.slice(0, 6).map(x => {
+        const c = U.calc(x);
+        return '<tr><td><b>' + esc(x.symbol) + '</b></td><td>' + sideBadge(x.side) + '</td><td class="muted">' + dateLabel(x.openedAt) + '</td><td class="mono">' + numfmt(x.entry) + '</td><td class="mono">' + numfmt(c.exitN) + '</td><td class="mono">' + numfmt(x.qty) + '</td><td class="mono num ' + cls(c.net) + '">' + (c.closed ? money(c.net, { sign: true }) : statusBadge('open')) + '</td></tr>';
+      }).join('');
+      body.innerHTML =
+        '<div class="imp-summary"><div><b class="mono">' + parsed.rows.length + '</b><span>' + t('imp_rows') + '</span></div><div class="ok"><b class="mono">' + result.trades.length + '</b><span>' + t('imp_new') + '</span></div>' +
+        '<div><b class="mono">' + result.duplicates + '</b><span>' + t('imp_dupes') + '</span></div><div><b class="mono">' + result.skipped + '</b><span>' + t('imp_skipped') + '</span></div></div>' +
+        '<h4 class="imp-h">' + t('imp_map') + '</h4><div class="imp-grid">' + grid + '</div>' +
+        '<div class="imp-opts"><label class="check"><input type="checkbox" id="impInvert"' + (invert ? ' checked' : '') + '/><span>' + t('imp_invert') + '</span></label>' +
+        (S().demo ? '<label class="check"><input type="checkbox" id="impDemo"' + (clearDemo ? ' checked' : '') + '/><span>' + t('imp_clear_demo') + '</span></label>' : '') + '</div>' +
+        (missing.length ? '<p class="imp-warn">' + icon('shield') + t('imp_need', { f: missing.map(f => t('imp_f_' + f.key)).join(', ') }) + '</p>' : '') +
+        (prev ? '<h4 class="imp-h">' + t('imp_preview') + '</h4><div class="table-wrap"><table class="table"><tbody>' + prev + '</tbody></table></div>' : '');
+      foot.innerHTML = '<button class="btn btn-ghost" id="impBack">' + icon('chevL') + t('imp_back') + '</button><div class="spacer"></div>' +
+        '<button class="btn btn-primary" id="impGo"' + (missing.length || !result.trades.length ? ' disabled' : '') + '>' + t('imp_go', { n: result.trades.length }) + '</button>';
+      $$('[data-map]', body).forEach(sel => sel.addEventListener('change', () => {
+        const v = sel.value === '' ? null : +sel.value;
+        Object.keys(map).forEach(k => { if (map[k] === v && k !== sel.dataset.map) delete map[k]; });
+        if (v == null) delete map[sel.dataset.map]; else map[sel.dataset.map] = v;
+        step2();
+      }));
+      $('#impInvert').addEventListener('change', e => { invert = e.target.checked; step2(); });
+      if ($('#impDemo')) $('#impDemo').addEventListener('change', e => { clearDemo = e.target.checked; step2(); });
+      $('#impBack').addEventListener('click', step1);
+      $('#impGo').addEventListener('click', doImport);
+    }
+    function doImport() {
+      if (!result || !result.trades.length) return;
+      if (clearDemo && S().demo) Store.clearAll();
+      const now = new Date().toISOString();
+      result.trades.forEach(x => Store.state.trades.push(Object.assign({ id: U.uid() + Math.random().toString(36).slice(2, 6), createdAt: now, updatedAt: now }, x)));
+      if (!Store.save()) return;
+      closeModal();
+      toast(t('imp_done', { n: result.trades.length }), 'ok');
+      ui.range = 'all';
+      if (location.hash !== '#/trades') location.hash = '#/trades'; else render();
+    }
+    step1();
+  }
+
   /* ---------- account & Pro ---------- */
   function accountCard() {
     const P = (window.EDGEBOOK_CONFIG || {}).pricing || { currency: '$', monthly: 12, yearly: 99 };
     const save = Math.round((1 - P.yearly / (P.monthly * 12)) * 100);
-    const SOON = ['pro_f3', 'pro_f4', 'pro_f5'];
+    const SOON = ['pro_f4', 'pro_f5'];
     const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f2', 'pro_f3', 'pro_f4', 'pro_f5'].map(k =>
       '<li' + (SOON.includes(k) ? ' class="soon"' : '') + '>' + t(k) + (SOON.includes(k) ? ' <span class="soon-chip">' + t('soon') + '</span>' : '') + '</li>').join('') + '</ul>';
     const head = (sub, right) => '<div class="card-head"><div><h3>' + t('acc_title') + '</h3><p>' + sub + '</p></div>' + (right || '') + '</div>';
@@ -1194,6 +1277,7 @@
       case 'export-csv': exportCSV(); toast(t('exported'), 'ok'); break;
       case 'shortcuts': shortcuts(); break;
       case 'palette': palette(); break;
+      case 'import': importDialog(); break;
       case 'upgrade': {
         const url = Cloud.checkoutUrl(el.dataset.interval);
         if (url) window.open(url, '_blank', 'noopener'); else toast(t('checkout_missing'), 'err');

@@ -104,3 +104,6 @@
   .auth-card h1 { font-size: 38px; }
 }
 @media (prefers-reduced-motion: reduce) { .art-card, .g-a, .g-b { animation: none; } .art-path { stroke-dashoffset: 0; animation: none; } }
+
+.auth-legal a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
+.auth-legal a:hover { color: var(--text); }

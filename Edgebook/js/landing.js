@@ -8,11 +8,11 @@
   const L = {
     kk: {
       nav_features: 'Мүмкіндіктер', nav_analytics: 'Аналитика', nav_how: 'Қалай жұмыс істейді', nav_faq: 'Сұрақтар', nav_open: 'Тегін бастау', nav_login: 'Кіру',
-      hero_badge: 'Тегін · Тіркелусіз · Деректер тек сізде',
+      hero_badge: 'Тегін бастау · Карта қажет емес · 30 секундта тіркелу',
       hero_title: 'Трейдингіңіздің<br><em>жасырын <span class="nw">edge-ін</span></em> табыңыз.',
       hero_sub: 'Edgebook әр мәмілені, эмоцияны және қатені нақты сандарға айналдырады. Қай сетап ақша әкелетінін, қай әдет оны ұрлайтынын бір көзқараста көресіз.',
       cta_primary: 'Тегін бастау', cta_secondary: 'Демоны көру',
-      hero_note: 'Тіркелу жоқ &nbsp;·&nbsp; Офлайн жұмыс істейді &nbsp;·&nbsp; 30 секундта бірінші мәміле',
+      hero_note: 'Карта қажет емес &nbsp;·&nbsp; Google арқылы бір басу &nbsp;·&nbsp; Қазақша және English',
       mock_greet: 'Қайырлы күн', mock_new: '+ Жаңа мәміле', mock_equity: 'Капитал қисығы', mock_calendar: 'Қыркүйек',
       f_trade: 'Мәміле жазылды', f_wr: 'Ұтыс үлесі', f_ins: 'Инсайт', f_ins_text: 'Breakout — ең мықты сетапыңыз',
       marquee: 'Кез келген нарық үшін',
@@ -49,23 +49,23 @@
       pf_1: 'Шексіз мәмілелер', pf_2: 'Толық аналитика және инсайттар', pf_3: 'P&L күнтізбесі және күнделік', pf_4: 'Скриншоттар, тегтер, эмоциялар', pf_5: 'JSON / CSV экспорт',
       pr_pro_desc: 'Кәсіби трейдерге арналған: бір журнал — барлық құрылғыда.', pr_pro_cta: 'Pro-ға өту',
       pp_0: 'Free-дегі барлық мүмкіндік', pp_1: 'Барлық құрылғыда бұлттық синхрондау', pp_2: 'Бұлтта автоматты сақтық көшірме',
-      pp_3: 'Брокерден импорт — жақында', pp_4: 'AI коуч — жақында', pp_5: 'PDF есептер және prop firm трекері — жақында',
+      pp_3: 'Брокерден импорт (Binance, Bybit, MT5 CSV)', pp_4: 'AI коуч — жақында', pp_5: 'PDF есептер және prop firm трекері — жақында',
       faq_title: 'Жиі қойылатын<br><em>сұрақтар</em>',
       q1: 'Деректерім қайда сақталады?', a1: 'Free нұсқада — тек сіздің браузеріңізде. Pro нұсқада — қосымша қорғалған бұлтта, оны тек сіз ғана оқи аласыз.',
-      q2: 'Тіркелу керек пе?', a2: 'Free үшін жоқ — ашып, бірден жаза бастаңыз. Аккаунт тек Pro синхрондау үшін керек.',
+      q2: 'Тіркелу керек пе?', a2: 'Иә, бірақ 30 секунд қана: Google, GitHub немесе email арқылы. Free нұсқада мәмілелеріңіз осы құрылғыда сақталады, ал Pro оларды барлық құрылғыға синхрондайды.',
       q3: 'Қандай нарықтарды қолдайды?', a3: 'Крипто, форекс, акциялар, фьючерс, опциондар — кез келген актив. Фьючерс үшін мультипликатор бар.',
       q4: 'Басқа құрылғыға қалай көшіремін?', a4: 'Pro-да бәрі автоматты синхрондалады. Free-де: Баптаулар → Сақтық көшірме (JSON), содан кейін жаңа құрылғыда «Көшірмені қалпына келтіру».',
       q5: 'Телефонда жұмыс істей ме?', a5: 'Иә. Интерфейс телефонға толық бейімделген: төменгі навигация және ыңғайлы формалар.',
       fc_title: 'Келесі мәмілеңізді<br><em>жазыңыз</em>.', fc_sub: 'Бір айдан кейін өз саудаңызды мүлде басқаша көресіз.',
-      foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.'
+      foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.', l_terms: 'Шарттар', l_privacy: 'Құпиялылық', l_refund: 'Қайтару'
     },
     en: {
       nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
-      hero_badge: 'Free · No sign-up · Your data stays yours',
+      hero_badge: 'Free to start · No card required · Sign up in 30 seconds',
       hero_title: 'Find the <em>hidden edge</em><br>in your trading.',
       hero_sub: 'Edgebook turns every trade, emotion and mistake into hard numbers. See which setups make you money — and which habits quietly take it back.',
       cta_primary: 'Start for free', cta_secondary: 'Explore the demo',
-      hero_note: 'No sign-up &nbsp;·&nbsp; Works offline &nbsp;·&nbsp; First trade in 30 seconds',
+      hero_note: 'No card required &nbsp;·&nbsp; One click with Google &nbsp;·&nbsp; Kazakh & English',
       mock_greet: 'Good afternoon', mock_new: '+ New trade', mock_equity: 'Equity curve', mock_calendar: 'September',
       f_trade: 'Trade logged', f_wr: 'Win rate', f_ins: 'Insight', f_ins_text: 'Breakout is your strongest setup',
       marquee: 'Built for every market',
@@ -102,15 +102,15 @@
       pf_1: 'Unlimited trades', pf_2: 'Full analytics & insights', pf_3: 'P&L calendar & journal', pf_4: 'Screenshots, tags, emotions', pf_5: 'JSON / CSV export',
       pr_pro_desc: 'For serious traders: one journal, on every device.', pr_pro_cta: 'Go Pro',
       pp_0: 'Everything in Free', pp_1: 'Cloud sync across all devices', pp_2: 'Automatic cloud backups',
-      pp_3: 'Broker import — coming soon', pp_4: 'AI coach — coming soon', pp_5: 'PDF reports & prop firm tracker — coming soon',
+      pp_3: 'Broker import (Binance, Bybit, MT5 CSV)', pp_4: 'AI coach — coming soon', pp_5: 'PDF reports & prop firm tracker — coming soon',
       faq_title: 'Frequently asked<br><em>questions</em>',
       q1: 'Where is my data stored?', a1: 'On Free, only in your browser. On Pro, also in a protected cloud that only you can read.',
-      q2: 'Do I need an account?', a2: 'Not for Free — just open it and start logging. An account is only needed for Pro sync.',
+      q2: 'Do I need an account?', a2: 'Yes, but it takes 30 seconds with Google, GitHub or email. On Free your trades are stored on this device; Pro syncs them across all your devices.',
       q3: 'Which markets are supported?', a3: 'Crypto, forex, stocks, futures, options — any instrument. Futures multipliers are supported.',
       q4: 'How do I move to another device?', a4: 'On Pro it syncs automatically. On Free: Settings → Backup (JSON), then “Restore backup” on the new device.',
       q5: 'Does it work on mobile?', a5: 'Yes. The interface is fully adapted to phones, with bottom navigation and touch-friendly forms.',
       fc_title: 'Log your<br><em>next trade</em>.', fc_sub: 'A month from now, you will see your trading completely differently.',
-      foot: 'Crafted for traders.', foot_disc: 'Not financial advice.'
+      foot: 'Crafted for traders.', foot_disc: 'Not financial advice.', l_terms: 'Terms', l_privacy: 'Privacy', l_refund: 'Refunds'
     }
   };
 
