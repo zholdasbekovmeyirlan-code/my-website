@@ -68,6 +68,36 @@
     <p>Тексеру: қойған соң редактордың 1-жолында <code class="k">// EntryX — AI coach (lite)</code> тұруы керек. Supabase-тің <code class="k">// Setup type definitions</code> деп басталатын ескі үлгісі толық өшірілуі керек.</p>
     <pre data-show="supabase/functions/coach-lite/index.ts">Жүктеліп жатыр…</pre>
   </div>
+
+  <h1 style="margin-top:48px">ENTRY<span>X</span> · Крипто төлем (Cryptomus)</h1>
+  <p class="lead">Клиент USDT/BTC/ETH-пен төлейді → Pro өзі қосылады. Кілт енгізу жоқ, ақша қайтару жоқ.</p>
+
+  <div class="step">
+    <h2><span class="n">5</span> SQL: төлемдер кестесі</h2>
+    <p>Supabase → <b>SQL Editor</b> → <b>New query</b> → қойыңыз → <b>Run</b>.</p>
+    <div class="bar"><button data-src="supabase/004_payments.sql">Көшіру</button><span class="meta"></span></div>
+    <pre data-show="supabase/004_payments.sql">Жүктеліп жатыр…</pre>
+  </div>
+
+  <div class="step warn">
+    <h2><span class="n">6</span> Cryptomus аккаунт</h2>
+    <ul>
+      <li><b>cryptomus.com</b> → тіркелу → <b>Business</b> → <b>Create merchant</b> (сайт: <code class="k">zholdasbekovmeyirlan-code.github.io</code>).</li>
+      <li>Мерчант ішінде <b>Settings → API</b>: <b>Merchant ID</b> (UUID) және <b>Payment API key</b> көшіріңіз.</li>
+      <li>Supabase → <b>Edge Functions → Secrets</b>:<br>
+        <code class="k">CRYPTOMUS_MERCHANT</code> = Merchant ID<br>
+        <code class="k">CRYPTOMUS_API_KEY</code> = Payment API key</li>
+    </ul>
+    <p>⚠️ Кілттерді ешкімге жібермеңіз, тек Supabase-ке қойыңыз.</p>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">7</span> Edge Function: <code class="k">pay</code></h2>
+    <p>Supabase → <b>Edge Functions</b> → <b>Deploy a new function</b> → <b>Via Editor</b> → барлық үлгі кодты өшіріп, мынаны қойыңыз → <b>Deploy</b>.</p>
+    <div class="bar"><button data-src="supabase/functions/pay/index.ts">Көшіру</button><span class="meta"></span></div>
+    <p>Кейін: функцияның <b>Settings</b> бетінде <b>Verify JWT</b> <b>өшірулі</b> болсын. Функцияның URL-інің соңғы бөлігін (мысалы <code class="k">clever-processor</code> сияқты) маған жазыңыз — сайтқа мен қосамын.</p>
+    <pre data-show="supabase/functions/pay/index.ts">Жүктеліп жатыр…</pre>
+  </div>
 </div>
 <script>
   const cache = {};

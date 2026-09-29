@@ -14,13 +14,16 @@ window.EDGEBOOK_CONFIG = {
   // Supported here: 'google', 'github', 'apple'
   oauthProviders: ['google', 'github'],
 
-  // Lemon Squeezy → Store → Products → Share (checkout links for each variant)
+  // Crypto payments: slug of the `pay` Edge Function (last part of its URL). Empty = off.
+  payFunction: '',
+
+  // Lemon Squeezy → Store → Products → Share (checkout links for each variant; unused when payFunction is set)
   checkout: {
     monthly: '',
     yearly: ''
   },
   // Where subscribers manage or cancel their plan
-  billingPortal: 'https://app.lemonsqueezy.com/my-orders',
+  billingPortal: '',
 
   // Shown on legal.html (Terms / Privacy / Refunds). Fill these in before launch.
   legal: { owner: '', email: '', country: 'Kazakhstan' },
