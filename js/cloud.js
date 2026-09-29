@@ -129,6 +129,20 @@
     },
     async signOut() { await this._client.auth.signOut(); },
 
+    /* Cryptomus: the `pay` Edge Function creates an invoice and returns its URL */
+    async startCheckout(interval) {
+      const token = await this.accessToken();
+      if (!token) throw new Error('auth');
+      const res = await fetch(C.supabaseUrl.replace(/\/$/, '') + '/functions/v1/' + C.payFunction, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, apikey: C.supabaseAnonKey },
+        body: JSON.stringify({ plan: interval === 'yearly' ? 'yearly' : 'monthly', returnUrl: location.origin + location.pathname })
+      });
+      let data = {};
+      try { data = await res.json(); } catch (e) { /* non-json */ }
+      if (!res.ok || !data.url) throw new Error(data.error || 'http_' + res.status);
+      return data.url;
+    },
     checkoutUrl(interval) {
       const base = (C.checkout || {})[interval];
       if (!base || !this.user) return '';

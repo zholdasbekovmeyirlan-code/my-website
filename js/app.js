@@ -1063,15 +1063,17 @@
     const buy = '<div class="acc-buy">' +
       '<button class="plan-opt" data-action="upgrade" data-interval="monthly"><span>' + t('monthly') + '</span><b class="mono">' + P.currency + P.monthly + '</b><small>' + t('per_month') + '</small></button>' +
       '<button class="plan-opt best" data-action="upgrade" data-interval="yearly"><span>' + t('yearly') + ' <i>−' + save + '%</i></span><b class="mono">' + P.currency + P.yearly + '</b><small>' + t('per_year') + '</small></button>' +
-      '<button class="btn btn-ghost btn-sm" data-action="refresh-plan">' + t('paid_check') + '</button></div>';
+      '<button class="btn btn-ghost btn-sm" data-action="refresh-plan">' + t('paid_check') + '</button>' +
+      ((window.EDGEBOOK_CONFIG || {}).payFunction ? '<p class="muted small pay-note">' + t('pay_crypto_note') + '</p>' : '') + '</div>';
     if (Cloud.isPro) {
       const until = Cloud.isPaid && Cloud.profile.plan_until ? t('pro_until', { d: dateLabel(Cloud.profile.plan_until, 'full') }) : '';
       const trialBox = Cloud.isTrial ? '<div class="acc-grid trial-box"><div><div class="acc-plan-name">' + t('trial_left', { n: Cloud.trialDaysLeft }) + '</div><p class="muted small">' + t('trial_x') + '</p></div>' + buy + '</div>' : '';
-      return '<div class="card acc-card is-pro">' + head(email + ' · ' + badge + (until ? ' · ' + until : '')) + trialBox +
+      const extendBox = Cloud.isPaid && (window.EDGEBOOK_CONFIG || {}).payFunction ? '<div class="acc-grid trial-box"><div><div class="acc-plan-name">' + t('extend_t') + '</div><p class="muted small">' + t('extend_x') + '</p></div>' + buy + '</div>' : '';
+      return '<div class="card acc-card is-pro">' + head(email + ' · ' + badge + (until ? ' · ' + until : '')) + trialBox + extendBox +
         '<div class="acc-sync"><span class="sync-dot s-' + Cloud.status + '"></span><div><b>' + t('sync_' + Cloud.status) + '</b><small>' +
         (Cloud.lastSync ? t('last_sync', { t: dateLabel(Cloud.lastSync) }) : '') + (Cloud.status === 'error' && Cloud.error ? ' · ' + esc(Cloud.error) : '') + '</small></div>' +
         '<div class="spacer"></div><button class="btn btn-ghost btn-sm" data-action="sync-now">' + t('sync_now') + '</button>' +
-        '<a class="btn btn-ghost btn-sm" href="' + esc((window.EDGEBOOK_CONFIG || {}).billingPortal || '#') + '" target="_blank" rel="noopener">' + t('manage_sub') + '</a>' +
+        ((window.EDGEBOOK_CONFIG || {}).billingPortal ? '<a class="btn btn-ghost btn-sm" href="' + esc((window.EDGEBOOK_CONFIG || {}).billingPortal) + '" target="_blank" rel="noopener">' + t('manage_sub') + '</a>' : '') +
         '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button></div></div>';
     }
     return '<div class="card acc-card">' + head(email + ' · ' + badge, '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button>') +
@@ -1291,6 +1293,14 @@
       case 'palette': palette(); break;
       case 'import': importDialog(); break;
       case 'upgrade': {
+        if ((window.EDGEBOOK_CONFIG || {}).payFunction) {
+          el.disabled = true;
+          toast(t('pay_redirect'));
+          Cloud.startCheckout(el.dataset.interval)
+            .then(url => { location.href = url; })
+            .catch(err => { el.disabled = false; toast(t('pay_err') + ' (' + err.message + ')', 'err'); });
+          break;
+        }
         const url = Cloud.checkoutUrl(el.dataset.interval);
         if (url) window.open(url, '_blank', 'noopener'); else toast(t('checkout_missing'), 'err');
         break;
@@ -1385,7 +1395,21 @@
     document.documentElement.classList.remove('auth-pending');
     render();
     PRO.maybeWelcome();
+    checkReturnFromPayment();
   });
+  // Back from the Cryptomus payment page (?paid=1): wait for the webhook to switch the plan on.
+  function checkReturnFromPayment() {
+    if (!/[?&]paid=1/.test(location.search) || !Cloud.user) return;
+    history.replaceState(null, '', location.pathname + '#/settings');
+    parseHash(); render();
+    toast(t('pay_wait'));
+    let n = 0;
+    const tick = () => Cloud.refreshProfile().then(() => {
+      if (Cloud.isPaid) { toast(t('plan_active'), 'ok'); Cloud.syncNow(); render(); return; }
+      if (++n < 36) setTimeout(tick, 5000); else toast(t('still_free'), 'err');
+    });
+    tick();
+  }
   function toLogin() { location.replace('login.html?next=' + encodeURIComponent(location.hash || '#/dashboard')); }
   Cloud.on(() => { if (gated && Cloud.enabled && Cloud.ready && !Cloud.user) toLogin(); if (gated) PRO.maybeWelcome(); });
 })();
