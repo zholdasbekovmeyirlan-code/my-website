@@ -632,7 +632,8 @@
   VIEWS.settings = function (v) {
     ui.charts = [];
     const s = S();
-    const bytes = new Blob([localStorage.getItem('edgebook:v1') || '']).size;
+    let bytes = 0;
+    try { bytes = new Blob([localStorage.getItem('edgebook:v1') || '']).size; } catch (e) { bytes = new Blob([JSON.stringify(Store.state)]).size; }
     v.innerHTML =
       '<div class="grid g-2 settings">' +
       '<div class="card"><div class="card-head"><div><h3>' + t('profile') + '</h3><p>' + t('profile_sub') + '</p></div></div>' +
