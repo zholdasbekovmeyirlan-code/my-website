@@ -145,7 +145,7 @@
           let data = {};
           try { data = await res.json(); } catch (e) { /* non-json */ }
           if (!res.ok) throw Object.assign(new Error(data.error || 'http_' + res.status), { code: data.error || 'http', data });
-          if (!('reply' in data) && !data.refused) throw Object.assign(new Error('wrong_function'), { code: 'wrong_function' });
+          if (!('reply' in data) && !data.refused) throw Object.assign(new Error('wrong_function'), { code: 'wrong_function ' + (C.aiFunction || 'coach') + ' → ' + JSON.stringify(data).slice(0, 60) });
           if (data.used != null) usage = { used: data.used, limit: data.limit };
           reply = data.refused ? t('ai_refused') : (data.reply || t('ai_empty')) + (data.truncated ? '\n\n' + t('ai_truncated') : '');
         } catch (e) {
