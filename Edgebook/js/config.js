@@ -4,8 +4,8 @@
    Leave supabaseUrl / supabaseAnonKey empty to run in local-only mode. */
 window.EDGEBOOK_CONFIG = {
   // Supabase → Project Settings → API
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://cxxlikhearnbirqnnhmn.supabase.co',
+  supabaseAnonKey: 'sb_publishable_zGsLEZl74dyA8JxHsGtzuQ_Nw8ey75p',
 
   // Lemon Squeezy → Store → Products → Share (checkout links for each variant)
   checkout: {
