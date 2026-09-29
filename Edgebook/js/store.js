@@ -91,6 +91,7 @@
       this._cache = null;
       try {
         localStorage.setItem(KEY, JSON.stringify(this.state));
+        this.saveListeners.forEach(fn => { try { fn(); } catch (err) { console.warn(err); } });
         return true;
       } catch (e) {
         console.warn('Edgebook: save failed', e);
@@ -100,6 +101,8 @@
     },
 
     onError(fn) { this.listeners.push(fn); },
+    saveListeners: [],
+    onSave(fn) { this.saveListeners.push(fn); },
 
     /* Computed trades, newest first */
     all() {
