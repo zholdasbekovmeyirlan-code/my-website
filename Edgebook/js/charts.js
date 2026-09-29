@@ -68,7 +68,7 @@
       s += '<text class="axis" x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="' + (k === 0 ? 'start' : k === n - 1 ? 'end' : 'middle') + '">' + o.label(pts[i], i) + '</text>';
     }
     s += '<path d="' + area + '" fill="url(#' + gid + ')"/>';
-    s += '<path d="' + d + '" class="line ' + (up ? 'up' : 'down') + '"/>';
+    s += '<path d="' + d + '" class="line ' + (up ? 'up' : 'down') + (o.animate === false ? ' static' : '') + '"/>';
     if (o.pulse !== false) {
       const ex = x(pts.length - 1).toFixed(1), ey = y(pts[pts.length - 1].y).toFixed(1);
       s += '<circle class="ping ' + (up ? 'up' : 'down') + '" cx="' + ex + '" cy="' + ey + '" r="4"/>';
