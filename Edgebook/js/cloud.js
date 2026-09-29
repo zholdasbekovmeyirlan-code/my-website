@@ -9,8 +9,9 @@
   const META_KEY = 'edgebook:sync';
   const SDK = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
-  const readMeta = () => { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } };
-  const writeMeta = m => { try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) { /* storage blocked */ } };
+  const metaKey = () => META_KEY + (Cloud.user ? ':' + Cloud.user.id : '');
+  const readMeta = () => { try { return JSON.parse(localStorage.getItem(metaKey())) || {}; } catch (e) { return {}; } };
+  const writeMeta = m => { try { localStorage.setItem(metaKey(), JSON.stringify(m)); } catch (e) { /* storage blocked */ } };
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -30,7 +31,7 @@
     profile: null,
     status: 'idle',          // idle | syncing | synced | error | conflict
     error: '',
-    lastSync: readMeta().lastSync || null,
+    lastSync: null,
     conflict: null,
     _client: null,
     _subs: [],
@@ -79,6 +80,13 @@
 
     async _setUser(u) {
       this.user = u; this.profile = null; this.conflict = null;
+      // Each account gets its own local journal; a brand-new one starts with demo data.
+      this._suppress = true;
+      try {
+        Store.setUser(u ? u.id : null);
+        if (u && !Store.state.settings.seeded) Store.seedDemo(Store.state.settings.lang || 'kk');
+      } finally { this._suppress = false; }
+      this.lastSync = u ? readMeta().lastSync || null : null;
       if (u) {
         await this.refreshProfile();
         if (this.isPro) await this.syncNow();

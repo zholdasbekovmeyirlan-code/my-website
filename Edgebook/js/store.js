@@ -2,7 +2,10 @@
 (function () {
   'use strict';
 
-  const KEY = 'edgebook:v1';
+  // Journals are stored per signed-in account so people sharing a browser never see each
+  // other's data. Without accounts (local mode) everything lives under the base key.
+  const BASE = 'edgebook:v1';
+  let KEY = BASE;
 
   const DEFAULT_SETUPS = ['Breakout', 'Pullback', 'Reversal', 'Range', 'Trend', 'News'];
 
@@ -309,6 +312,27 @@
       this.save();
     }
   };
+
+  /* Switch to the journal of a signed-in account (null = shared local journal).
+     The first account to sign in on this browser inherits the pre-account journal. */
+  Store.setUser = function (userId) {
+    const next = userId ? BASE + ':' + userId : BASE;
+    if (next === KEY) return;
+    let prefs = {};
+    try {
+      const legacy = localStorage.getItem(BASE);
+      if (legacy) { const s = (JSON.parse(legacy) || {}).settings || {}; prefs = { lang: s.lang, theme: s.theme, langChosen: s.langChosen }; }
+      if (userId && !localStorage.getItem(next) && legacy && !localStorage.getItem(BASE + ':claimed')) {
+        localStorage.setItem(next, legacy);
+        localStorage.setItem(BASE + ':claimed', userId);
+      }
+    } catch (e) { /* storage blocked */ }
+    KEY = next;
+    this.state = defaults();
+    Object.keys(prefs).forEach(k => { if (prefs[k] != null) this.state.settings[k] = prefs[k]; });
+    this.load();
+  };
+  Store.key = () => KEY;
 
   Store.utils = { uid, num, dayKey, toLocalInput, pad, calc };
   window.Store = Store;
