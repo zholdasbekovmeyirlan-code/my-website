@@ -282,17 +282,9 @@
     const all = Store.all();
     if (!all.length) {
       v.innerHTML = emptyState(t('empty_title'), t('empty_text'),
-        '<form class="start-bal" id="startBal"><label class="field"><span>' + t('start_balance') + '</span><div class="suffix"><input class="input mono" name="balance" type="number" min="0" step="any" value="' + esc(S().balance) + '"/><em>' + esc(S().currency) + '</em></div></label>' +
-        '<button class="btn btn-ghost" type="submit">' + t('save') + '</button></form>' +
-        '<div class="empty-actions"><button class="btn btn-primary" data-action="new-trade">' + icon('plus') + t('new_trade') + '</button>' +
+        '<button class="btn btn-primary" data-action="new-trade">' + icon('plus') + t('new_trade') + '</button>' +
         '<button class="btn btn-ghost" data-action="import">' + icon('upload') + t('import') + '</button>' +
-        '<button class="btn btn-ghost" data-action="seed">' + icon('sparkle') + t('load_demo') + '</button></div>');
-      $('#startBal').addEventListener('submit', e => {
-        e.preventDefault();
-        const b = U.num(e.target.balance.value);
-        if (b == null || b < 0) { toast(t('bad_balance'), 'err'); return; }
-        S().balance = b; Store.save(); toast(t('saved'), 'ok'); renderSidebar();
-      });
+        '<button class="btn btn-ghost" data-action="seed">' + icon('sparkle') + t('load_demo') + '</button>');
       return;
     }
     const list = inRange(all, ui.range);
