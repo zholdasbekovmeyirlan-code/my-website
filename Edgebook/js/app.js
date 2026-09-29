@@ -38,6 +38,8 @@
     sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/>'
   };
+  const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  const MOD = MAC ? '⌘' : 'Ctrl ';
   const icon = (n, c) => '<svg class="ic ' + (c || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
 
   const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'journal', 'settings'];
@@ -186,7 +188,7 @@
       '<a href="#/' + r + '" class="nav-item' + (ui.route === r ? ' active' : '') + '" data-route="' + r + '">' + icon(r) +
       '<span>' + t('nav_' + r) + '</span><kbd>' + (i + 1) + '</kbd></a>').join('');
     $('#sidebar').innerHTML =
-      '<a class="brand" href="#/dashboard"><span class="brand-mark">' + icon('trades') + '</span><span class="brand-name">Edgebook<em>' + t('brand_sub') + '</em></span></a>' +
+      '<a class="brand" href="index.html" title="' + t('home') + '"><span class="brand-mark">' + icon('trades') + '</span><span class="brand-name">Edgebook<em>' + t('brand_sub') + '</em></span></a>' +
       '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
       '<div class="side-card">' +
       '<div class="side-card-label">' + t('equity') + '</div>' +
@@ -205,6 +207,7 @@
     $('#topbar').innerHTML =
       '<div class="tb-title"><h1>' + t('title_' + ui.route) + '</h1><p>' + t('sub_' + ui.route) + '</p></div>' +
       '<div class="tb-actions">' +
+      '<button class="cmdk-btn" data-action="palette" aria-label="' + t('search_btn') + '">' + icon('search') + '<span>' + t('search_short') + '</span><kbd>' + MOD + 'K</kbd></button>' +
       (showRange ? '<div class="seg range" role="tablist">' + ranges.map(r => '<button class="' + (ui.range === r[0] ? 'on' : '') + '" data-range="' + r[0] + '">' + r[1] + '</button>').join('') + '</div>' : '') +
       '<div class="seg seg-sm lang">' + ['kk', 'en'].map(l => '<button class="' + (s.lang === l ? 'on' : '') + '" data-lang="' + l + '">' + l.toUpperCase() + '</button>').join('') + '</div>' +
       '<button class="icon-btn" data-action="theme" title="' + t('theme') + '">' + icon(s.theme === 'dark' ? 'sun' : 'moon') + '</button>' +
@@ -360,6 +363,7 @@
     }));
     ui.charts.push(() => Charts.hbars($('#chSetup'), bySetup, { fmt: v => money(v, { sign: true, compact: true }), empty: t('no_data') }));
     drawCharts();
+    countUp(v);
   };
 
   VIEWS.trades = function (v) {
@@ -668,6 +672,7 @@
       const b = U.num(fd.get('balance'));
       s.balance = b != null && b >= 0 ? b : s.balance;
       s.currency = fd.get('currency');
+      if (s.lang !== fd.get('lang')) s.langChosen = true;
       s.lang = fd.get('lang');
       s.setups = fd.get('setups').split(',').map(x => x.trim()).filter(Boolean).slice(0, 30);
       Store.save();
@@ -686,9 +691,10 @@
   };
 
   /* ---------- modal ---------- */
-  let lastFocus = null;
+  let lastFocus = null, closeTimer = null;
   function openModal(html, size) {
-    lastFocus = document.activeElement;
+    clearTimeout(closeTimer);
+    if ($('#modal').hidden) lastFocus = document.activeElement;
     const m = $('#modal'), p = $('#modalPanel');
     p.className = 'modal-panel ' + (size || '');
     p.innerHTML = html;
@@ -703,7 +709,7 @@
     if (m.hidden) return;
     m.classList.remove('open');
     document.body.classList.remove('no-scroll');
-    setTimeout(() => { m.hidden = true; $('#modalPanel').innerHTML = ''; }, 180);
+    closeTimer = setTimeout(() => { m.hidden = true; $('#modalPanel').innerHTML = ''; }, 180);
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
@@ -753,7 +759,7 @@
       '<aside class="tf-preview" id="tfPreview"></aside>' +
       '</div>' +
       '<div class="modal-foot">' + (raw ? '<button type="button" class="btn btn-ghost danger-text" data-action="delete-trade" data-id="' + raw.id + '">' + icon('trash') + t('delete') + '</button>' : '') +
-      '<div class="spacer"></div><button type="button" class="btn btn-ghost" data-close>' + t('cancel') + '</button><button type="submit" class="btn btn-primary">' + (raw ? t('save') : t('add_trade')) + '<kbd>⌘↵</kbd></button></div>' +
+      '<div class="spacer"></div><button type="button" class="btn btn-ghost" data-close>' + t('cancel') + '</button><button type="submit" class="btn btn-primary">' + (raw ? t('save') : t('add_trade')) + '<kbd>' + MOD + '↵</kbd></button></div>' +
       '</form>', 'lg');
 
     const form = $('#tradeForm');
@@ -849,7 +855,7 @@
       if (item) loadImage(item.getAsFile());
     });
 
-    form.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); form.requestSubmit(); } });
+    form.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
     form.addEventListener('submit', e => {
       e.preventDefault();
       const o = collect();
@@ -918,10 +924,83 @@
   }
 
   function shortcuts() {
-    const k = [['N', t('new_trade')], ['1 – 6', t('sc_nav')], ['/', t('sc_search')], ['T', t('theme')], ['Esc', t('sc_close')], ['⌘ / Ctrl + ↵', t('sc_save')]];
+    const k = [[MOD + 'K', t('cmd_title')], ['N', t('new_trade')], ['1 – 6', t('sc_nav')], ['/', t('sc_search')], ['T', t('theme')], ['Esc', t('sc_close')], [MOD + '↵', t('sc_save')]];
     openModal('<div class="modal-head"><div><h2 class="display">' + t('shortcuts') + '</h2></div><button class="icon-btn" data-close>' + icon('x') + '</button></div><div class="modal-body"><ul class="stat-list kbd-list">' +
       k.map(r => '<li><span>' + r[1] + '</span><kbd>' + r[0] + '</kbd></li>').join('') + '</ul></div>', 'sm');
   }
+
+  /* ---------- command palette ---------- */
+  function palette() {
+    const cmds = ROUTES.map((r, i) => ({ group: 'nav', icon: r, label: t('nav_' + r), hint: String(i + 1), run: () => { location.hash = '#/' + r; } })).concat([
+      { group: 'act', icon: 'plus', label: t('new_trade'), hint: 'N', run: () => tradeForm() },
+      { group: 'act', icon: S().theme === 'dark' ? 'sun' : 'moon', label: t('cmd_theme'), hint: 'T', run: () => { Store.set('theme', S().theme === 'dark' ? 'light' : 'dark'); render(); } },
+      { group: 'act', icon: 'sparkle', label: t('cmd_lang'), run: () => { Store.set('lang', S().lang === 'kk' ? 'en' : 'kk'); Store.set('langChosen', true); render(); } },
+      { group: 'act', icon: 'download', label: t('export_csv'), run: () => { exportCSV(); toast(t('exported'), 'ok'); } },
+      { group: 'act', icon: 'download', label: t('export_json'), run: () => { download('edgebook-backup-' + U.dayKey(new Date()) + '.json', Store.exportJSON(), 'application/json'); toast(t('exported'), 'ok'); } },
+      { group: 'act', icon: 'keyboard', label: t('shortcuts'), run: () => shortcuts() }
+    ]);
+    openModal('<div class="cmdk-input">' + icon('search') + '<input id="cmdkIn" placeholder="' + t('cmd_ph') + '" autocomplete="off" spellcheck="false" autofocus/><kbd>Esc</kbd></div>' +
+      '<div class="cmdk-list" id="cmdkList"></div>' +
+      '<div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd>' + t('cmd_move') + '</span><span><kbd>↵</kbd>' + t('cmd_run') + '</span></div>', 'palette');
+    let sel = 0, items = [];
+    const input = $('#cmdkIn'), list = $('#cmdkList');
+    const draw = () => {
+      const q = input.value.trim().toLowerCase();
+      const cm = cmds.filter(c => !q || c.label.toLowerCase().includes(q));
+      const tr = q ? Store.all().filter(x => [x.symbol, x.setup, (x.tags || []).join(' '), x.notes].join(' ').toLowerCase().includes(q)).slice(0, 8) : [];
+      items = cm.concat(tr.map(x => ({ group: 'trades', trade: x, run: () => tradeDetail(x.id) })));
+      sel = Math.max(0, Math.min(sel, items.length - 1));
+      let html = '', last = '';
+      items.forEach((it, i) => {
+        if (it.group !== last) { html += '<div class="cmdk-group">' + t('cmd_g_' + it.group) + '</div>'; last = it.group; }
+        const x = it.trade;
+        html += '<button class="cmdk-item' + (i === sel ? ' on' : '') + '" data-ci="' + i + '">' +
+          (x ? icon('trades') + '<b>' + esc(x.symbol) + '</b><span class="muted">' + dateLabel(x.openedAt || x.when) + '</span><small class="' + cls(x.net) + '">' + (x.closed ? money(x.net, { sign: true }) : t('st_open')) + '</small>'
+            : icon(it.icon) + '<b>' + it.label + '</b>' + (it.hint ? '<small><kbd>' + it.hint + '</kbd></small>' : '')) + '</button>';
+      });
+      list.innerHTML = html || '<div class="cmdk-empty">' + t('cmd_empty') + '</div>';
+      const on = $('.cmdk-item.on', list);
+      if (on) on.scrollIntoView({ block: 'nearest' });
+    };
+    const run = i => { const it = items[i]; if (!it) return; closeModal(); it.run(); };
+    input.addEventListener('input', () => { sel = 0; draw(); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % Math.max(1, items.length); draw(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + items.length) % Math.max(1, items.length); draw(); }
+      else if (e.key === 'Enter') { e.preventDefault(); run(sel); }
+    });
+    list.addEventListener('click', e => { const b = e.target.closest('[data-ci]'); if (b) run(+b.dataset.ci); });
+    draw();
+  }
+
+  /* ---------- motion ---------- */
+  function countUp(root) {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    $$('.kpi-value', root).forEach(el => {
+      if (el.children.length) return;
+      const m = el.textContent.match(/^(.*?)([\d,]+(?:\.\d+)?)(.*)$/);
+      if (!m) return;
+      const dec = (m[2].split('.')[1] || '').length;
+      const target = parseFloat(m[2].replace(/,/g, ''));
+      if (!isFinite(target) || target === 0) return;
+      const t0 = performance.now(), dur = 1100;
+      const step = now => {
+        const k = Math.min(1, (now - t0) / dur);
+        const e = k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
+        el.textContent = m[1] + (target * e).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + m[3];
+        if (k < 1 && el.isConnected) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  document.addEventListener('pointermove', e => {
+    const c = e.target.closest && e.target.closest('.card, .kpi');
+    if (!c) return;
+    const r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }, { passive: true });
 
   /* ---------- toast ---------- */
   function toast(msg, type) {
@@ -966,7 +1045,7 @@
       closeModal(); return;
     }
     if (el.dataset.range) { ui.range = el.dataset.range; ui.tq.page = 1; render(); return; }
-    if (el.dataset.lang) { Store.set('lang', el.dataset.lang); render(); return; }
+    if (el.dataset.lang) { Store.set('langChosen', true); Store.set('lang', el.dataset.lang); render(); return; }
     if (el.dataset.sort) { const k = el.dataset.sort; if (ui.tq.sort === k) ui.tq.dir *= -1; else { ui.tq.sort = k; ui.tq.dir = -1; } render(); return; }
     if (el.dataset.page) { ui.tq.page = +el.dataset.page; render(); return; }
     if (el.dataset.cal != null && el.hasAttribute('data-cal')) {
@@ -1005,6 +1084,7 @@
       case 'import-json': $('#importFile').click(); break;
       case 'export-csv': exportCSV(); toast(t('exported'), 'ok'); break;
       case 'shortcuts': shortcuts(); break;
+      case 'palette': palette(); break;
     }
   });
 
@@ -1027,6 +1107,11 @@
   });
 
   document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      if ($('#modalPanel').classList.contains('palette') && !$('#modal').hidden) closeModal(); else palette();
+      return;
+    }
     if (e.key === 'Escape') { closeModal(); return; }
     const tag = (e.target.tagName || '').toLowerCase();
     if (['input', 'textarea', 'select'].includes(tag) || e.target.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -1065,8 +1150,10 @@
   /* ---------- boot ---------- */
   Store.load();
   if (!Store.state.settings.seeded) {
-    const navLang = (navigator.language || '').toLowerCase();
-    Store.state.settings.lang = navLang.startsWith('kk') || navLang.startsWith('ru') ? 'kk' : (navLang.startsWith('en') ? 'en' : 'kk');
+    if (!Store.state.settings.langChosen) {
+      const navLang = (navigator.language || '').toLowerCase();
+      Store.state.settings.lang = navLang.startsWith('en') ? 'en' : 'kk';
+    }
     Store.seedDemo(Store.state.settings.lang);
   }
   I18N.use(() => S().lang);

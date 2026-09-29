@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="kk" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Edgebook — премиум трейдинг журнал: мәмілелер, капитал қисығы, күнтізбе, аналитика және күнделік." />
+  <meta name="theme-color" content="#08090c" />
+  <title>Edgebook — Trading Journal</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111318'/%3E%3Cpath d='M7 21l6-6 4 4 8-9' fill='none' stroke='%23d9b76e' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"><span class="glow g1"></span><span class="glow g2"></span><span class="noise"></span></div>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <header class="topbar" id="topbar"></header>
+      <div class="demo-banner" id="demoBanner" hidden></div>
+      <section class="view" id="view" tabindex="-1"></section>
+    </main>
+  </div>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" id="modalPanel"></div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

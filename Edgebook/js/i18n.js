@@ -88,7 +88,10 @@
     delete: 'Өшіру', delete_q: 'Мәмілені өшіру керек пе?', delete_text: 'Бұл мәміле журналдан біржола өшіріледі.',
     cancel: 'Бас тарту', edit: 'Өңдеу', duplicate: 'Көшірме',
     sc_nav: 'Бөлімдер арасында ауысу', sc_search: 'Мәмілелерден іздеу', sc_close: 'Терезені жабу', sc_save: 'Мәмілені сақтау',
-    u_min: 'м', u_h: 'с', u_d: 'к'
+    u_min: 'м', u_h: 'с', u_d: 'к',
+    home: 'Басты бет', search_short: 'Іздеу', search_btn: 'Іздеу және командалар', cmd_title: 'Командалар палитрасы', cmd_ph: 'Бөлім, әрекет немесе актив іздеу…',
+    cmd_g_nav: 'Бөлімдер', cmd_g_act: 'Әрекеттер', cmd_g_trades: 'Мәмілелер', cmd_theme: 'Тақырыпты ауыстыру', cmd_lang: 'Тілді ауыстыру (KK / EN)',
+    cmd_empty: 'Ештеңе табылмады', cmd_move: 'таңдау', cmd_run: 'орындау'
   };
 
   const en = {
@@ -177,7 +180,10 @@
     delete: 'Delete', delete_q: 'Delete this trade?', delete_text: 'This trade will be permanently removed from your journal.',
     cancel: 'Cancel', edit: 'Edit', duplicate: 'Duplicate',
     sc_nav: 'Switch sections', sc_search: 'Search trades', sc_close: 'Close dialog', sc_save: 'Save trade',
-    u_min: 'm', u_h: 'h', u_d: 'd'
+    u_min: 'm', u_h: 'h', u_d: 'd',
+    home: 'Home', search_short: 'Search', search_btn: 'Search & commands', cmd_title: 'Command palette', cmd_ph: 'Search sections, actions or symbols…',
+    cmd_g_nav: 'Navigate', cmd_g_act: 'Actions', cmd_g_trades: 'Trades', cmd_theme: 'Toggle theme', cmd_lang: 'Switch language (KK / EN)',
+    cmd_empty: 'Nothing found', cmd_move: 'navigate', cmd_run: 'run'
   };
 
   const months = {
