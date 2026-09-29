@@ -197,9 +197,11 @@
       '<div class="side-card">' +
       '<div class="side-card-label">' + t('equity') + (Cloud.isPro ? '<span class="sync-dot s-' + Cloud.status + '" title="' + t('sync_' + Cloud.status) + '"></span>' : '') + '</div>' +
       '<div class="side-card-value mono">' + money(eq) + '</div>' +
-      '<div class="side-card-sub ' + cls(st.net) + '">' + icon(st.net >= 0 ? 'arrowUp' : 'arrowDown') + money(st.net, { sign: true }) +
-      ' <span>· ' + pct(S().balance ? st.net / S().balance : null) + '</span></div>' +
-      '<div class="side-card-spark">' + Charts.spark(equitySeries('all').pts.map(p => p.y), 200, 38) + '</div>' +
+      (st.closed
+        ? '<div class="side-card-sub ' + cls(st.net) + '">' + (st.net ? icon(st.net > 0 ? 'arrowUp' : 'arrowDown') : '') + money(st.net, { sign: true }) +
+          ' <span>· ' + pct(S().balance ? st.net / S().balance : null) + '</span></div>' +
+          '<div class="side-card-spark">' + Charts.spark(equitySeries('all').pts.map(p => p.y), 200, 38) + '</div>'
+        : '<div class="side-card-empty">' + t('no_closed_yet') + '<a href="#/settings">' + t('set_balance') + ' →</a></div>') +
       '</div>' +
       (Cloud.user ? '<div class="side-user"><span class="avatar">' + esc((Cloud.user.email || '?').charAt(0).toUpperCase()) + '</span><div class="side-user-info"><b>' + esc(Cloud.user.email || '') + '</b><small>' + (Cloud.isPro ? 'Pro' : 'Free') + '</small></div>' +
         '<button class="icon-btn sm" data-action="sign-out" title="' + t('sign_out') + '" aria-label="' + t('sign_out') + '">' + icon('logout') + '</button></div>' : '') +
@@ -280,8 +282,17 @@
     const all = Store.all();
     if (!all.length) {
       v.innerHTML = emptyState(t('empty_title'), t('empty_text'),
-        '<button class="btn btn-primary" data-action="new-trade">' + icon('plus') + t('new_trade') + '</button>' +
-        '<button class="btn btn-ghost" data-action="seed">' + icon('sparkle') + t('load_demo') + '</button>');
+        '<form class="start-bal" id="startBal"><label class="field"><span>' + t('start_balance') + '</span><div class="suffix"><input class="input mono" name="balance" type="number" min="0" step="any" value="' + esc(S().balance) + '"/><em>' + esc(S().currency) + '</em></div></label>' +
+        '<button class="btn btn-ghost" type="submit">' + t('save') + '</button></form>' +
+        '<div class="empty-actions"><button class="btn btn-primary" data-action="new-trade">' + icon('plus') + t('new_trade') + '</button>' +
+        '<button class="btn btn-ghost" data-action="import">' + icon('upload') + t('import') + '</button>' +
+        '<button class="btn btn-ghost" data-action="seed">' + icon('sparkle') + t('load_demo') + '</button></div>');
+      $('#startBal').addEventListener('submit', e => {
+        e.preventDefault();
+        const b = U.num(e.target.balance.value);
+        if (b == null || b < 0) { toast(t('bad_balance'), 'err'); return; }
+        S().balance = b; Store.save(); toast(t('saved'), 'ok'); renderSidebar();
+      });
       return;
     }
     const list = inRange(all, ui.range);
