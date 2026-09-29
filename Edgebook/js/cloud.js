@@ -50,7 +50,9 @@
       if (!this.enabled) { this.ready = true; return; }
       try {
         await loadScript(SDK);
-        this._client = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey);
+        this._client = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey, {
+          auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true }
+        });
         const { data } = await this._client.auth.getSession();
         await this._setUser(data.session ? data.session.user : null);
         this._client.auth.onAuthStateChange((evt, session) => {
@@ -94,6 +96,14 @@
       if (error) throw error;
       return !!data.session;   // false → email confirmation required
     },
+    async signInWith(provider) {
+      const { error } = await this._client.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: location.origin + location.pathname }
+      });
+      if (error) throw error;
+    },
+    providers() { return (C.oauthProviders || []).filter(p => ['google', 'github', 'apple'].indexOf(p) >= 0); },
     async signOut() { await this._client.auth.signOut(); },
 
     checkoutUrl(interval) {
