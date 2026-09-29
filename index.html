@@ -16,6 +16,11 @@
   <link rel="stylesheet" href="css/landing.css" />
 </head>
 <body class="lp">
+  <div class="intro" id="intro" aria-hidden="true">
+    <svg class="intro-mark" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+    <span class="intro-word">Edgebook</span>
+  </div>
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
 
   <!-- ============ NAV ============ -->
   <header class="lp-nav" id="lpNav">
@@ -41,6 +46,7 @@
     <!-- ============ HERO ============ -->
     <section class="hero">
       <div class="hero-bg" aria-hidden="true">
+        <canvas class="wave" id="wave"></canvas>
         <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
         <div class="hero-grid"></div>
         <div class="beam"></div>
@@ -52,7 +58,7 @@
           <span class="pulse-dot"></span><span data-l="hero_badge"></span>
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </a>
-        <h1 class="hero-title" data-l="hero_title" data-reveal></h1>
+        <h1 class="hero-title" data-l="hero_title"></h1>
         <p class="hero-sub" data-l="hero_sub" data-reveal></p>
         <div class="hero-cta" data-reveal>
           <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -272,5 +278,6 @@
   <script src="js/store.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/landing.js"></script>
+  <script src="js/fx.js"></script>
 </body>
 </html>
