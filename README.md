@@ -1,4 +1,4 @@
-# Edgebook — Premium Trading Journal
+# EntryX — Premium Trading Journal
 
 Трейдерлерге арналған премиум журнал: мәмілелерді жазу, капитал қисығы, P&L күнтізбесі, терең аналитика және күнделік.
 Таза HTML/CSS/JS, кітапханасыз, серверсіз. Барлық деректер тек браузерде (localStorage) сақталады.
@@ -6,7 +6,7 @@
 ## Ашу
 
 ```bash
-cd Edgebook
+cd EntryX
 python3 -m http.server 8080
 # → http://localhost:8080
 ```
@@ -15,8 +15,8 @@ python3 -m http.server 8080
 
 ## Deploy (Netlify)
 
-- **Netlify Drop:** `Edgebook` папкасын app.netlify.com/drop бетіне сүйреп апарыңыз.
-- **Git арқылы:** Netlify-да *Base directory* = `Edgebook`, *Publish directory* = `.` (`netlify.toml` дайын).
+- **Netlify Drop:** `EntryX` папкасын app.netlify.com/drop бетіне сүйреп апарыңыз.
+- **Git арқылы:** Netlify-да *Base directory* = `EntryX`, *Publish directory* = `.` (`netlify.toml` дайын).
 
 ## Не бар
 

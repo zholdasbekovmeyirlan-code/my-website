@@ -1,4 +1,4 @@
-/* Edgebook — landing page */
+/* EntryX — landing page */
 (function () {
   'use strict';
 
@@ -10,7 +10,7 @@
       nav_features: 'Мүмкіндіктер', nav_analytics: 'Аналитика', nav_how: 'Қалай жұмыс істейді', nav_faq: 'Сұрақтар', nav_open: 'Тегін бастау', nav_login: 'Кіру',
       hero_badge: 'Тегін бастау · Карта қажет емес · 30 секундта тіркелу',
       hero_title: 'Трейдингіңіздің<br><em>жасырын <span class="nw">edge-ін</span></em> табыңыз.',
-      hero_sub: 'Edgebook әр мәмілені, эмоцияны және қатені нақты сандарға айналдырады. Қай сетап ақша әкелетінін, қай әдет оны ұрлайтынын бір көзқараста көресіз.',
+      hero_sub: 'EntryX әр мәмілені, эмоцияны және қатені нақты сандарға айналдырады. Қай сетап ақша әкелетінін, қай әдет оны ұрлайтынын бір көзқараста көресіз.',
       cta_primary: 'Тегін бастау', cta_secondary: 'Демоны көру',
       hero_note: 'Карта қажет емес &nbsp;·&nbsp; Google арқылы бір басу &nbsp;·&nbsp; Қазақша және English',
       mock_greet: 'Қайырлы күн', mock_new: '+ Жаңа мәміле', mock_equity: 'Капитал қисығы', mock_calendar: 'Қыркүйек',
@@ -22,7 +22,7 @@
       feat_sub: 'Excel кестелері мен дәптерлерді ұмытыңыз. Бүкіл сауда тарихыңыз — бір әдемі жерде.',
       t1_title: 'Капитал қисығы және 30+ метрика', t1_text: 'Profit factor, expectancy, R, drawdown, серия — бәрі нақты уақытта есептеледі.',
       t2_title: 'P&L күнтізбесі', t2_text: 'Табысты және шығынды күндер — бір көзқараста.',
-      t3_title: 'Автоматты инсайттар', t3_text: 'Edgebook деректеріңізді оқып, нені өзгерту керегін айтады.',
+      t3_title: 'Автоматты инсайттар', t3_text: 'EntryX деректеріңізді оқып, нені өзгерту керегін айтады.',
       ti_1: '<b>Breakout</b> — орташа +0.89R', ti_2: '<b>Кек</b> күйі: −$186', ti_3: 'Ең жақсы сағат — <b>10:00</b>',
       t4_title: 'Эмоция мен қателер', t4_text: 'FOMO мен кек саудасы сізге қаншаға түсетінін доллармен көріңіз.',
       e_calm: 'Сабырлы', e_revenge: 'Кек', e_greed: 'Ашкөздік',
@@ -34,7 +34,7 @@
       tj_lesson: 'Сабақ', tj_lesson_text: 'Ең жақсы мәмілелер жалықтырады.',
       an_eyebrow: 'Аналитика',
       an_title: 'Деректер<br><em>шындықты</em> айтады.',
-      an_sub: 'Көп трейдер неге шығынға батып жатқанын ешқашан білмейді. Edgebook әр мәмілені апта күні, сағат, сетап, эмоция және қате бойынша бөліп, нақты себебін көрсетеді.',
+      an_sub: 'Көп трейдер неге шығынға батып жатқанын ешқашан білмейді. EntryX әр мәмілені апта күні, сағат, сетап, эмоция және қате бойынша бөліп, нақты себебін көрсетеді.',
       an_li1: 'Апта күні мен сағат бойынша P&L', an_li2: 'Long vs Short салыстыру', an_li3: 'Сетап және эмоция кестелері', an_li4: 'Орындау сапасы мен нәтиже байланысы',
       an_cta: 'Аналитиканы ашу', an_weekday: 'Апта күндері бойынша P&L', example: 'Мысал',
       ins_a: 'Ең табысты күніңіз — <b>Дүйсенбі</b> (+$2,456).', ins_b: '<b>Кек</b> күйінде сауда сізге −$186 шығын әкелді.',
@@ -63,7 +63,7 @@
       nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
       hero_badge: 'Free to start · No card required · Sign up in 30 seconds',
       hero_title: 'Find the <em>hidden edge</em><br>in your trading.',
-      hero_sub: 'Edgebook turns every trade, emotion and mistake into hard numbers. See which setups make you money — and which habits quietly take it back.',
+      hero_sub: 'EntryX turns every trade, emotion and mistake into hard numbers. See which setups make you money — and which habits quietly take it back.',
       cta_primary: 'Start for free', cta_secondary: 'Explore the demo',
       hero_note: 'No card required &nbsp;·&nbsp; One click with Google &nbsp;·&nbsp; Kazakh & English',
       mock_greet: 'Good afternoon', mock_new: '+ New trade', mock_equity: 'Equity curve', mock_calendar: 'September',
@@ -75,7 +75,7 @@
       feat_sub: 'Forget spreadsheets and notebooks. Your entire trading history, in one beautiful place.',
       t1_title: 'Equity curve & 30+ metrics', t1_text: 'Profit factor, expectancy, R-multiples, drawdown, streaks — computed in real time.',
       t2_title: 'P&L calendar', t2_text: 'Green days and red days — the whole month at a glance.',
-      t3_title: 'Automatic insights', t3_text: 'Edgebook reads your data and tells you what to change.',
+      t3_title: 'Automatic insights', t3_text: 'EntryX reads your data and tells you what to change.',
       ti_1: '<b>Breakout</b> — avg +0.89R', ti_2: '<b>Revenge</b> trading: −$186', ti_3: 'Best hour — <b>10:00</b>',
       t4_title: 'Emotions & mistakes', t4_text: 'See exactly what FOMO and revenge trading cost you, in dollars.',
       e_calm: 'Calm', e_revenge: 'Revenge', e_greed: 'Greed',
@@ -87,7 +87,7 @@
       tj_lesson: 'Lesson', tj_lesson_text: 'The best trades feel boring.',
       an_eyebrow: 'Analytics',
       an_title: 'Your data tells<br><em>the truth</em>.',
-      an_sub: 'Most traders never learn why they lose. Edgebook slices every trade by weekday, hour, setup, emotion and mistake — and shows you the real reason.',
+      an_sub: 'Most traders never learn why they lose. EntryX slices every trade by weekday, hour, setup, emotion and mistake — and shows you the real reason.',
       an_li1: 'P&L by weekday and hour', an_li2: 'Long vs Short comparison', an_li3: 'Setup and emotion breakdowns', an_li4: 'Execution quality vs. results',
       an_cta: 'Open analytics', an_weekday: 'P&L by weekday', example: 'Example',
       ins_a: 'Your most profitable day is <b>Monday</b> (+$2,456).', ins_b: 'Trading while <b>Revenge</b> cost you −$186.',

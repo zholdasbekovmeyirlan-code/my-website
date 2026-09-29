@@ -1,4 +1,4 @@
-/* Edgebook — landing motion layer: intro, 3D wave, word reveals, live mock, micro-interactions */
+/* EntryX — landing motion layer: intro, 3D wave, word reveals, live mock, micro-interactions */
 (function () {
   'use strict';
 
@@ -88,7 +88,7 @@
           const a = (0.18 + depth * 0.75) * edge * (0.55 + (h + 1.6) * 0.18);
           if (a <= 0.01) continue;
           const crest = h > 1.05 || bump > 0.25;
-          ctx.fillStyle = crest ? 'rgba(241,217,160,' + Math.min(1, a * 1.3).toFixed(3) + ')' : 'rgba(200,190,165,' + (a * 0.5).toFixed(3) + ')';
+          ctx.fillStyle = crest ? 'rgba(216, 180, 254,' + Math.min(1, a * 1.3).toFixed(3) + ')' : 'rgba(200,205,222,' + (a * 0.5).toFixed(3) + ')';
           const s = Math.max(0.8, 1.9 * sc * 6 * (crest ? 1.3 : 1));
           ctx.fillRect(sx - s / 2, sy - s / 2, s, s);
         }

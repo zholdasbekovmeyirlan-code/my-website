@@ -1,4 +1,4 @@
-/* Edgebook — sign in / sign up / password reset page */
+/* EntryX — sign in / sign up / password reset page */
 (function () {
   'use strict';
 

@@ -1,5 +1,5 @@
 /* =========================================================
-   Edgebook — premium trading journal
+   EntryX — premium trading journal
    ========================================================= */
 
 :root {
@@ -23,10 +23,10 @@
   --text: #eceae4;
   --text-2: #a4a39d;
   --text-3: #6a6a67;
-  --accent: #d9b76e;
-  --accent-2: #f1d9a0;
-  --accent-ink: #1a1408;
-  --accent-soft: rgba(217, 183, 110, .12);
+  --accent: #a855f7;
+  --accent-2: #d8b4fe;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(168, 85, 247, .12);
   --up: #3ddc97;
   --up-soft: rgba(61, 220, 151, .12);
   --down: #ff5f6d;
@@ -34,11 +34,11 @@
   --warn: #f5a524;
   --shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 20px 50px -20px rgba(0, 0, 0, .6);
   --shadow-lg: 0 40px 120px -20px rgba(0, 0, 0, .8), 0 0 0 1px var(--line-2);
-  --glow-a: rgba(217, 183, 110, .10);
+  --glow-a: rgba(168, 85, 247, .10);
   --glow-b: rgba(61, 220, 151, .05);
-  --accent-line: rgba(217, 183, 110, .32);
-  --accent-tint: rgba(217, 183, 110, .09);
-  --accent-faint: rgba(217, 183, 110, .05);
+  --accent-line: rgba(168, 85, 247, .32);
+  --accent-tint: rgba(168, 85, 247, .09);
+  --accent-faint: rgba(168, 85, 247, .05);
   --up-line: rgba(61, 220, 151, .35);
   --up-mid: rgba(61, 220, 151, .5);
   --up-glow: rgba(61, 220, 151, .45);
@@ -48,7 +48,7 @@
   --warn-soft: rgba(245, 165, 36, .12);
   --bg-glass: rgba(8, 9, 12, .86);
   --spot: rgba(255, 255, 255, .055);
-  --spot-edge: rgba(217, 183, 110, .55);
+  --spot-edge: rgba(168, 85, 247, .55);
   color-scheme: dark;
 }
 
@@ -64,10 +64,10 @@
   --text: #16150f;
   --text-2: #5d5b52;
   --text-3: #93908a;
-  --accent: #a07a2c;
-  --accent-2: #7c5c1c;
-  --accent-ink: #fffaf0;
-  --accent-soft: rgba(160, 122, 44, .1);
+  --accent: #7c3aed;
+  --accent-2: #6d28d9;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(124, 58, 237, .1);
   --up: #0f9d63;
   --up-soft: rgba(15, 157, 99, .1);
   --down: #dc3545;
@@ -75,11 +75,11 @@
   --warn: #c77c02;
   --shadow: 0 1px 2px rgba(20, 18, 12, .04), 0 12px 32px -16px rgba(20, 18, 12, .14);
   --shadow-lg: 0 40px 100px -20px rgba(20, 18, 12, .3), 0 0 0 1px var(--line-2);
-  --glow-a: rgba(217, 183, 110, .22);
+  --glow-a: rgba(168, 85, 247, .22);
   --glow-b: rgba(61, 220, 151, .08);
-  --accent-line: rgba(160, 122, 44, .32);
-  --accent-tint: rgba(160, 122, 44, .08);
-  --accent-faint: rgba(160, 122, 44, .05);
+  --accent-line: rgba(124, 58, 237, .32);
+  --accent-tint: rgba(124, 58, 237, .08);
+  --accent-faint: rgba(124, 58, 237, .05);
   --up-line: rgba(15, 157, 99, .35);
   --up-mid: rgba(15, 157, 99, .5);
   --up-glow: rgba(15, 157, 99, .3);
@@ -88,8 +88,8 @@
   --down-glow: rgba(220, 53, 69, .3);
   --warn-soft: rgba(199, 124, 2, .1);
   --bg-glass: rgba(245, 243, 238, .88);
-  --spot: rgba(160, 122, 44, .06);
-  --spot-edge: rgba(160, 122, 44, .45);
+  --spot: rgba(124, 58, 237, .06);
+  --spot-edge: rgba(124, 58, 237, .45);
   color-scheme: light;
 }
 
@@ -159,7 +159,7 @@ kbd {
   background: linear-gradient(145deg, var(--surface-solid), var(--bg-2));
   border: 1px solid var(--line-2);
   color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft), 0 8px 20px -6px rgba(217, 183, 110, .35);
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 8px 20px -6px rgba(168, 85, 247, .35);
 }
 .brand-mark .ic { width: 20px; height: 20px; stroke-width: 2.2; }
 .brand-name { display: flex; flex-direction: column; font: 400 23px/1 var(--display); letter-spacing: -.01em; }
@@ -238,10 +238,10 @@ kbd {
 .btn-primary {
   color: var(--accent-ink);
   background: linear-gradient(180deg, var(--accent-2), var(--accent));
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, .15), 0 1px 0 rgba(255, 255, 255, .35) inset, 0 8px 24px -8px rgba(217, 183, 110, .6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .15), 0 1px 0 rgba(255, 255, 255, .35) inset, 0 8px 24px -8px rgba(168, 85, 247, .6);
 }
-[data-theme="light"] .btn-primary { background: linear-gradient(180deg, #b48b39, var(--accent)); }
-.btn-primary:hover { box-shadow: 0 0 0 1px rgba(0, 0, 0, .15), 0 1px 0 rgba(255, 255, 255, .35) inset, 0 12px 32px -8px rgba(217, 183, 110, .8); }
+[data-theme="light"] .btn-primary { background: linear-gradient(180deg, #8b5cf6, var(--accent)); }
+.btn-primary:hover { box-shadow: 0 0 0 1px rgba(0, 0, 0, .15), 0 1px 0 rgba(255, 255, 255, .35) inset, 0 12px 32px -8px rgba(168, 85, 247, .8); }
 .btn-primary kbd { background: rgba(0, 0, 0, .12); color: inherit; border-color: rgba(0, 0, 0, .15); opacity: .75; }
 .btn-ghost { background: var(--surface); border: 1px solid var(--line-2); color: var(--text); }
 .btn-ghost:hover { background: var(--surface-2); }
@@ -945,7 +945,7 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .plan-opt span i { font-style: normal; color: var(--up); margin-left: 4px; }
 .plan-opt b { font-size: 28px; font-weight: 600; letter-spacing: -.03em; margin-top: 4px; }
 .plan-opt small { color: var(--text-3); font-size: 12px; }
-.plan-opt.best { border-color: var(--accent-line); background: linear-gradient(160deg, var(--accent-tint), var(--surface)); box-shadow: 0 16px 40px -20px rgba(217, 183, 110, .5); }
+.plan-opt.best { border-color: var(--accent-line); background: linear-gradient(160deg, var(--accent-tint), var(--surface)); box-shadow: 0 16px 40px -20px rgba(168, 85, 247, .5); }
 .plan-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font: 700 10.5px/1.4 var(--font); letter-spacing: .08em; background: var(--surface-2); color: var(--text-2); }
 .plan-badge.pro { color: var(--accent-ink); background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
 .acc-sync { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -1009,3 +1009,22 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .imp-warn .ic { width: 16px; }
 .btn .pro-badge { margin-left: 2px; }
 @media (max-width: 720px) { .imp-grid { grid-template-columns: 1fr 1fr; } .imp-summary { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- EntryX brand ---------- */
+.logo-mark { display: block; width: 36px; height: auto; flex: none; filter: drop-shadow(0 4px 14px rgba(147, 51, 234, .45)); }
+.wordmark {
+  font-family: 'Michroma', var(--font); font-weight: 400; font-size: 16px; letter-spacing: .2em; line-height: 1; white-space: nowrap;
+  background: linear-gradient(180deg, #ffffff 0%, #d4d6dd 55%, #9ca0aa 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.wordmark b { font-weight: 400; background: linear-gradient(135deg, #e9d5ff, #a855f7 55%, #7e22ce); -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-theme="light"] .wordmark { background-image: linear-gradient(180deg, #1c1b22, #4b4d57); }
+[data-theme="light"] .logo-mark { background: #0b0912; border-radius: 10px; padding: 4px; }
+.brand .logo-mark { width: 38px; }
+.brand-name .wordmark { font-size: 15px; }
+.brand-name em { margin-top: 7px; }
+.lp-logo .logo-mark, .auth-logo .logo-mark { width: 38px; }
+.lp-logo .wordmark, .auth-logo .wordmark { font-size: 17px; }
+.lg-logo .logo-mark { width: 32px; }
+.lg-logo .wordmark { font-size: 14px; }
+.mock-side .logo-mark { width: 30px; margin-bottom: 10px; }
+.lp-foot .lp-logo .wordmark { font-size: 14px; }

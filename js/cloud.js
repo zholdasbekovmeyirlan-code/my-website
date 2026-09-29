@@ -1,4 +1,4 @@
-/* Edgebook — accounts, Pro plan and cloud sync (Supabase).
+/* EntryX — accounts, Pro plan and cloud sync (Supabase).
    Inactive unless js/config.js has supabaseUrl + supabaseAnonKey. Pro status is
    read from the `profiles` table, which only the payment webhook can write; the
    `journals` table rejects reads/writes from non-Pro users via RLS. */

@@ -1,4 +1,4 @@
-/* Edgebook — public configuration.
+/* EntryX — public configuration.
    Everything here is safe to publish (the Supabase anon key is designed to be public;
    access is enforced by Row Level Security in supabase/schema.sql).
    Leave supabaseUrl / supabaseAnonKey empty to run in local-only mode. */

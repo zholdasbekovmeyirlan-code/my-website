@@ -1,4 +1,4 @@
-/* Edgebook — i18n (Қазақша / English) */
+/* EntryX — i18n (Қазақша / English) */
 (function () {
   'use strict';
 
@@ -67,7 +67,7 @@
     setups_list: 'Сетаптар', setups_hint: 'Үтір арқылы. Мәміле формасында ұсыныс ретінде шығады.', save: 'Сақтау',
     data: 'Деректер', data_sub: '{n} мәміле · {kb} KB браузерде сақталған',
     export_json: 'Сақтық көшірме (JSON)', export_json_sub: 'Барлық мәмілелер, күнделік және баптаулар',
-    import_json: 'Көшірмені қалпына келтіру', import_json_sub: 'Edgebook JSON файлынан',
+    import_json: 'Көшірмені қалпына келтіру', import_json_sub: 'EntryX JSON файлынан',
     export_csv: 'CSV экспорт', export_csv_sub: 'Excel / Google Sheets үшін',
     clear_all: 'Барлығын өшіру', clear_all_sub: 'Мәмілелер мен күнделік толық өшіріледі', clear_all_text: 'Бұл әрекетті қайтару мүмкін емес. Алдымен сақтық көшірме жасаңыз.',
     seed_confirm: 'Қазіргі деректер демо деректермен ауыстырылады.',
@@ -187,7 +187,7 @@
     setups_list: 'Setups', setups_hint: 'Comma separated. Suggested in the trade form.', save: 'Save',
     data: 'Data', data_sub: '{n} trades · {kb} KB stored in your browser',
     export_json: 'Backup (JSON)', export_json_sub: 'All trades, journal and settings',
-    import_json: 'Restore backup', import_json_sub: 'From an Edgebook JSON file',
+    import_json: 'Restore backup', import_json_sub: 'From an EntryX JSON file',
     export_csv: 'Export CSV', export_csv_sub: 'For Excel / Google Sheets',
     clear_all: 'Delete everything', clear_all_sub: 'Trades and journal are erased', clear_all_text: 'This cannot be undone. Make a backup first.',
     seed_confirm: 'Your current data will be replaced with demo data.',

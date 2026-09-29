@@ -1,6 +1,6 @@
-/* Edgebook — broker CSV import (pure logic, no DOM).
+/* EntryX — broker CSV import (pure logic, no DOM).
    Works with any trade-history CSV: columns are matched by name (Binance, Bybit,
-   MT4/MT5 exports, TradingView, Edgebook's own CSV, spreadsheets) and can be
+   MT4/MT5 exports, TradingView, EntryX's own CSV, spreadsheets) and can be
    remapped by the user before importing. */
 (function () {
   'use strict';

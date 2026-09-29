@@ -1,4 +1,4 @@
-# Edgebook Pro — іске қосу нұсқаулығы
+# EntryX Pro — іске қосу нұсқаулығы
 
 Pro нұсқасы үш сервисті қажет етеді: **Supabase** (аккаунт + бұлт), **Lemon Squeezy** (төлем), **Netlify** (сайт + webhook).
 Барлығы басында тегін. Кілттерсіз сайт бұрынғыдай Free режимде жұмыс істей береді.
@@ -36,7 +36,7 @@ Pro нұсқасы үш сервисті қажет етеді: **Supabase** (а
 
 1. https://lemonsqueezy.com → тіркеліп, **Store** ашыңыз. Төлем алу үшін дүкенді активтендіру (жеке мәлімет, банк/PayPal) керек.
    Қазақстанға төлем жасайтынын тіркелу кезінде тексеріңіз.
-2. **Products → New product**: `Edgebook Pro`, түрі **Subscription**, екі вариант:
+2. **Products → New product**: `EntryX Pro`, түрі **Subscription**, екі вариант:
    - *Monthly* — $12 / ай
    - *Yearly* — $99 / жыл
 3. Әр варианттың **Share → Checkout link** сілтемесін көшіріп, `js/config.js` ішіндегі `checkout.monthly` және `checkout.yearly`-ге қойыңыз.
@@ -52,9 +52,9 @@ Pro нұсқасы үш сервисті қажет етеді: **Supabase** (а
 1. https://app.netlify.com → **Add new site → Import an existing project → GitHub** → `my-website`.
 2. Баптау:
    - *Branch*: `claude/eager-einstein-rak9yq` (немесе main-ге біріктіргеннен кейін `main`)
-   - *Base directory*: `Edgebook`
+   - *Base directory*: `EntryX`
    - *Build command*: бос
-   - *Publish directory*: `Edgebook`
+   - *Publish directory*: `EntryX`
 3. **Site configuration → Environment variables**:
 
    | Кілт | Мәні |
