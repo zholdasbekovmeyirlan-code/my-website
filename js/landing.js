@@ -7,7 +7,7 @@
 
   const L = {
     kk: {
-      nav_features: 'Мүмкіндіктер', nav_analytics: 'Аналитика', nav_how: 'Қалай жұмыс істейді', nav_faq: 'Сұрақтар', nav_open: 'Журналды ашу',
+      nav_features: 'Мүмкіндіктер', nav_analytics: 'Аналитика', nav_how: 'Қалай жұмыс істейді', nav_faq: 'Сұрақтар', nav_open: 'Тегін бастау', nav_login: 'Кіру',
       hero_badge: 'Тегін · Тіркелусіз · Деректер тек сізде',
       hero_title: 'Трейдингіңіздің<br><em>жасырын <span class="nw">edge-ін</span></em> табыңыз.',
       hero_sub: 'Edgebook әр мәмілені, эмоцияны және қатені нақты сандарға айналдырады. Қай сетап ақша әкелетінін, қай әдет оны ұрлайтынын бір көзқараста көресіз.',
@@ -60,7 +60,7 @@
       foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.'
     },
     en: {
-      nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Open journal',
+      nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
       hero_badge: 'Free · No sign-up · Your data stays yours',
       hero_title: 'Find the <em>hidden edge</em><br>in your trading.',
       hero_sub: 'Edgebook turns every trade, emotion and mistake into hard numbers. See which setups make you money — and which habits quietly take it back.',
