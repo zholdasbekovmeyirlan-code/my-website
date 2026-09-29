@@ -119,7 +119,7 @@
     <!-- ============ STATS ============ -->
     <section class="wrap stats" data-reveal>
       <div><b class="mono" data-count="30" data-suffix="+">30+</b><span data-l="st1"></span></div>
-      <div><b class="mono" data-count="0">0</b><span data-l="st2"></span></div>
+      <div><b class="mono">∞</b><span data-l="st2"></span></div>
       <div><b class="mono" data-count="2">2</b><span data-l="st3"></span></div>
       <div><b class="mono" data-count="100" data-suffix="%">100%</b><span data-l="st4"></span></div>
     </section>
@@ -230,16 +230,26 @@
         <span class="eyebrow-pill" data-l="pr_eyebrow"></span>
         <h2 class="display" data-l="pr_title"></h2>
       </div>
-      <div class="price-card" data-reveal>
-        <div class="price-left">
-          <span class="price-plan">Edgebook</span>
-          <div class="price-num"><b class="display">$0</b><span data-l="pr_per"></span></div>
-          <p data-l="pr_desc"></p>
-          <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="pr_cta"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <div class="bill-wrap" data-reveal>
+        <div class="seg bill" id="billSeg"><button data-bill="monthly" class="on" data-l="pr_monthly"></button><button data-bill="yearly" data-l="pr_yearly"></button></div>
+      </div>
+      <div class="plans">
+        <div class="plan price-card" data-reveal>
+          <span class="price-plan">Free</span>
+          <div class="price-num"><b class="display">$0</b><span data-l="pr_per_free"></span></div>
+          <p data-l="pr_free_desc"></p>
+          <ul class="checks price-list"><li data-l="pf_1"></li><li data-l="pf_2"></li><li data-l="pf_3"></li><li data-l="pf_4"></li><li data-l="pf_5"></li></ul>
+          <a class="btn btn-glass btn-xl" href="app.html#/dashboard"><span data-l="pr_free_cta"></span></a>
         </div>
-        <ul class="checks price-list">
-          <li data-l="pr_f1"></li><li data-l="pr_f2"></li><li data-l="pr_f3"></li><li data-l="pr_f4"></li><li data-l="pr_f5"></li><li data-l="pr_f6"></li>
-        </ul>
+        <div class="plan plan-pro price-card" data-reveal>
+          <span class="plan-flag" data-l="pr_popular"></span>
+          <span class="price-plan">Pro</span>
+          <div class="price-num"><b class="display" id="proPrice">$12</b><span id="proPer"></span></div>
+          <p class="plan-save" id="proSave"></p>
+          <p data-l="pr_pro_desc"></p>
+          <ul class="checks price-list"><li data-l="pp_0"></li><li data-l="pp_1"></li><li data-l="pp_2"></li><li class="soon" data-l="pp_3"></li><li class="soon" data-l="pp_4"></li><li class="soon" data-l="pp_5"></li></ul>
+          <a class="btn btn-primary btn-xl" href="app.html#/settings"><span data-l="pr_pro_cta"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
       </div>
     </section>
 
@@ -274,6 +284,7 @@
     <p class="muted">© 2026 Edgebook · <span data-l="foot_disc"></span></p>
   </footer>
 
+  <script src="js/config.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/store.js"></script>
   <script src="js/charts.js"></script>

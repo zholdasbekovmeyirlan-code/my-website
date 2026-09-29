@@ -1,0 +1,169 @@
+/* Edgebook — accounts, Pro plan and cloud sync (Supabase).
+   Inactive unless js/config.js has supabaseUrl + supabaseAnonKey. Pro status is
+   read from the `profiles` table, which only the payment webhook can write; the
+   `journals` table rejects reads/writes from non-Pro users via RLS. */
+(function () {
+  'use strict';
+
+  const C = window.EDGEBOOK_CONFIG || {};
+  const META_KEY = 'edgebook:sync';
+  const SDK = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+
+  const readMeta = () => { try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch (e) { return {}; } };
+  const writeMeta = m => { try { localStorage.setItem(META_KEY, JSON.stringify(m)); } catch (e) { /* storage blocked */ } };
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (window.supabase && window.supabase.createClient) return resolve();
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = resolve; s.onerror = () => reject(new Error('sdk'));
+      document.head.appendChild(s);
+      setTimeout(() => reject(new Error('timeout')), 15000);
+    });
+  }
+
+  const Cloud = {
+    enabled: !!(C.supabaseUrl && C.supabaseAnonKey),
+    ready: false,
+    user: null,
+    profile: null,
+    status: 'idle',          // idle | syncing | synced | error | conflict
+    error: '',
+    lastSync: readMeta().lastSync || null,
+    conflict: null,
+    _client: null,
+    _subs: [],
+    _suppress: false,
+    _timer: null,
+
+    on(fn) { this._subs.push(fn); },
+    emit() { this._subs.forEach(fn => { try { fn(this); } catch (e) { console.error(e); } }); },
+
+    get isPro() {
+      const p = this.profile;
+      return !!(this.user && p && p.plan === 'pro' && (!p.plan_until || new Date(p.plan_until) > new Date()));
+    },
+
+    async init() {
+      Store.onSave(() => this._queue());
+      if (!this.enabled) { this.ready = true; return; }
+      try {
+        await loadScript(SDK);
+        this._client = window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey);
+        const { data } = await this._client.auth.getSession();
+        await this._setUser(data.session ? data.session.user : null);
+        this._client.auth.onAuthStateChange((evt, session) => {
+          const u = session ? session.user : null;
+          if ((u && u.id) !== (this.user && this.user.id)) this._setUser(u);
+        });
+        window.addEventListener('online', () => { if (this.isPro && readMeta().dirty) this.push(); });
+      } catch (e) {
+        this.status = 'error'; this.error = e.message;
+      }
+      this.ready = true;
+      this.emit();
+    },
+
+    async _setUser(u) {
+      this.user = u; this.profile = null; this.conflict = null;
+      if (u) {
+        await this.refreshProfile();
+        if (this.isPro) await this.syncNow();
+      } else this.status = 'idle';
+      this.emit();
+    },
+
+    async refreshProfile() {
+      if (!this.user) return null;
+      const { data, error } = await this._client.from('profiles').select('plan, plan_until, email').eq('id', this.user.id).maybeSingle();
+      if (!error) this.profile = data || { plan: 'free' };
+      this.emit();
+      return this.profile;
+    },
+
+    async signIn(email, password) {
+      const { error } = await this._client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    },
+    async signUp(email, password) {
+      const { data, error } = await this._client.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: location.origin + location.pathname + '#/settings' }
+      });
+      if (error) throw error;
+      return !!data.session;   // false → email confirmation required
+    },
+    async signOut() { await this._client.auth.signOut(); },
+
+    checkoutUrl(interval) {
+      const base = (C.checkout || {})[interval];
+      if (!base || !this.user) return '';
+      return base + (base.indexOf('?') >= 0 ? '&' : '?') +
+        'checkout[email]=' + encodeURIComponent(this.user.email || '') +
+        '&checkout[custom][user_id]=' + encodeURIComponent(this.user.id);
+    },
+
+    /* Called on every local save */
+    _queue() {
+      if (this._suppress) return;
+      const m = readMeta(); m.dirty = true; writeMeta(m);
+      if (!this.isPro) return;
+      clearTimeout(this._timer);
+      this._timer = setTimeout(() => this.push(), 1500);
+    },
+
+    async push() {
+      if (!this.isPro) return false;
+      this.status = 'syncing'; this.emit();
+      const { data, error } = await this._client.from('journals')
+        .upsert({ user_id: this.user.id, data: Store.state, updated_at: new Date().toISOString() })
+        .select('updated_at').single();
+      if (error) { this.status = 'error'; this.error = error.message; this.emit(); return false; }
+      this.lastSync = data.updated_at;
+      writeMeta({ userId: this.user.id, lastSync: data.updated_at, dirty: false });
+      this.status = 'synced'; this.emit();
+      return true;
+    },
+
+    /* Decide direction: pull, push, or ask the user */
+    async syncNow() {
+      if (!this.isPro) return;
+      this.status = 'syncing'; this.emit();
+      const { data, error } = await this._client.from('journals').select('data, updated_at').eq('user_id', this.user.id).maybeSingle();
+      if (error) { this.status = 'error'; this.error = error.message; this.emit(); return; }
+      const m = readMeta();
+      const same = m.userId === this.user.id;
+      const lastSync = same ? m.lastSync : null;
+      const dirty = same ? !!m.dirty : true;
+      const localEmpty = !Store.state.trades.length || Store.state.settings.demo;
+      if (!data) return this.push();
+      if (localEmpty || !dirty) return this.apply(data);
+      if (lastSync && new Date(data.updated_at) <= new Date(lastSync)) return this.push();
+      this.conflict = data; this.status = 'conflict'; this.emit();
+    },
+
+    apply(row) {
+      const keep = { lang: Store.state.settings.lang, theme: Store.state.settings.theme, langChosen: Store.state.settings.langChosen };
+      this._suppress = true;
+      try {
+        Store.importJSON(JSON.stringify(row.data));
+        Object.assign(Store.state.settings, keep);
+        Store.save();
+      } finally { this._suppress = false; }
+      this.lastSync = row.updated_at;
+      writeMeta({ userId: this.user.id, lastSync: row.updated_at, dirty: false });
+      this.conflict = null; this.status = 'synced';
+      this.emit();
+    },
+
+    resolve(choice) {
+      const row = this.conflict;
+      this.conflict = null;
+      if (!row) return;
+      if (choice === 'cloud') this.apply(row); else this.push();
+    }
+  };
+
+  window.Cloud = Cloud;
+})();

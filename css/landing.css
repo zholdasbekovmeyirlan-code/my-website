@@ -550,3 +550,29 @@ body.intro-on { overflow: hidden; }
   .hero-title .hw, .manifesto .mw { opacity: 1; transform: none; filter: none; }
   .intro { display: none; }
 }
+
+/* ---------- Free / Pro plans ---------- */
+.bill-wrap { display: flex; justify-content: center; margin: -24px 0 36px; }
+.bill button { padding: 8px 18px; font-size: 13px; }
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 960px; margin: 0 auto; align-items: stretch; }
+.plan.price-card { display: flex; flex-direction: column; align-items: stretch; gap: 0; max-width: none; margin: 0; padding: 36px; }
+.plan .price-num { margin-top: 8px; }
+.plan .price-num b { font-size: 72px; }
+.plan > p { color: var(--text-2); margin: 10px 0 0; }
+.plan .price-list { margin: 26px 0 30px; flex: 1; }
+.plan .btn { width: 100%; }
+.plan:not(.plan-pro) { background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .012)); border-color: rgba(255, 255, 255, .09); box-shadow: none; }
+.plan-pro { position: relative; box-shadow: 0 60px 120px -40px rgba(217, 183, 110, .45), inset 0 1px 0 rgba(255, 255, 255, .08); }
+.plan-flag {
+  position: absolute; top: 20px; right: 20px; padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-ink); background: linear-gradient(180deg, #f1d9a0, #d9b76e); box-shadow: 0 8px 20px -6px rgba(217, 183, 110, .7);
+}
+.plan-save { font-size: 13px; color: var(--up) !important; min-height: 20px; opacity: 0; transition: opacity .3s; margin-top: 4px !important; }
+.plan-save.on { opacity: 1; }
+.checks li.soon { color: var(--text-3); }
+.checks li.soon::before { background-color: rgba(255, 255, 255, .05); filter: grayscale(1) opacity(.5); }
+@media (max-width: 760px) {
+  .plans { grid-template-columns: 1fr; }
+  .plan.price-card { padding: 26px; }
+  .plan .price-num b { font-size: 60px; }
+}

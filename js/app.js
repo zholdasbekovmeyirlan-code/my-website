@@ -188,10 +188,10 @@
       '<a href="#/' + r + '" class="nav-item' + (ui.route === r ? ' active' : '') + '" data-route="' + r + '">' + icon(r) +
       '<span>' + t('nav_' + r) + '</span><kbd>' + (i + 1) + '</kbd></a>').join('');
     $('#sidebar').innerHTML =
-      '<a class="brand" href="index.html" title="' + t('home') + '"><span class="brand-mark">' + icon('trades') + '</span><span class="brand-name">Edgebook<em>' + t('brand_sub') + '</em></span></a>' +
+      '<a class="brand" href="index.html" title="' + t('home') + '"><span class="brand-mark">' + icon('trades') + '</span><span class="brand-name">Edgebook<em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO</b>' : '') + '</em></span></a>' +
       '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
       '<div class="side-card">' +
-      '<div class="side-card-label">' + t('equity') + '</div>' +
+      '<div class="side-card-label">' + t('equity') + (Cloud.isPro ? '<span class="sync-dot s-' + Cloud.status + '" title="' + t('sync_' + Cloud.status) + '"></span>' : '') + '</div>' +
       '<div class="side-card-value mono">' + money(eq) + '</div>' +
       '<div class="side-card-sub ' + cls(st.net) + '">' + icon(st.net >= 0 ? 'arrowUp' : 'arrowDown') + money(st.net, { sign: true }) +
       ' <span>· ' + pct(S().balance ? st.net / S().balance : null) + '</span></div>' +
@@ -638,7 +638,7 @@
     const s = S();
     let bytes = 0;
     try { bytes = new Blob([localStorage.getItem('edgebook:v1') || '']).size; } catch (e) { bytes = new Blob([JSON.stringify(Store.state)]).size; }
-    v.innerHTML =
+    v.innerHTML = accountCard() +
       '<div class="grid g-2 settings">' +
       '<div class="card"><div class="card-head"><div><h3>' + t('profile') + '</h3><p>' + t('profile_sub') + '</p></div></div>' +
       '<form id="setForm" class="form-grid">' +
@@ -665,6 +665,7 @@
       return '<button class="data-btn ' + (extra || '') + '" data-action="' + action + '">' + icon(ic) + '<div><b>' + title + '</b><small>' + sub + '</small></div>' + icon('chevR', 'chev') + '</button>';
     }
 
+    bindAccount();
     $('#setForm').addEventListener('submit', e => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -929,6 +930,98 @@
       k.map(r => '<li><span>' + r[1] + '</span><kbd>' + r[0] + '</kbd></li>').join('') + '</ul></div>', 'sm');
   }
 
+  /* ---------- account & Pro ---------- */
+  function accountCard() {
+    const P = (window.EDGEBOOK_CONFIG || {}).pricing || { currency: '$', monthly: 12, yearly: 99 };
+    const save = Math.round((1 - P.yearly / (P.monthly * 12)) * 100);
+    const SOON = ['pro_f3', 'pro_f4', 'pro_f5'];
+    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f2', 'pro_f3', 'pro_f4', 'pro_f5'].map(k =>
+      '<li' + (SOON.includes(k) ? ' class="soon"' : '') + '>' + t(k) + (SOON.includes(k) ? ' <span class="soon-chip">' + t('soon') + '</span>' : '') + '</li>').join('') + '</ul>';
+    const head = (sub, right) => '<div class="card-head"><div><h3>' + t('acc_title') + '</h3><p>' + sub + '</p></div>' + (right || '') + '</div>';
+
+    if (!Cloud.enabled) {
+      return '<div class="card acc-card">' + head(t('acc_local')) + '<div class="acc-grid"><div class="acc-upsell"><div class="acc-plan-name">Pro</div>' + perks + '</div>' +
+        '<div class="acc-note">' + icon('shield') + '<p>' + t('acc_local_note') + '</p></div></div></div>';
+    }
+    if (!Cloud.ready) return '<div class="card acc-card">' + head(t('loading')) + '</div>';
+
+    if (!Cloud.user) {
+      return '<div class="card acc-card">' + head(t('acc_signin_sub')) +
+        '<div class="acc-grid"><form id="authForm" class="acc-auth" novalidate>' +
+        '<label class="field"><span>Email</span><input class="input" name="email" type="email" autocomplete="email" required/></label>' +
+        '<label class="field"><span>' + t('password') + '</span><input class="input" name="password" type="password" autocomplete="current-password" minlength="6" required/></label>' +
+        '<div class="acc-actions"><button class="btn btn-primary" type="submit" data-mode="in">' + t('sign_in') + '</button><button class="btn btn-ghost" type="submit" data-mode="up">' + t('sign_up') + '</button></div>' +
+        '<p class="acc-msg" id="authMsg"></p></form>' +
+        '<div class="acc-upsell"><div class="acc-plan-name">Pro <span>' + P.currency + P.monthly + ' ' + t('per_month') + '</span></div>' + perks + '</div></div></div>';
+    }
+
+    const email = esc(Cloud.user.email || '');
+    const badge = Cloud.isPro ? '<span class="plan-badge pro">PRO</span>' : '<span class="plan-badge">FREE</span>';
+    if (Cloud.isPro) {
+      const until = Cloud.profile && Cloud.profile.plan_until ? t('pro_until', { d: dateLabel(Cloud.profile.plan_until, 'full') }) : '';
+      return '<div class="card acc-card is-pro">' + head(email + ' · ' + badge + (until ? ' · ' + until : '')) +
+        '<div class="acc-sync"><span class="sync-dot s-' + Cloud.status + '"></span><div><b>' + t('sync_' + Cloud.status) + '</b><small>' +
+        (Cloud.lastSync ? t('last_sync', { t: dateLabel(Cloud.lastSync) }) : '') + (Cloud.status === 'error' && Cloud.error ? ' · ' + esc(Cloud.error) : '') + '</small></div>' +
+        '<div class="spacer"></div><button class="btn btn-ghost btn-sm" data-action="sync-now">' + t('sync_now') + '</button>' +
+        '<a class="btn btn-ghost btn-sm" href="' + esc((window.EDGEBOOK_CONFIG || {}).billingPortal || '#') + '" target="_blank" rel="noopener">' + t('manage_sub') + '</a>' +
+        '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button></div></div>';
+    }
+    return '<div class="card acc-card">' + head(email + ' · ' + badge, '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button>') +
+      '<div class="acc-grid"><div class="acc-upsell"><div class="acc-plan-name">' + t('upgrade_title') + '</div>' + perks + '</div>' +
+      '<div class="acc-buy">' +
+      '<button class="plan-opt" data-action="upgrade" data-interval="monthly"><span>' + t('monthly') + '</span><b class="mono">' + P.currency + P.monthly + '</b><small>' + t('per_month') + '</small></button>' +
+      '<button class="plan-opt best" data-action="upgrade" data-interval="yearly"><span>' + t('yearly') + ' <i>−' + save + '%</i></span><b class="mono">' + P.currency + P.yearly + '</b><small>' + t('per_year') + '</small></button>' +
+      '<button class="btn btn-ghost btn-sm" data-action="refresh-plan">' + t('paid_check') + '</button></div></div></div>';
+  }
+
+  function bindAccount() {
+    const f = $('#authForm');
+    if (!f) return;
+    let mode = 'in';
+    $$('button[type="submit"]', f).forEach(b => b.addEventListener('click', () => { mode = b.dataset.mode; }));
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = f.email.value.trim(), pw = f.password.value;
+      const msg = $('#authMsg');
+      if (!/^\S+@\S+\.\S+$/.test(email) || pw.length < 6) { msg.textContent = t('auth_invalid'); msg.className = 'acc-msg err'; return; }
+      $$('button', f).forEach(b => { b.disabled = true; });
+      try {
+        if (mode === 'up') {
+          const hasSession = await Cloud.signUp(email, pw);
+          msg.textContent = hasSession ? t('signed_in') : t('check_email');
+          msg.className = 'acc-msg ok';
+        } else {
+          await Cloud.signIn(email, pw);
+          toast(t('signed_in'), 'ok');
+        }
+      } catch (err) {
+        msg.textContent = t('auth_err', { m: err.message || '' }); msg.className = 'acc-msg err';
+      } finally { $$('button', f).forEach(b => { b.disabled = false; }); }
+    });
+  }
+
+  function conflictDialog() {
+    const row = Cloud.conflict;
+    if (!row) return;
+    const cloudN = (row.data && row.data.trades || []).length, localN = Store.state.trades.length;
+    openModal('<div class="confirm"><div class="confirm-ic gold">' + icon('upload') + '</div><h3>' + t('conflict_title') + '</h3><p>' + t('conflict_text') + '</p>' +
+      '<div class="modal-foot"><button class="btn btn-ghost" id="useLocal">' + t('use_local', { n: localN }) + '</button><button class="btn btn-primary" id="useCloud">' + t('use_cloud', { n: cloudN }) + '</button></div></div>', 'sm');
+    $('#useCloud').addEventListener('click', () => { closeModal(); Cloud.resolve('cloud'); });
+    $('#useLocal').addEventListener('click', () => { closeModal(); Cloud.resolve('local'); });
+  }
+
+  let lastCloudKey = '';
+  Cloud.on(() => {
+    if (Cloud.conflict && $('#modal').hidden) conflictDialog();
+    const key = [Cloud.ready, Cloud.user && Cloud.user.id, Cloud.isPro, Cloud.status, Cloud.lastSync].join('|');
+    if (key === lastCloudKey) return;
+    const dataChanged = Cloud.status === 'synced' && lastCloudKey.split('|')[3] === 'syncing';
+    lastCloudKey = key;
+    const typing = document.activeElement && document.activeElement.closest && document.activeElement.closest('form');
+    if (typing && !dataChanged) { renderSidebar(); return; }
+    render();
+  });
+
   /* ---------- command palette ---------- */
   function palette() {
     const cmds = ROUTES.map((r, i) => ({ group: 'nav', icon: r, label: t('nav_' + r), hint: String(i + 1), run: () => { location.hash = '#/' + r; } })).concat([
@@ -1085,6 +1178,16 @@
       case 'export-csv': exportCSV(); toast(t('exported'), 'ok'); break;
       case 'shortcuts': shortcuts(); break;
       case 'palette': palette(); break;
+      case 'upgrade': {
+        const url = Cloud.checkoutUrl(el.dataset.interval);
+        if (url) window.open(url, '_blank', 'noopener'); else toast(t('checkout_missing'), 'err');
+        break;
+      }
+      case 'refresh-plan':
+        Cloud.refreshProfile().then(p => { if (Cloud.isPro) { toast(t('plan_active'), 'ok'); Cloud.syncNow(); } else toast(t('still_free'), 'err'); });
+        break;
+      case 'sync-now': Cloud.syncNow(); break;
+      case 'sign-out': Cloud.signOut().then(() => toast(t('signed_out'), 'ok')); break;
     }
   });
 
@@ -1159,4 +1262,5 @@
   I18N.use(() => S().lang);
   parseHash();
   render();
+  Cloud.init();
 })();
