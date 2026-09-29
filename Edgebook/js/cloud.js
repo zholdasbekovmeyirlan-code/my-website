@@ -122,6 +122,11 @@
       if (error) throw error;
     },
     providers() { return (C.oauthProviders || []).filter(p => ['google', 'github', 'apple'].indexOf(p) >= 0); },
+    async accessToken() {
+      if (!this._client) return null;
+      const { data } = await this._client.auth.getSession();
+      return data.session ? data.session.access_token : null;
+    },
     async signOut() { await this._client.auth.signOut(); },
 
     checkoutUrl(interval) {

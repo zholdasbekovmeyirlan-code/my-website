@@ -92,15 +92,32 @@ window.EDGEBOOK_CONFIG = {
 
 Бірдеңе шықпаса: Netlify → **Logs → Functions** бетінен webhook қатесін, ал Supabase → **Table editor → profiles** бетінен `plan` бағанын қараңыз.
 
+## 6. AI коуч (Pro)
+
+Коуч Claude-ды тек серверден (Supabase Edge Function) шақырады. API кілт браузерге ешқашан шықпайды.
+
+1. **SQL:** Supabase → **SQL Editor** → `supabase/002_trial.sql` (бұрын іске қоспаған болсаңыз) және `supabase/003_ai_coach.sql` мазмұнын қойып, **Run** басыңыз.
+2. **Anthropic кілт:** [console.anthropic.com](https://console.anthropic.com) → **Billing** бөлімінде баланс толтырыңыз → **API Keys → Create Key**.
+3. **Құпиялар:** Supabase → **Edge Functions → Secrets** бөліміне мыналарды қосыңыз:
+   - `ANTHROPIC_API_KEY` — жаңа кілт (міндетті)
+   - `AI_MODEL` — міндетті емес. Әдепкісі `claude-opus-5-5` (ең ақылдысы). Арзанырақ болсын десеңіз, `claude-haiku-4-5` қойыңыз.
+   - `AI_MONTHLY_LIMIT` — бір пайдаланушыға айына берілетін сұрақ саны (әдепкісі `100`)
+4. **Функция:** Supabase → **Edge Functions → Deploy a new function → Via Editor** → атын `coach` деп қойыңыз → `supabase/functions/coach/index.ts` мазмұнын қойып, **Deploy** басыңыз.
+   CLI арқылы жасасаңыз: `supabase functions deploy coach`.
+5. **Тексеру:** Pro немесе trial аккаунтпен **AI коуч** бетін ашып, дайын сұрақтардың бірін басыңыз.
+
+Шығын: әр сұрақ журналдың қысқаша мазмұнын жібереді (≈10–20 мың токен), ал ол кэштеледі. Лимит `ai_usage` кестесінде есептеледі; қате болса, сұрақ лимиттен қайтарылады.
+
 ## Қауіпсіздік
 
 - `anon` кілті ашық болуға арналған. Оның қорғанысы — `schema.sql` ішіндегі RLS ережелері.
 - Пайдаланушы өзіне Pro бере алмайды: `profiles` кестесіне тек webhook (service_role) жаза алады.
 - Бұлтқа оқу/жазу дерекқор деңгейінде тек белсенді Pro-ға рұқсат етіледі.
 - Webhook әр сұраныстың HMAC қолтаңбасын тексереді.
+- AI коуч JWT арқылы пайдаланушыны тексереді, Pro екенін және лимитті дерекқордың өзі (`ai_take`) бақылайды.
 
 ## Сатуға дейін қосу керек
 
-- Terms of Service, Privacy Policy, Refund Policy беттері (Lemon Squeezy оларды талап етеді)
+- Terms / Privacy / Payment Terms беттері бар (`legal.html`); `config.legal` ішіне атыңыз бен email-ыңызды жазыңыз
 - Жеке домен (мысалы `edgebook.kz`) — Netlify → Domain management
 - Қазақстандағы клиенттер үшін Kaspi Pay / CloudPayments (келесі кезең)
