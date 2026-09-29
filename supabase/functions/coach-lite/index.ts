@@ -4,7 +4,21 @@
 
 const SB_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
+// Model names change over time: try the configured one, then current aliases, skipping any that 404.
+const GEMINI_MODELS = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean) as string[])];
+async function geminiFetch(key: string, payload: string): Promise<Response> {
+  let res: Response | null = null;
+  for (const model of GEMINI_MODELS) {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: payload,
+    });
+    if (res.status !== 404) return res;
+    console.error("gemini model not found:", model);
+  }
+  return res!;
+}
 const LIMIT = Number(Deno.env.get("AI_MONTHLY_LIMIT") ?? "100");
 
 const CORS = {
@@ -59,15 +73,11 @@ Deno.serve(async (req) => {
   if (used === -1) return json({ error: "limit", limit: LIMIT }, 429);
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: `${SYSTEM}\n\n<lang>${lang}</lang>\n<journal>\n${context}\n</journal>` }] },
-        contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-        generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
-      }),
-    });
+    const res = await geminiFetch(GEMINI_KEY, JSON.stringify({
+      systemInstruction: { parts: [{ text: `${SYSTEM}\n\n<lang>${lang}</lang>\n<journal>\n${context}\n</journal>` }] },
+      contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
+    }));
     if (!res.ok) {
       console.error("gemini", res.status, (await res.text()).slice(0, 500));
       await rpc("ai_refund");

@@ -3,7 +3,7 @@
 //   ANTHROPIC_API_KEY   Claude (paid, best quality). Used when present.
 //   GEMINI_API_KEY      Google Gemini free tier (aistudio.google.com). Used when no Anthropic key is set.
 //   AI_MODEL            optional, default "claude-opus-5-5" (e.g. "claude-haiku-4-5" to cut cost)
-//   GEMINI_MODEL        optional, default "gemini-2.5-flash"
+//   GEMINI_MODEL        optional; falls back to gemini-flash-latest / gemini-2.5-flash / gemini-2.0-flash
 //   AI_MONTHLY_LIMIT    optional, default 100 questions per user per month
 // Never put either key in the browser.
 // SUPABASE_URL and SUPABASE_ANON_KEY are provided by Supabase automatically.
@@ -18,7 +18,21 @@ const EFFORT_MODELS = [...FALLBACK_MODELS, "claude-fable-5", "claude-opus-4-8", 
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
+// Model names change over time: try the configured one, then current aliases, skipping any that 404.
+const GEMINI_MODELS = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean) as string[])];
+async function geminiFetch(key: string, payload: string): Promise<Response> {
+  let res: Response | null = null;
+  for (const model of GEMINI_MODELS) {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: payload,
+    });
+    if (res.status !== 404) return res;
+    console.error("gemini model not found:", model);
+  }
+  return res!;
+}
 const anthropic = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY }) : null;
 
 type Answer = { reply: string; truncated: boolean; refused: boolean };
@@ -27,15 +41,11 @@ class UpstreamError extends Error {
 }
 
 async function askGemini(system: string, journal: string, messages: { role: "user" | "assistant"; content: string }[]): Promise<Answer> {
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY! },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system + "\n\n" + journal }] },
-      contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-      generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
-    }),
-  });
+  const res = await geminiFetch(GEMINI_KEY!, JSON.stringify({
+    systemInstruction: { parts: [{ text: system + "\n\n" + journal }] },
+    contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+    generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
+  }));
   if (!res.ok) {
     const detail = (await res.text()).slice(0, 300);
     if (res.status === 429 || res.status === 503) throw new UpstreamError("busy", res.status, detail);
