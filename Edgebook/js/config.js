@@ -7,6 +7,9 @@ window.EDGEBOOK_CONFIG = {
   supabaseUrl: 'https://cxxlikhearnbirqnnhmn.supabase.co',
   supabaseAnonKey: 'sb_publishable_zGsLEZl74dyA8JxHsGtzuQ_Nw8ey75p',
 
+  // AI coach Edge Function slug — the last part of its URL in Supabase → Edge Functions
+  aiFunction: 'bright-action',
+
   // Social sign-in buttons. Each must also be enabled in Supabase → Authentication → Providers.
   // Supported here: 'google', 'github', 'apple'
   oauthProviders: ['google', 'github'],

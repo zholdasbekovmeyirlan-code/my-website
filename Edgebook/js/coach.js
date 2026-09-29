@@ -6,7 +6,7 @@
   window.CoachFeature = function (api) {
     const { t, esc, icon, money, pct, rfmt, stats, S, U, $, $$, toast } = api;
     const C = window.EDGEBOOK_CONFIG || {};
-    const endpoint = () => (C.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/coach';
+    const endpoint = () => (C.supabaseUrl || '').replace(/\/$/, '') + '/functions/v1/' + (C.aiFunction || 'coach');
     const HIST_MAX = 40;
     let busy = false;
     let usage = null;
