@@ -36,6 +36,7 @@
     arrowUp: '<path d="M7 17L17 7M9 7h8v8"/>',
     arrowDown: '<path d="M7 7l10 10M17 9v8H9"/>',
     sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
+    rules: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
     logout: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/>',
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/>'
   };
@@ -43,7 +44,9 @@
   const MOD = MAC ? '⌘' : 'Ctrl ';
   const icon = (n, c) => '<svg class="ic ' + (c || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
 
-  const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'journal', 'settings'];
+  const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'journal', 'rules', 'settings'];
+  let PRO = null;
+  const hasPro = () => !Cloud.enabled || Cloud.isPro;
   const EMOTIONS = ['calm', 'confident', 'fomo', 'fear', 'greed', 'revenge', 'bored'];
   const MISTAKES = ['early_exit', 'late_entry', 'moved_stop', 'oversize', 'no_plan', 'chased'];
   const MARKETS = ['crypto', 'forex', 'stocks', 'futures', 'options', 'other'];
@@ -189,7 +192,7 @@
       '<a href="#/' + r + '" class="nav-item' + (ui.route === r ? ' active' : '') + '" data-route="' + r + '">' + icon(r) +
       '<span>' + t('nav_' + r) + '</span><kbd>' + (i + 1) + '</kbd></a>').join('');
     $('#sidebar').innerHTML =
-      '<a class="brand" href="index.html" title="' + t('home') + '"><img class="logo-mark" src="img/entryx-mark.svg" alt="" /><span class="brand-name"><span class="wordmark">ENTRY<b>X</b></span><em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO</b>' : '') + '</em></span></a>' +
+      '<a class="brand" href="index.html" title="' + t('home') + '"><img class="logo-mark" src="img/entryx-mark.svg" alt="" /><span class="brand-name"><span class="wordmark">ENTRY<b>X</b></span><em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO' + (Cloud.isTrial ? ' · ' + t('days_left', { n: Cloud.trialDaysLeft }) : '') + '</b>' : '') + '</em></span></a>' +
       '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
       '<div class="side-card">' +
       '<div class="side-card-label">' + t('equity') + (Cloud.isPro ? '<span class="sync-dot s-' + Cloud.status + '" title="' + t('sync_' + Cloud.status) + '"></span>' : '') + '</div>' +
@@ -308,7 +311,9 @@
       '<div class="pill ' + (st.streak.type === 'win' ? 'pos' : st.streak.type === 'loss' ? 'neg' : '') + '">' + icon('flame') + t('streak') + ': <b>' + st.streak.n + ' ' + (st.streak.type ? t('st_' + st.streak.type).toLowerCase() : '') + '</b></div>' +
       '<div class="pill">' + icon('target') + t('trades_n', { n: st.closed }) + '</div>' +
       (open.length ? '<div class="pill accent">' + icon('bolt') + t('open_n', { n: open.length }) + '</div>' : '') +
+      '<button class="pill pill-btn" data-action="share">' + icon('image') + t('share') + (hasPro() ? '' : ' <b class="pro-badge">PRO</b>') + '</button>' +
       '</div></div>' +
+      PRO.dashboardWidgets() +
 
       '<div class="grid kpis">' +
       kpi({ hero: true, icon: 'trades', label: t('net_pnl'), value: money(st.net, { sign: true }), cls: cls(st.net),
@@ -800,7 +805,7 @@
         '<li><span>' + t('position') + '</span><span class="mono">' + (c.entryN != null && c.qtyN != null ? money(c.entryN * c.qtyN * c.multN, { compact: true }) : '—') + '</span></li>' +
         '<li><span>' + t('hold') + '</span><span class="mono">' + holdLabel(c.holdMin) + '</span></li>' +
         '</ul>' +
-        (riskPct && riskPct > 0.02 ? '<div class="pv-warn">' + icon('shield') + t('risk_warn', { p: pct(riskPct, 1) }) + '</div>' : '');
+        (riskPct && riskPct > PRO.riskPctLimit() ? '<div class="pv-warn">' + icon('shield') + t('risk_warn', { p: pct(riskPct, 1), l: pct(PRO.riskPctLimit(), 1) }) + '</div>' : '');
     };
     preview();
     form.addEventListener('input', preview);
@@ -930,7 +935,7 @@
   }
 
   function shortcuts() {
-    const k = [[MOD + 'K', t('cmd_title')], ['N', t('new_trade')], ['1 – 6', t('sc_nav')], ['/', t('sc_search')], ['T', t('theme')], ['Esc', t('sc_close')], [MOD + '↵', t('sc_save')]];
+    const k = [[MOD + 'K', t('cmd_title')], ['N', t('new_trade')], ['1 – 7', t('sc_nav')], ['/', t('sc_search')], ['T', t('theme')], ['Esc', t('sc_close')], [MOD + '↵', t('sc_save')]];
     openModal('<div class="modal-head"><div><h2 class="display">' + t('shortcuts') + '</h2></div><button class="icon-btn" data-close>' + icon('x') + '</button></div><div class="modal-body"><ul class="stat-list kbd-list">' +
       k.map(r => '<li><span>' + r[1] + '</span><kbd>' + r[0] + '</kbd></li>').join('') + '</ul></div>', 'sm');
   }
@@ -1020,8 +1025,8 @@
   function accountCard() {
     const P = (window.EDGEBOOK_CONFIG || {}).pricing || { currency: '$', monthly: 12, yearly: 99 };
     const save = Math.round((1 - P.yearly / (P.monthly * 12)) * 100);
-    const SOON = ['pro_f4', 'pro_f5'];
-    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f2', 'pro_f3', 'pro_f4', 'pro_f5'].map(k =>
+    const SOON = ['pro_f6'];
+    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f3', 'pro_f4', 'pro_f5', 'pro_f2', 'pro_f6'].map(k =>
       '<li' + (SOON.includes(k) ? ' class="soon"' : '') + '>' + t(k) + (SOON.includes(k) ? ' <span class="soon-chip">' + t('soon') + '</span>' : '') + '</li>').join('') + '</ul>';
     const head = (sub, right) => '<div class="card-head"><div><h3>' + t('acc_title') + '</h3><p>' + sub + '</p></div>' + (right || '') + '</div>';
 
@@ -1049,10 +1054,15 @@
     }
 
     const email = esc(Cloud.user.email || '');
-    const badge = Cloud.isPro ? '<span class="plan-badge pro">PRO</span>' : '<span class="plan-badge">FREE</span>';
+    const badge = Cloud.isPaid ? '<span class="plan-badge pro">PRO</span>' : Cloud.isTrial ? '<span class="plan-badge pro">PRO · ' + t('trial') + '</span>' : '<span class="plan-badge">FREE</span>';
+    const buy = '<div class="acc-buy">' +
+      '<button class="plan-opt" data-action="upgrade" data-interval="monthly"><span>' + t('monthly') + '</span><b class="mono">' + P.currency + P.monthly + '</b><small>' + t('per_month') + '</small></button>' +
+      '<button class="plan-opt best" data-action="upgrade" data-interval="yearly"><span>' + t('yearly') + ' <i>−' + save + '%</i></span><b class="mono">' + P.currency + P.yearly + '</b><small>' + t('per_year') + '</small></button>' +
+      '<button class="btn btn-ghost btn-sm" data-action="refresh-plan">' + t('paid_check') + '</button></div>';
     if (Cloud.isPro) {
-      const until = Cloud.profile && Cloud.profile.plan_until ? t('pro_until', { d: dateLabel(Cloud.profile.plan_until, 'full') }) : '';
-      return '<div class="card acc-card is-pro">' + head(email + ' · ' + badge + (until ? ' · ' + until : '')) +
+      const until = Cloud.isPaid && Cloud.profile.plan_until ? t('pro_until', { d: dateLabel(Cloud.profile.plan_until, 'full') }) : '';
+      const trialBox = Cloud.isTrial ? '<div class="acc-grid trial-box"><div><div class="acc-plan-name">' + t('trial_left', { n: Cloud.trialDaysLeft }) + '</div><p class="muted small">' + t('trial_x') + '</p></div>' + buy + '</div>' : '';
+      return '<div class="card acc-card is-pro">' + head(email + ' · ' + badge + (until ? ' · ' + until : '')) + trialBox +
         '<div class="acc-sync"><span class="sync-dot s-' + Cloud.status + '"></span><div><b>' + t('sync_' + Cloud.status) + '</b><small>' +
         (Cloud.lastSync ? t('last_sync', { t: dateLabel(Cloud.lastSync) }) : '') + (Cloud.status === 'error' && Cloud.error ? ' · ' + esc(Cloud.error) : '') + '</small></div>' +
         '<div class="spacer"></div><button class="btn btn-ghost btn-sm" data-action="sync-now">' + t('sync_now') + '</button>' +
@@ -1060,11 +1070,7 @@
         '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button></div></div>';
     }
     return '<div class="card acc-card">' + head(email + ' · ' + badge, '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button>') +
-      '<div class="acc-grid"><div class="acc-upsell"><div class="acc-plan-name">' + t('upgrade_title') + '</div>' + perks + '</div>' +
-      '<div class="acc-buy">' +
-      '<button class="plan-opt" data-action="upgrade" data-interval="monthly"><span>' + t('monthly') + '</span><b class="mono">' + P.currency + P.monthly + '</b><small>' + t('per_month') + '</small></button>' +
-      '<button class="plan-opt best" data-action="upgrade" data-interval="yearly"><span>' + t('yearly') + ' <i>−' + save + '%</i></span><b class="mono">' + P.currency + P.yearly + '</b><small>' + t('per_year') + '</small></button>' +
-      '<button class="btn btn-ghost btn-sm" data-action="refresh-plan">' + t('paid_check') + '</button></div></div></div>';
+      '<div class="acc-grid"><div class="acc-upsell"><div class="acc-plan-name">' + t('upgrade_title') + '</div>' + perks + '</div>' + buy + '</div></div>';
   }
 
   function bindAccount() {
@@ -1252,7 +1258,8 @@
 
     const a = el.dataset.action;
     switch (a) {
-      case 'new-trade': tradeForm(null, el.dataset.day); break;
+      case 'new-trade': { const d = el.dataset.day; PRO.guardNewTrade(() => tradeForm(null, d)); break; }
+      case 'share': PRO.shareDialog(); break;
       case 'edit-trade': tradeForm(el.dataset.id); break;
       case 'duplicate-trade': {
         const r = Store.raw(el.dataset.id); if (!r) break;
@@ -1319,14 +1326,14 @@
     const tag = (e.target.tagName || '').toLowerCase();
     if (['input', 'textarea', 'select'].includes(tag) || e.target.isContentEditable || e.metaKey || e.ctrlKey || e.altKey) return;
     if (!$('#modal').hidden) return;
-    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); tradeForm(); }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); PRO.guardNewTrade(() => tradeForm()); }
     else if (e.key === 't' || e.key === 'T') { Store.set('theme', S().theme === 'dark' ? 'light' : 'dark'); render(); }
     else if (e.key === '/') {
       e.preventDefault();
       if (ui.route === 'trades') { const i = $('#tq'); if (i) i.focus(); }
       else { location.hash = '#/trades'; setTimeout(() => { const i = $('#tq'); if (i) i.focus(); }, 30); }
     }
-    else if (/^[1-6]$/.test(e.key)) location.hash = '#/' + ROUTES[+e.key - 1];
+    else if (/^[1-7]$/.test(e.key)) location.hash = '#/' + ROUTES[+e.key - 1];
   });
 
   let rsTimer, lastW = window.innerWidth;
@@ -1362,6 +1369,7 @@
   I18N.use(() => S().lang);
   parseHash();
   // Auth gate: when accounts are configured, the journal requires sign-in
+  PRO = window.ProFeatures({ t, esc, icon, money, pct, rfmt, cls, dateLabel, openModal, closeModal, toast, stats, S, U, $, $$, VIEWS, hasPro, proUpsell });
   let gated = false;
   if (Cloud.enabled) document.documentElement.classList.add('auth-pending');
   render();
@@ -1370,7 +1378,8 @@
     gated = true;
     document.documentElement.classList.remove('auth-pending');
     render();
+    PRO.maybeWelcome();
   });
   function toLogin() { location.replace('login.html?next=' + encodeURIComponent(location.hash || '#/dashboard')); }
-  Cloud.on(() => { if (gated && Cloud.enabled && Cloud.ready && !Cloud.user) toLogin(); });
+  Cloud.on(() => { if (gated && Cloud.enabled && Cloud.ready && !Cloud.user) toLogin(); if (gated) PRO.maybeWelcome(); });
 })();
