@@ -158,7 +158,8 @@
           const code = err && err.code;
           const msg = code === 'limit' ? t('ai_err_limit', { m: (err.data && err.data.limit) || '' }) : code === 'not_pro' ? t('ai_err_pro') : code === 'unauthorized' ? t('ai_err_auth') :
             code === 'busy' ? t('ai_err_busy') : err instanceof TypeError ? t('ai_err_net') + ' (code: network)' : t('ai_err_generic') + ' (code: ' + String(code || (err && err.message) || 'unknown') + ((err && err.data && err.data.status) ? ' ' + err.data.status : '') + ')';
-          h2.push({ role: 'assistant', content: msg, error: true });
+          const detail = err && err.data && err.data.detail ? '\n\n' + String(err.data.detail).slice(0, 200) : '';
+          h2.push({ role: 'assistant', content: msg + detail, error: true });
         }
         saveHist(h2);
         if (!document.body.contains(log)) return;

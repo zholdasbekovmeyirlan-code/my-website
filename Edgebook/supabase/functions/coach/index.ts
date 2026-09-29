@@ -18,8 +18,9 @@ const EFFORT_MODELS = [...FALLBACK_MODELS, "claude-fable-5", "claude-opus-4-8", 
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-// Model names change over time: try the configured one, then current aliases, skipping any that 404.
-const GEMINI_MODELS = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean) as string[])];
+// Model names and free-tier quotas change over time: try the configured model, then current aliases,
+// moving on when one is missing (404), out of free quota (429) or overloaded (503).
+const GEMINI_MODELS = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"].filter(Boolean) as string[])];
 async function geminiFetch(key: string, payload: string): Promise<Response> {
   let res: Response | null = null;
   for (const model of GEMINI_MODELS) {
@@ -28,8 +29,8 @@ async function geminiFetch(key: string, payload: string): Promise<Response> {
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: payload,
     });
-    if (res.status !== 404) return res;
-    console.error("gemini model not found:", model);
+    if (![404, 429, 503].includes(res.status)) return res;
+    console.error("gemini", model, res.status, (await res.clone().text()).slice(0, 300));
   }
   return res!;
 }
@@ -47,7 +48,9 @@ async function askGemini(system: string, journal: string, messages: { role: "use
     generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
   }));
   if (!res.ok) {
-    const detail = (await res.text()).slice(0, 300);
+    const raw = await res.text();
+    let detail = raw.slice(0, 200);
+    try { detail = JSON.parse(raw).error.message.slice(0, 200); } catch { /* not json */ }
     if (res.status === 429 || res.status === 503) throw new UpstreamError("busy", res.status, detail);
     if (res.status === 401 || res.status === 403) throw new UpstreamError("server_key", res.status, detail);
     if (res.status === 400 || res.status === 404) throw new UpstreamError("bad_model_request", res.status, detail);
@@ -158,7 +161,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     await sb.rpc("ai_refund");
     console.error(error);
-    if (error instanceof UpstreamError) return json({ error: error.code, status: error.status }, error.code === "busy" ? 503 : 502);
+    if (error instanceof UpstreamError) return json({ error: error.code, status: error.status, detail: error.message }, error.code === "busy" ? 503 : 502);
     if (error instanceof Anthropic.RateLimitError) return json({ error: "busy" }, 503);
     if (error instanceof Anthropic.AuthenticationError) return json({ error: "server_key" }, 500);
     if (error instanceof Anthropic.BadRequestError) return json({ error: "bad_model_request", detail: error.message }, 500);
