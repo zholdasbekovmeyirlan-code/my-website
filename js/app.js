@@ -36,6 +36,8 @@
     arrowUp: '<path d="M7 17L17 7M9 7h8v8"/>',
     arrowDown: '<path d="M7 7l10 10M17 9v8H9"/>',
     sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
+    coach: '<path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 16.5l.6 1.4 1.4.6-1.4.6L5 20.5l-.6-1.4L3 18.5l1.4-.6z"/>',
+    send: '<path d="M5 12h13M13 6l6 6-6 6"/>',
     rules: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
     logout: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/>',
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/>'
@@ -44,7 +46,7 @@
   const MOD = MAC ? '⌘' : 'Ctrl ';
   const icon = (n, c) => '<svg class="ic ' + (c || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
 
-  const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'journal', 'rules', 'settings'];
+  const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'journal', 'coach', 'rules', 'settings'];
   let PRO = null;
   const hasPro = () => !Cloud.enabled || Cloud.isPro;
   const EMOTIONS = ['calm', 'confident', 'fomo', 'fear', 'greed', 'revenge', 'bored'];
@@ -938,7 +940,7 @@
   }
 
   function shortcuts() {
-    const k = [[MOD + 'K', t('cmd_title')], ['N', t('new_trade')], ['1 – 7', t('sc_nav')], ['/', t('sc_search')], ['T', t('theme')], ['Esc', t('sc_close')], [MOD + '↵', t('sc_save')]];
+    const k = [[MOD + 'K', t('cmd_title')], ['N', t('new_trade')], ['1 – 8', t('sc_nav')], ['/', t('sc_search')], ['T', t('theme')], ['Esc', t('sc_close')], [MOD + '↵', t('sc_save')]];
     openModal('<div class="modal-head"><div><h2 class="display">' + t('shortcuts') + '</h2></div><button class="icon-btn" data-close>' + icon('x') + '</button></div><div class="modal-body"><ul class="stat-list kbd-list">' +
       k.map(r => '<li><span>' + r[1] + '</span><kbd>' + r[0] + '</kbd></li>').join('') + '</ul></div>', 'sm');
   }
@@ -1028,7 +1030,7 @@
   function accountCard() {
     const P = (window.EDGEBOOK_CONFIG || {}).pricing || { currency: '$', monthly: 12, yearly: 99 };
     const save = Math.round((1 - P.yearly / (P.monthly * 12)) * 100);
-    const SOON = ['pro_f6'];
+    const SOON = [];
     const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f3', 'pro_f4', 'pro_f5', 'pro_f2', 'pro_f6'].map(k =>
       '<li' + (SOON.includes(k) ? ' class="soon"' : '') + '>' + t(k) + (SOON.includes(k) ? ' <span class="soon-chip">' + t('soon') + '</span>' : '') + '</li>').join('') + '</ul>';
     const head = (sub, right) => '<div class="card-head"><div><h3>' + t('acc_title') + '</h3><p>' + sub + '</p></div>' + (right || '') + '</div>';
@@ -1336,7 +1338,7 @@
       if (ui.route === 'trades') { const i = $('#tq'); if (i) i.focus(); }
       else { location.hash = '#/trades'; setTimeout(() => { const i = $('#tq'); if (i) i.focus(); }, 30); }
     }
-    else if (/^[1-7]$/.test(e.key)) location.hash = '#/' + ROUTES[+e.key - 1];
+    else if (/^[1-8]$/.test(e.key)) location.hash = '#/' + ROUTES[+e.key - 1];
   });
 
   let rsTimer, lastW = window.innerWidth;
@@ -1373,6 +1375,7 @@
   parseHash();
   // Auth gate: when accounts are configured, the journal requires sign-in
   PRO = window.ProFeatures({ t, esc, icon, money, pct, rfmt, cls, dateLabel, openModal, closeModal, toast, stats, S, U, $, $$, VIEWS, hasPro, proUpsell });
+  window.CoachFeature({ t, esc, icon, money, pct, rfmt, stats, S, U, $, $$, toast, VIEWS, hasPro });
   let gated = false;
   if (Cloud.enabled) document.documentElement.classList.add('auth-pending');
   render();
