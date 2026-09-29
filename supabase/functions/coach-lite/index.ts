@@ -4,8 +4,9 @@
 
 const SB_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-// Model names change over time: try the configured one, then current aliases, skipping any that 404.
-const GEMINI_MODELS = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean) as string[])];
+// Model names and free-tier quotas change over time: try the configured model, then current aliases,
+// moving on when one is missing (404), out of free quota (429) or overloaded (503).
+const GEMINI_MODELS = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"].filter(Boolean) as string[])];
 async function geminiFetch(key: string, payload: string): Promise<Response> {
   let res: Response | null = null;
   for (const model of GEMINI_MODELS) {
@@ -14,8 +15,8 @@ async function geminiFetch(key: string, payload: string): Promise<Response> {
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: payload,
     });
-    if (res.status !== 404) return res;
-    console.error("gemini model not found:", model);
+    if (![404, 429, 503].includes(res.status)) return res;
+    console.error("gemini", model, res.status, (await res.clone().text()).slice(0, 300));
   }
   return res!;
 }
@@ -79,10 +80,13 @@ Deno.serve(async (req) => {
       generationConfig: { maxOutputTokens: 8192, temperature: 0.6 },
     }));
     if (!res.ok) {
-      console.error("gemini", res.status, (await res.text()).slice(0, 500));
+      const raw = await res.text();
+      console.error("gemini", res.status, raw.slice(0, 500));
+      let detail = raw.slice(0, 200);
+      try { detail = JSON.parse(raw).error.message.slice(0, 200); } catch { /* not json */ }
       await rpc("ai_refund");
       const code = res.status === 429 || res.status === 503 ? "busy" : res.status === 400 || res.status === 403 ? "server_key" : "upstream";
-      return json({ error: code, status: res.status }, code === "busy" ? 503 : 502);
+      return json({ error: code, status: res.status, detail }, code === "busy" ? 503 : 502);
     }
     // deno-lint-ignore no-explicit-any
     const data: any = await res.json();
