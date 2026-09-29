@@ -3,38 +3,274 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="Edgebook — премиум трейдинг журнал: мәмілелер, капитал қисығы, күнтізбе, аналитика және күнделік." />
-  <meta name="theme-color" content="#08090c" />
+  <meta name="description" content="Edgebook — трейдерлерге арналған премиум журнал. Әр мәмілені, эмоцияны және қатені нақты сандарға айналдырыңыз." />
+  <meta name="theme-color" content="#050608" />
+  <meta property="og:title" content="Edgebook — Trading Journal" />
+  <meta property="og:description" content="Find the hidden edge in your trading." />
   <title>Edgebook — Trading Journal</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111318'/%3E%3Cpath d='M7 21l6-6 4 4 8-9' fill='none' stroke='%23d9b76e' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/landing.css" />
 </head>
-<body>
-  <div class="ambient" aria-hidden="true"><span class="glow g1"></span><span class="glow g2"></span><span class="noise"></span></div>
+<body class="lp">
 
-  <div class="app">
-    <aside class="sidebar" id="sidebar"></aside>
+  <!-- ============ NAV ============ -->
+  <header class="lp-nav" id="lpNav">
+    <div class="lp-nav-inner">
+      <a class="lp-logo" href="#top">
+        <span class="brand-mark"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>
+        <span>Edgebook</span>
+      </a>
+      <nav class="lp-links">
+        <a href="#features" data-l="nav_features"></a>
+        <a href="#analytics" data-l="nav_analytics"></a>
+        <a href="#how" data-l="nav_how"></a>
+        <a href="#faq" data-l="nav_faq"></a>
+      </nav>
+      <div class="lp-nav-right">
+        <div class="seg seg-sm lang"><button data-lang="kk">KK</button><button data-lang="en">EN</button></div>
+        <a class="btn btn-primary btn-sm" href="app.html#/dashboard"><span data-l="nav_open"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </header>
 
-    <main class="main">
-      <header class="topbar" id="topbar"></header>
-      <div class="demo-banner" id="demoBanner" hidden></div>
-      <section class="view" id="view" tabindex="-1"></section>
-    </main>
-  </div>
+  <main id="top">
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
+        <div class="hero-grid"></div>
+        <div class="beam"></div>
+        <div class="noise"></div>
+      </div>
 
-  <div class="modal" id="modal" hidden>
-    <div class="modal-backdrop" data-close></div>
-    <div class="modal-panel" role="dialog" aria-modal="true" id="modalPanel"></div>
-  </div>
+      <div class="wrap hero-copy">
+        <a class="hero-badge" href="app.html#/dashboard" data-reveal>
+          <span class="pulse-dot"></span><span data-l="hero_badge"></span>
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+        <h1 class="hero-title" data-l="hero_title" data-reveal></h1>
+        <p class="hero-sub" data-l="hero_sub" data-reveal></p>
+        <div class="hero-cta" data-reveal>
+          <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-glass btn-xl" href="app.html#/analytics"><span data-l="cta_secondary"></span></a>
+        </div>
+        <p class="hero-note" data-l="hero_note" data-reveal></p>
+      </div>
 
-  <div class="toasts" id="toasts" aria-live="polite"></div>
+      <!-- product stage -->
+      <div class="stage" id="stage">
+        <div class="stage-glow" aria-hidden="true"></div>
+        <div class="mock" id="mock">
+          <div class="mock-bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="mock-url"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>edgebook.app/dashboard</span>
+            <span class="dots ghost"><i></i><i></i><i></i></span>
+          </div>
+          <div class="mock-body">
+            <aside class="mock-side">
+              <span class="brand-mark"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>
+              <i class="on"></i><i></i><i></i><i></i><i></i><i></i>
+            </aside>
+            <div class="mock-main">
+              <div class="mock-head">
+                <div><small id="mkDate"></small><b class="display" data-l="mock_greet"></b></div>
+                <span class="mock-btn" data-l="mock_new"></span>
+              </div>
+              <div class="mock-kpis" id="mockKpis"></div>
+              <div class="mock-row">
+                <div class="mock-card mock-chart"><div class="mock-card-head"><b data-l="mock_equity"></b><span class="mono pos">+69.9%</span></div><div id="mockEquity"></div></div>
+                <div class="mock-card mock-cal"><div class="mock-card-head"><b data-l="mock_calendar"></b></div><div class="heat" id="mockHeat"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="float f1">
+          <span class="float-ic up"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <div><small data-l="f_trade"></small><b>NVDA <span class="mono pos">+$457.86</span></b><em class="mono">+2.14R · Breakout</em></div>
+        </div>
+        <div class="float f2">
+          <div class="f2-ring" id="f2Ring"></div>
+          <div><small data-l="f_wr"></small><b class="mono">58.8%</b><em class="mono"><span class="pos">63W</span> · <span class="neg">44L</span></em></div>
+        </div>
+        <div class="float f3">
+          <span class="float-ic gold"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg></span>
+          <div><small data-l="f_ins"></small><b data-l="f_ins_text"></b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MARQUEE ============ -->
+    <section class="marquee-wrap">
+      <p class="marquee-label" data-l="marquee"></p>
+      <div class="marquee"><div class="marquee-track" id="marquee"></div></div>
+    </section>
+
+    <!-- ============ STATS ============ -->
+    <section class="wrap stats" data-reveal>
+      <div><b class="mono" data-count="30" data-suffix="+">30+</b><span data-l="st1"></span></div>
+      <div><b class="mono" data-count="0">0</b><span data-l="st2"></span></div>
+      <div><b class="mono" data-count="2">2</b><span data-l="st3"></span></div>
+      <div><b class="mono" data-count="100" data-suffix="%">100%</b><span data-l="st4"></span></div>
+    </section>
+
+    <!-- ============ FEATURES (BENTO) ============ -->
+    <section class="wrap section" id="features">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow-pill" data-l="feat_eyebrow"></span>
+        <h2 class="display" data-l="feat_title"></h2>
+        <p data-l="feat_sub"></p>
+      </div>
+      <div class="bento">
+        <article class="tile t-lg" data-reveal>
+          <div class="tile-copy"><h3 data-l="t1_title"></h3><p data-l="t1_text"></p></div>
+          <div class="tile-kpis">
+            <div><small>Profit factor</small><b class="mono pos">2.47</b></div>
+            <div><small>Expectancy</small><b class="mono pos">+$58.72</b></div>
+            <div><small>Avg R</small><b class="mono pos">+0.58R</b></div>
+            <div><small>Max DD</small><b class="mono neg">−4.7%</b></div>
+          </div>
+          <div class="tile-chart" id="tileEquity"></div>
+        </article>
+        <article class="tile" data-reveal>
+          <div class="heat heat-lg" id="tileHeat"></div>
+          <div class="tile-copy"><h3 data-l="t2_title"></h3><p data-l="t2_text"></p></div>
+        </article>
+        <article class="tile" data-reveal>
+          <div class="tile-insights">
+            <div class="mini-ins pos"><i></i><span data-l="ti_1"></span></div>
+            <div class="mini-ins neg"><i></i><span data-l="ti_2"></span></div>
+            <div class="mini-ins pos"><i></i><span data-l="ti_3"></span></div>
+          </div>
+          <div class="tile-copy"><h3 data-l="t3_title"></h3><p data-l="t3_text"></p></div>
+        </article>
+        <article class="tile" data-reveal>
+          <div class="tile-emotions">
+            <div><span class="chip on static" data-l="e_calm"></span><b class="mono pos">+$5,236</b></div>
+            <div><span class="chip static">FOMO</span><b class="mono pos">+$333</b></div>
+            <div><span class="chip warn on static" data-l="e_revenge"></span><b class="mono neg">−$186</b></div>
+            <div><span class="chip warn on static" data-l="e_greed"></span><b class="mono neg">−$268</b></div>
+          </div>
+          <div class="tile-copy"><h3 data-l="t4_title"></h3><p data-l="t4_text"></p></div>
+        </article>
+        <article class="tile" data-reveal>
+          <div class="tile-chart sm" id="tileR"></div>
+          <div class="tile-copy"><h3 data-l="t5_title"></h3><p data-l="t5_text"></p></div>
+        </article>
+        <article class="tile t-wide" data-reveal>
+          <div class="tile-journal">
+            <div class="tj-line"><small data-l="tj_plan"></small><p data-l="tj_plan_text"></p></div>
+            <div class="tj-line"><small data-l="tj_lesson"></small><p data-l="tj_lesson_text"></p><span class="caret"></span></div>
+          </div>
+          <div class="tile-copy"><h3 data-l="t8_title"></h3><p data-l="t8_text"></p></div>
+        </article>
+        <article class="tile" data-reveal>
+          <div class="tile-keys"><kbd class="key">⌘</kbd><kbd class="key">K</kbd><kbd class="key key-sm">N</kbd><kbd class="key key-sm">/</kbd></div>
+          <div class="tile-copy"><h3 data-l="t7_title"></h3><p data-l="t7_text"></p></div>
+        </article>
+        <article class="tile" data-reveal>
+          <div class="tile-shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div class="tile-copy"><h3 data-l="t6_title"></h3><p data-l="t6_text"></p></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ ANALYTICS SPLIT ============ -->
+    <section class="wrap section split" id="analytics">
+      <div class="split-copy" data-reveal>
+        <span class="eyebrow-pill" data-l="an_eyebrow"></span>
+        <h2 class="display" data-l="an_title"></h2>
+        <p data-l="an_sub"></p>
+        <ul class="checks">
+          <li data-l="an_li1"></li><li data-l="an_li2"></li><li data-l="an_li3"></li><li data-l="an_li4"></li>
+        </ul>
+        <a class="btn btn-glass" href="app.html#/analytics"><span data-l="an_cta"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="split-visual" data-reveal>
+        <div class="sv-card sv-chart">
+          <div class="mock-card-head"><b data-l="an_weekday"></b><span class="sv-tag" data-l="example"></span></div>
+          <div id="svWeekday"></div>
+        </div>
+        <div class="sv-ins sv-i1"><span class="float-ic up"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg></span><p data-l="ins_a"></p></div>
+        <div class="sv-ins sv-i2"><span class="float-ic down"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4 0-7-2.7-7-6.5 0-3 2-5 3.5-6.5.3 2 1.3 3 2.5 3.5C11 8 12 5 14.5 3c.3 3 4.5 5.5 4.5 11 0 4-3 7-7 7z"/></svg></span><p data-l="ins_b"></p></div>
+      </div>
+    </section>
+
+    <!-- ============ HOW ============ -->
+    <section class="wrap section" id="how">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow-pill" data-l="how_eyebrow"></span>
+        <h2 class="display" data-l="how_title"></h2>
+      </div>
+      <div class="steps">
+        <div class="step" data-reveal><span class="step-n mono">01</span><h3 data-l="s1_t"></h3><p data-l="s1_x"></p></div>
+        <div class="step" data-reveal><span class="step-n mono">02</span><h3 data-l="s2_t"></h3><p data-l="s2_x"></p></div>
+        <div class="step" data-reveal><span class="step-n mono">03</span><h3 data-l="s3_t"></h3><p data-l="s3_x"></p></div>
+      </div>
+    </section>
+
+    <!-- ============ MANIFESTO ============ -->
+    <section class="wrap manifesto" data-reveal>
+      <p class="display" data-l="quote"></p>
+    </section>
+
+    <!-- ============ PRICING ============ -->
+    <section class="wrap section pricing" id="pricing">
+      <div class="section-head" data-reveal>
+        <span class="eyebrow-pill" data-l="pr_eyebrow"></span>
+        <h2 class="display" data-l="pr_title"></h2>
+      </div>
+      <div class="price-card" data-reveal>
+        <div class="price-left">
+          <span class="price-plan">Edgebook</span>
+          <div class="price-num"><b class="display">$0</b><span data-l="pr_per"></span></div>
+          <p data-l="pr_desc"></p>
+          <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="pr_cta"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+        <ul class="checks price-list">
+          <li data-l="pr_f1"></li><li data-l="pr_f2"></li><li data-l="pr_f3"></li><li data-l="pr_f4"></li><li data-l="pr_f5"></li><li data-l="pr_f6"></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="wrap section faq" id="faq">
+      <div class="section-head" data-reveal>
+        <h2 class="display" data-l="faq_title"></h2>
+      </div>
+      <div class="faq-list" data-reveal>
+        <details><summary data-l="q1"></summary><p data-l="a1"></p></details>
+        <details><summary data-l="q2"></summary><p data-l="a2"></p></details>
+        <details><summary data-l="q3"></summary><p data-l="a3"></p></details>
+        <details><summary data-l="q4"></summary><p data-l="a4"></p></details>
+        <details><summary data-l="q5"></summary><p data-l="a5"></p></details>
+      </div>
+    </section>
+
+    <!-- ============ FINAL CTA ============ -->
+    <section class="wrap final" data-reveal>
+      <div class="final-card">
+        <div class="final-glow" aria-hidden="true"></div>
+        <h2 class="display" data-l="fc_title"></h2>
+        <p data-l="fc_sub"></p>
+        <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap lp-foot">
+    <a class="lp-logo" href="#top"><span class="brand-mark"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><span>Edgebook</span></a>
+    <p data-l="foot"></p>
+    <p class="muted">© 2026 Edgebook · <span data-l="foot_disc"></span></p>
+  </footer>
 
   <script src="js/i18n.js"></script>
   <script src="js/store.js"></script>
   <script src="js/charts.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/landing.js"></script>
 </body>
 </html>

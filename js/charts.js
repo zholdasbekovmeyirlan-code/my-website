@@ -69,6 +69,11 @@
     }
     s += '<path d="' + area + '" fill="url(#' + gid + ')"/>';
     s += '<path d="' + d + '" class="line ' + (up ? 'up' : 'down') + '"/>';
+    if (o.pulse !== false) {
+      const ex = x(pts.length - 1).toFixed(1), ey = y(pts[pts.length - 1].y).toFixed(1);
+      s += '<circle class="ping ' + (up ? 'up' : 'down') + '" cx="' + ex + '" cy="' + ey + '" r="4"/>';
+      s += '<circle class="end ' + (up ? 'up' : 'down') + '" cx="' + ex + '" cy="' + ey + '" r="4"/>';
+    }
     s += '<line class="cross" x1="0" x2="0" y1="' + P.t + '" y2="' + (H - P.b) + '" style="opacity:0"/>';
     s += '<circle class="dot ' + (up ? 'up' : 'down') + '" r="5" cx="0" cy="0" style="opacity:0"/>';
     s += '<rect class="hit" x="' + P.l + '" y="0" width="' + (W - P.l - P.r) + '" height="' + H + '" fill="transparent"/></svg>';
@@ -76,6 +81,8 @@
     host.classList.add('chart-host');
 
     const svg = host.querySelector('svg'), cross = svg.querySelector('.cross'), dot = svg.querySelector('.dot');
+    const path = svg.querySelector('.line');
+    if (path.getTotalLength) path.style.setProperty('--len', Math.ceil(path.getTotalLength()));
     const tip = tipEl(host);
     const move = e => {
       const rect = svg.getBoundingClientRect();
