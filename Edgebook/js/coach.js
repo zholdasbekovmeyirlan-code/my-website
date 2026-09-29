@@ -128,6 +128,7 @@
         text = String(text || '').trim();
         if (!text || busy) return;
         const h = loadHist().filter(m => !m.error);
+        if (h.length && h[h.length - 1].role === 'user') h.pop();   // drop a question that never got an answer
         h.push({ role: 'user', content: text });
         saveHist(h);
         ta.value = ''; grow();
