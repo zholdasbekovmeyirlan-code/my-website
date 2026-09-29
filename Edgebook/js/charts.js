@@ -1,4 +1,4 @@
-/* Edgebook — dependency-free SVG charts */
+/* EntryX — dependency-free SVG charts */
 (function () {
   'use strict';
 

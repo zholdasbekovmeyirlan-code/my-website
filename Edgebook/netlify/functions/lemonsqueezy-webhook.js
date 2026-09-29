@@ -1,4 +1,4 @@
-/* Edgebook — Lemon Squeezy webhook → sets the user's plan in Supabase.
+/* EntryX — Lemon Squeezy webhook → sets the user's plan in Supabase.
    Netlify env vars required:
      LEMONSQUEEZY_WEBHOOK_SECRET  (Lemon Squeezy → Settings → Webhooks → signing secret)
      SUPABASE_URL                 (https://xxxx.supabase.co)

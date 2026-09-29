@@ -1,4 +1,4 @@
-/* Edgebook — sign in page */
+/* EntryX — sign in page */
 .auth { --bg: #050608; background: var(--bg); min-height: 100vh; overflow-x: hidden; }
 .auth-shell { display: grid; grid-template-columns: 1.05fr 1fr; min-height: 100vh; }
 
@@ -9,7 +9,7 @@
   background: linear-gradient(160deg, #0d0e12, #07080a 60%);
 }
 .art-glow { position: absolute; border-radius: 50%; pointer-events: none; }
-.g-a { width: 720px; height: 620px; left: -200px; top: -260px; background: radial-gradient(closest-side, rgba(217, 183, 110, .28), transparent); animation: artDrift 14s ease-in-out infinite alternate; }
+.g-a { width: 720px; height: 620px; left: -200px; top: -260px; background: radial-gradient(closest-side, rgba(168, 85, 247, .28), transparent); animation: artDrift 14s ease-in-out infinite alternate; }
 .g-b { width: 620px; height: 560px; right: -260px; bottom: -220px; background: radial-gradient(closest-side, rgba(61, 220, 151, .14), transparent); animation: artDrift 18s ease-in-out infinite alternate-reverse; }
 @keyframes artDrift { to { transform: translate3d(50px, 40px, 0) scale(1.08); } }
 .art-grid {
@@ -26,7 +26,7 @@
 .auth-logo.sm .brand-mark { width: 32px; height: 32px; }
 .art-copy h2 { font-size: clamp(44px, 4.6vw, 72px); line-height: .98; letter-spacing: -.035em; }
 .art-copy h2 em {
-  font-style: italic; background: linear-gradient(100deg, #f6e3b4, #d9b76e 45%, #a8812f);
+  font-style: italic; background: linear-gradient(100deg, #f3e8ff, #a855f7 45%, #6d28d9);
   -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em;
 }
 .art-copy p { color: var(--text-2); font-size: 17px; margin-top: 16px; max-width: 420px; line-height: 1.55; }
@@ -99,7 +99,7 @@
   .auth-shell { grid-template-columns: 1fr; }
   .auth-art { display: none; }
   .auth-top .auth-logo { display: inline-flex; }
-  .auth-main { background: radial-gradient(90% 50% at 50% 0%, rgba(217, 183, 110, .14), transparent 70%); padding: 110px 20px 90px; justify-content: flex-start; }
+  .auth-main { background: radial-gradient(90% 50% at 50% 0%, rgba(168, 85, 247, .14), transparent 70%); padding: 110px 20px 90px; justify-content: flex-start; }
   .auth-top { left: 20px; right: 20px; top: 20px; }
   .auth-card h1 { font-size: 38px; }
 }

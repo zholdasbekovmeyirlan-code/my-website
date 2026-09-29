@@ -1,4 +1,4 @@
-/* Edgebook — application */
+/* EntryX — application */
 (function () {
   'use strict';
 
@@ -189,7 +189,7 @@
       '<a href="#/' + r + '" class="nav-item' + (ui.route === r ? ' active' : '') + '" data-route="' + r + '">' + icon(r) +
       '<span>' + t('nav_' + r) + '</span><kbd>' + (i + 1) + '</kbd></a>').join('');
     $('#sidebar').innerHTML =
-      '<a class="brand" href="index.html" title="' + t('home') + '"><span class="brand-mark">' + icon('trades') + '</span><span class="brand-name">Edgebook<em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO</b>' : '') + '</em></span></a>' +
+      '<a class="brand" href="index.html" title="' + t('home') + '"><img class="logo-mark" src="img/entryx-mark.svg" alt="" /><span class="brand-name"><span class="wordmark">ENTRY<b>X</b></span><em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO</b>' : '') + '</em></span></a>' +
       '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
       '<div class="side-card">' +
       '<div class="side-card-label">' + t('equity') + (Cloud.isPro ? '<span class="sync-dot s-' + Cloud.status + '" title="' + t('sync_' + Cloud.status) + '"></span>' : '') + '</div>' +

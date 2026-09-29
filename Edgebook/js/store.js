@@ -1,4 +1,4 @@
-/* Edgebook — data layer (localStorage) */
+/* EntryX — data layer (localStorage) */
 (function () {
   'use strict';
 
@@ -82,7 +82,7 @@
             settings: Object.assign(d.settings, data.settings || {})
           };
         }
-      } catch (e) { console.warn('Edgebook: load failed', e); }
+      } catch (e) { console.warn('EntryX: load failed', e); }
       this._cache = null;
       return this.state;
     },
@@ -94,7 +94,7 @@
         this.saveListeners.forEach(fn => { try { fn(); } catch (err) { console.warn(err); } });
         return true;
       } catch (e) {
-        console.warn('Edgebook: save failed', e);
+        console.warn('EntryX: save failed', e);
         this.listeners.forEach(fn => fn('quota'));
         return false;
       }
@@ -139,7 +139,7 @@
     set(key, value) { this.state.settings[key] = value; this.save(); },
 
     exportJSON() {
-      return JSON.stringify({ app: 'Edgebook', exportedAt: new Date().toISOString(), ...this.state }, null, 2);
+      return JSON.stringify({ app: 'EntryX', exportedAt: new Date().toISOString(), ...this.state }, null, 2);
     },
 
     importJSON(text) {
