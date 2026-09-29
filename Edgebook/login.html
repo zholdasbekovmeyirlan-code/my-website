@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="kk" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Edgebook — кіру немесе тіркелу." />
+  <meta name="theme-color" content="#050608" />
+  <title>Edgebook — Sign in</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111318'/%3E%3Cpath d='M7 21l6-6 4 4 8-9' fill='none' stroke='%23d9b76e' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=1790698814" />
+  <link rel="stylesheet" href="css/login.css?v=1790698814" />
+</head>
+<body class="auth">
+  <div class="auth-shell">
+    <!-- brand panel -->
+    <aside class="auth-art" aria-hidden="true">
+      <div class="art-glow g-a"></div><div class="art-glow g-b"></div><div class="art-grid"></div>
+      <a class="auth-logo" href="index.html">
+        <span class="brand-mark"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>
+        <span>Edgebook</span>
+      </a>
+      <div class="art-copy">
+        <h2 class="display" data-l="art_title"></h2>
+        <p data-l="art_sub"></p>
+      </div>
+      <div class="art-card">
+        <div class="art-card-head"><small data-l="art_equity"></small><b class="mono pos">+$6,987.88</b></div>
+        <svg class="art-line" viewBox="0 0 400 110" preserveAspectRatio="none">
+          <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3ddc97" stop-opacity=".35"/><stop offset="1" stop-color="#3ddc97" stop-opacity="0"/></linearGradient></defs>
+          <path d="M0 96 L22 90 L40 93 L62 84 L80 86 L104 74 L122 78 L146 64 L168 67 L190 55 L210 58 L232 46 L252 49 L276 38 L298 41 L320 28 L342 31 L366 18 L384 20 L400 10 L400 110 L0 110 Z" fill="url(#ag)"/>
+          <path class="art-path" d="M0 96 L22 90 L40 93 L62 84 L80 86 L104 74 L122 78 L146 64 L168 67 L190 55 L210 58 L232 46 L252 49 L276 38 L298 41 L320 28 L342 31 L366 18 L384 20 L400 10" fill="none" stroke="#3ddc97" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <div class="art-chips"><span><i class="up"></i>Win rate <b class="mono">58.8%</b></span><span><i class="gold"></i>PF <b class="mono">2.47</b></span><span><i class="up"></i>Avg <b class="mono">+0.58R</b></span></div>
+      </div>
+      <ul class="art-points">
+        <li data-l="pt1"></li><li data-l="pt2"></li><li data-l="pt3"></li>
+      </ul>
+    </aside>
+
+    <!-- form panel -->
+    <main class="auth-main">
+      <div class="auth-top">
+        <a class="auth-logo sm" href="index.html">
+          <span class="brand-mark"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>
+          <span>Edgebook</span>
+        </a>
+        <div class="seg seg-sm lang"><button data-lang="kk">KK</button><button data-lang="en">EN</button></div>
+      </div>
+
+      <div class="auth-card" id="card">
+        <h1 class="display" id="title"></h1>
+        <p class="auth-sub" id="subtitle"></p>
+
+        <div class="social" id="social"></div>
+        <div class="or" id="orLine"><span data-l="or_email"></span></div>
+
+        <form id="form" novalidate>
+          <label class="field" id="fEmail"><span>Email</span><input class="input" name="email" type="email" autocomplete="email" placeholder="you@example.com" required /></label>
+          <label class="field" id="fPass"><span><b data-l="password"></b><a href="#" class="forgot" id="forgotLink" data-l="forgot"></a></span>
+            <div class="pw"><input class="input" name="password" type="password" autocomplete="current-password" minlength="6" placeholder="••••••••" required /><button type="button" class="pw-toggle" id="pwToggle" aria-label="show password"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          </label>
+          <button class="btn btn-primary btn-block" type="submit" id="submit"><span id="submitText"></span><span class="spinner" aria-hidden="true"></span></button>
+          <p class="auth-msg" id="msg" role="status"></p>
+        </form>
+
+        <p class="auth-switch" id="switchLine"></p>
+      </div>
+
+      <p class="auth-legal" data-l="legal"></p>
+    </main>
+  </div>
+
+  <script src="js/config.js?v=1790698814"></script>
+  <script src="js/store.js?v=1790698814"></script>
+  <script src="js/login.js?v=1790698814"></script>
+</body>
+</html>

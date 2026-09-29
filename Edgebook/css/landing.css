@@ -576,3 +576,7 @@ body.intro-on { overflow: hidden; }
   .plan.price-card { padding: 26px; }
   .plan .price-num b { font-size: 60px; }
 }
+
+.lp-login { padding: 8px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--text-2); transition: color .2s, background .2s; }
+.lp-login:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
+@media (max-width: 760px) { .lp-login { padding: 8px; font-size: 13px; } }

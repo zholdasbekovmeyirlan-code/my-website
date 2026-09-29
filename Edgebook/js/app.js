@@ -36,6 +36,7 @@
     arrowUp: '<path d="M7 17L17 7M9 7h8v8"/>',
     arrowDown: '<path d="M7 7l10 10M17 9v8H9"/>',
     sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
+    logout: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/>',
     keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/>'
   };
   const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
@@ -197,6 +198,8 @@
       ' <span>· ' + pct(S().balance ? st.net / S().balance : null) + '</span></div>' +
       '<div class="side-card-spark">' + Charts.spark(equitySeries('all').pts.map(p => p.y), 200, 38) + '</div>' +
       '</div>' +
+      (Cloud.user ? '<div class="side-user"><span class="avatar">' + esc((Cloud.user.email || '?').charAt(0).toUpperCase()) + '</span><div class="side-user-info"><b>' + esc(Cloud.user.email || '') + '</b><small>' + (Cloud.isPro ? 'Pro' : 'Free') + '</small></div>' +
+        '<button class="icon-btn sm" data-action="sign-out" title="' + t('sign_out') + '" aria-label="' + t('sign_out') + '">' + icon('logout') + '</button></div>' : '') +
       '<div class="side-foot"><button class="kbd-hint" data-action="shortcuts">' + icon('keyboard') + t('shortcuts') + '</button></div>';
   }
 
@@ -1200,7 +1203,7 @@
         Cloud.refreshProfile().then(p => { if (Cloud.isPro) { toast(t('plan_active'), 'ok'); Cloud.syncNow(); } else toast(t('still_free'), 'err'); });
         break;
       case 'sync-now': Cloud.syncNow(); break;
-      case 'sign-out': Cloud.signOut().then(() => toast(t('signed_out'), 'ok')); break;
+      case 'sign-out': Cloud.signOut().then(() => { location.replace('login.html'); }); break;
     }
   });
 
@@ -1274,6 +1277,16 @@
   }
   I18N.use(() => S().lang);
   parseHash();
+  // Auth gate: when accounts are configured, the journal requires sign-in
+  let gated = false;
+  if (Cloud.enabled) document.documentElement.classList.add('auth-pending');
   render();
-  Cloud.init();
+  Cloud.init().then(() => {
+    if (Cloud.enabled && !Cloud.user && Cloud.status !== 'error') { toLogin(); return; }
+    gated = true;
+    document.documentElement.classList.remove('auth-pending');
+    render();
+  });
+  function toLogin() { location.replace('login.html?next=' + encodeURIComponent(location.hash || '#/dashboard')); }
+  Cloud.on(() => { if (gated && Cloud.enabled && Cloud.ready && !Cloud.user) toLogin(); });
 })();

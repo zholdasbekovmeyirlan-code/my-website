@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=1790697361" />
-  <link rel="stylesheet" href="css/landing.css?v=1790697361" />
+  <link rel="stylesheet" href="css/style.css?v=1790698814" />
+  <link rel="stylesheet" href="css/landing.css?v=1790698814" />
 </head>
 <body class="lp">
   <div class="intro" id="intro" aria-hidden="true">
@@ -37,7 +37,8 @@
       </nav>
       <div class="lp-nav-right">
         <div class="seg seg-sm lang"><button data-lang="kk">KK</button><button data-lang="en">EN</button></div>
-        <a class="btn btn-primary btn-sm" href="app.html#/dashboard"><span data-l="nav_open"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="lp-login" href="login.html" data-l="nav_login"></a>
+        <a class="btn btn-primary btn-sm" href="login.html?mode=up"><span data-l="nav_open"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </div>
     </div>
   </header>
@@ -54,14 +55,14 @@
       </div>
 
       <div class="wrap hero-copy">
-        <a class="hero-badge" href="app.html#/dashboard" data-reveal>
+        <a class="hero-badge" href="login.html?mode=up" data-reveal>
           <span class="pulse-dot"></span><span data-l="hero_badge"></span>
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </a>
         <h1 class="hero-title" data-l="hero_title"></h1>
         <p class="hero-sub" data-l="hero_sub" data-reveal></p>
         <div class="hero-cta" data-reveal>
-          <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-primary btn-xl" href="login.html?mode=up"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
           <a class="btn btn-glass btn-xl" href="app.html#/analytics"><span data-l="cta_secondary"></span></a>
         </div>
         <p class="hero-note" data-l="hero_note" data-reveal></p>
@@ -239,7 +240,7 @@
           <div class="price-num"><b class="display">$0</b><span data-l="pr_per_free"></span></div>
           <p data-l="pr_free_desc"></p>
           <ul class="checks price-list"><li data-l="pf_1"></li><li data-l="pf_2"></li><li data-l="pf_3"></li><li data-l="pf_4"></li><li data-l="pf_5"></li></ul>
-          <a class="btn btn-glass btn-xl" href="app.html#/dashboard"><span data-l="pr_free_cta"></span></a>
+          <a class="btn btn-glass btn-xl" href="login.html?mode=up"><span data-l="pr_free_cta"></span></a>
         </div>
         <div class="plan plan-pro price-card" data-reveal>
           <span class="plan-flag" data-l="pr_popular"></span>
@@ -248,7 +249,7 @@
           <p class="plan-save" id="proSave"></p>
           <p data-l="pr_pro_desc"></p>
           <ul class="checks price-list"><li data-l="pp_0"></li><li data-l="pp_1"></li><li data-l="pp_2"></li><li class="soon" data-l="pp_3"></li><li class="soon" data-l="pp_4"></li><li class="soon" data-l="pp_5"></li></ul>
-          <a class="btn btn-primary btn-xl" href="app.html#/settings"><span data-l="pr_pro_cta"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-primary btn-xl" href="login.html?mode=up&amp;next=%23%2Fsettings"><span data-l="pr_pro_cta"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
         </div>
       </div>
     </section>
@@ -273,7 +274,7 @@
         <div class="final-glow" aria-hidden="true"></div>
         <h2 class="display" data-l="fc_title"></h2>
         <p data-l="fc_sub"></p>
-        <a class="btn btn-primary btn-xl" href="app.html#/dashboard"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn btn-primary btn-xl" href="login.html?mode=up"><span data-l="cta_primary"></span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </div>
     </section>
   </main>
@@ -284,11 +285,11 @@
     <p class="muted">© 2026 Edgebook · <span data-l="foot_disc"></span></p>
   </footer>
 
-  <script src="js/config.js?v=1790697361"></script>
-  <script src="js/i18n.js?v=1790697361"></script>
-  <script src="js/store.js?v=1790697361"></script>
-  <script src="js/charts.js?v=1790697361"></script>
-  <script src="js/landing.js?v=1790697361"></script>
-  <script src="js/fx.js?v=1790697361"></script>
+  <script src="js/config.js?v=1790698814"></script>
+  <script src="js/i18n.js?v=1790698814"></script>
+  <script src="js/store.js?v=1790698814"></script>
+  <script src="js/charts.js?v=1790698814"></script>
+  <script src="js/landing.js?v=1790698814"></script>
+  <script src="js/fx.js?v=1790698814"></script>
 </body>
 </html>
