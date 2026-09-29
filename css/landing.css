@@ -580,3 +580,9 @@ body.intro-on { overflow: hidden; }
 .lp-login { padding: 8px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--text-2); transition: color .2s, background .2s; }
 .lp-login:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
 @media (max-width: 760px) { .lp-login { padding: 8px; font-size: 13px; } }
+
+.foot-links { display: flex; gap: 18px; margin-left: auto; }
+.foot-links a { color: var(--text-3); transition: color .2s; }
+.foot-links a:hover { color: var(--text); }
+.lp-foot .foot-links + p { margin-left: 0; }
+@media (max-width: 760px) { .foot-links { margin-left: 0; } }

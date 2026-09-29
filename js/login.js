@@ -25,7 +25,7 @@
       err_exists: 'Бұл email тіркелген. Кіріп көріңіз.', err_provider: 'Бұл кіру тәсілі әлі қосылмаған.', err_generic: 'Қате: {m}',
       ok_check: 'Растау хаты <b>{e}</b> мекенжайына жіберілді. Сілтемені басыңыз.', ok_reset_sent: 'Сілтеме жіберілді. Поштаңызды тексеріңіз.',
       ok_reset: 'Құпиясөз жаңартылды. Журнал ашылуда…', redirecting: 'Журнал ашылуда…', offline: 'Сервермен байланыс жоқ. Интернетті тексеріңіз.',
-      legal: 'Жалғастыру арқылы сіз Қызмет көрсету шарттарымен келісесіз. Қаржылық кеңес емес.'
+      legal: 'Жалғастыру арқылы сіз <a href="legal.html#terms">Шарттармен</a> және <a href="legal.html#privacy">Құпиялылық саясатымен</a> келісесіз. Қаржылық кеңес емес.'
     },
     en: {
       art_title: 'Every trade is<br>a <em>lesson.</em>', art_sub: 'Turn your trading history into a real edge.', art_equity: 'Equity · 90 days',
@@ -44,7 +44,7 @@
       err_exists: 'This email is already registered. Try signing in.', err_provider: 'This sign-in method is not enabled yet.', err_generic: 'Error: {m}',
       ok_check: 'We sent a confirmation link to <b>{e}</b>. Click it to continue.', ok_reset_sent: 'Link sent. Check your inbox.',
       ok_reset: 'Password updated. Opening your journal…', redirecting: 'Opening your journal…', offline: 'Cannot reach the server. Check your connection.',
-      legal: 'By continuing you agree to the Terms of Service. Not financial advice.'
+      legal: 'By continuing you agree to the <a href="legal.html#terms">Terms</a> and <a href="legal.html#privacy">Privacy Policy</a>. Not financial advice.'
     }
   };
 

@@ -19,6 +19,9 @@ window.EDGEBOOK_CONFIG = {
   // Where subscribers manage or cancel their plan
   billingPortal: 'https://app.lemonsqueezy.com/my-orders',
 
+  // Shown on legal.html (Terms / Privacy / Refunds). Fill these in before launch.
+  legal: { owner: '', email: '', country: 'Kazakhstan' },
+
   // Prices shown on the landing page and in the app
   pricing: { currency: '$', monthly: 12, yearly: 99 }
 };
