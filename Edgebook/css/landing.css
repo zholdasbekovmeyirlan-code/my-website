@@ -11,7 +11,7 @@
 .lp .wrap { max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: 24px; padding-right: 24px; }
 .lp em { font-style: italic; }
 .lp h2.display em, .hero-title em, .manifesto em {
-  font-style: italic;
+  font-style: normal;
   background: linear-gradient(100deg, #f3e8ff 0%, #a855f7 45%, #6d28d9 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   padding-right: .06em;
@@ -73,11 +73,12 @@
   mask-image: radial-gradient(ellipse 60% 55% at 50% 20%, #000 20%, transparent 75%);
 }
 .beam {
-  position: absolute; left: 50%; top: 0; width: 1px; height: 420px; margin-left: -.5px;
+  position: absolute; left: 50%; top: 0; width: 1px; height: 300px; margin-left: -.5px;
   background: linear-gradient(180deg, transparent, rgba(216, 180, 254, .8), transparent);
   box-shadow: 0 0 30px 6px rgba(168, 85, 247, .25);
   animation: beam 6s ease-in-out infinite;
 }
+.hero-badge, .hero-title, .hero-sub, .hero-cta, .hero-note { position: relative; z-index: 1; }
 @keyframes beam { 0%, 100% { opacity: .15; transform: scaleY(.6); transform-origin: top; } 50% { opacity: .7; transform: scaleY(1); } }
 .hero .noise { opacity: .05; }
 .hero-copy { position: relative; }
@@ -102,7 +103,7 @@
 @keyframes pdot { 70% { box-shadow: 0 0 0 8px rgba(61, 220, 151, 0); } 100% { box-shadow: 0 0 0 0 rgba(61, 220, 151, 0); } }
 
 .hero-title {
-  font: 400 clamp(52px, 8.4vw, 112px)/.95 var(--display); letter-spacing: -.035em;
+  font: 600 clamp(38px, 7vw, 92px)/1.02 var(--display); letter-spacing: -.045em;
   margin: 28px auto 0; max-width: 1000px;
   text-shadow: 0 10px 60px rgba(0, 0, 0, .5);
 }
@@ -215,7 +216,7 @@
   display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
   color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent-line);
 }
-.section-head h2, .split-copy h2 { font-size: clamp(40px, 5.4vw, 68px); line-height: 1; letter-spacing: -.03em; margin-top: 20px; }
+.section-head h2, .split-copy h2 { font-size: clamp(32px, 4.5vw, 56px); line-height: 1.05; letter-spacing: -.04em; margin-top: 20px; }
 .section-head p, .split-copy > p { color: var(--text-2); font-size: 17px; line-height: 1.6; margin-top: 18px; }
 
 /* spotlight surfaces */
@@ -248,7 +249,7 @@
 .t-wide { grid-column: span 2; }
 .tile-copy h3 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
 .tile-copy p { color: var(--text-3); font-size: 14px; line-height: 1.55; margin-top: 6px; max-width: 420px; }
-.t-lg .tile-copy h3 { font: 400 34px/1.05 var(--display); letter-spacing: -.02em; }
+.t-lg .tile-copy h3 { font: 600 27px/1.1 var(--display); letter-spacing: -.035em; }
 .t-lg .tile-copy p { font-size: 15px; }
 .tile-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .tile-kpis div { padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .06); }
@@ -335,12 +336,12 @@
   border: 1px solid rgba(255, 255, 255, .08);
 }
 .step-n { font-size: 13px; color: var(--accent); font-weight: 600; letter-spacing: .1em; }
-.step h3 { font: 400 36px/1.1 var(--display); margin-top: 40px; letter-spacing: -.02em; }
+.step h3 { font: 600 27px/1.15 var(--display); margin-top: 40px; letter-spacing: -.035em; }
 .step p { color: var(--text-3); margin-top: 10px; line-height: 1.6; }
 
 /* ---------- manifesto ---------- */
 .manifesto { padding-top: 160px; text-align: center; }
-.manifesto p { font-size: clamp(36px, 5.2vw, 72px); line-height: 1.08; letter-spacing: -.03em; color: var(--text); max-width: 1000px; margin: 0 auto; }
+.manifesto p { font-size: clamp(28px, 4.3vw, 58px); line-height: 1.12; letter-spacing: -.04em; color: var(--text); max-width: 1000px; margin: 0 auto; }
 
 /* ---------- pricing ---------- */
 .price-card {
@@ -352,7 +353,7 @@
 }
 .price-plan { font-size: 13px; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); font-weight: 600; }
 .price-num { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
-.price-num b { font-size: 96px; line-height: .9; letter-spacing: -.04em; }
+.price-num b { font-size: 80px; line-height: .95; letter-spacing: -.05em; }
 .price-num span { color: var(--text-3); font-size: 16px; }
 .price-left p { color: var(--text-2); margin: 12px 0 28px; }
 .price-list { margin: 0; }
@@ -383,7 +384,7 @@
   border: 1px solid rgba(255, 255, 255, .08);
 }
 .final-glow { position: absolute; left: 50%; top: 100%; width: 900px; height: 500px; margin: -250px 0 0 -450px; background: radial-gradient(closest-side, rgba(168, 85, 247, .45), transparent); filter: blur(40px); }
-.final-card h2 { position: relative; font-size: clamp(44px, 6vw, 84px); line-height: 1; letter-spacing: -.035em; }
+.final-card h2 { position: relative; font-size: clamp(34px, 5vw, 68px); line-height: 1.05; letter-spacing: -.045em; }
 .final-card p { position: relative; color: var(--text-2); font-size: 17px; margin: 18px 0 34px; }
 .final-card .btn { position: relative; }
 
@@ -449,7 +450,7 @@
   .step h3 { margin-top: 20px; }
   .manifesto { padding-top: 110px; }
   .price-card { grid-template-columns: 1fr; padding: 28px; gap: 28px; }
-  .price-num b { font-size: 76px; }
+  .price-num b { font-size: 64px; }
   .price-left .btn { width: 100%; }
   .final { padding-top: 96px; }
   .final-card { padding: 64px 20px; border-radius: 24px; }
@@ -561,7 +562,7 @@ body.intro-on { overflow: hidden; }
 .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 960px; margin: 0 auto; align-items: stretch; }
 .plan.price-card { display: flex; flex-direction: column; align-items: stretch; gap: 0; max-width: none; margin: 0; padding: 36px; }
 .plan .price-num { margin-top: 8px; }
-.plan .price-num b { font-size: 72px; }
+.plan .price-num b { font-size: 62px; }
 .plan > p { color: var(--text-2); margin: 10px 0 0; }
 .plan .price-list { margin: 26px 0 30px; flex: 1; }
 .plan .btn { width: 100%; }
@@ -578,7 +579,7 @@ body.intro-on { overflow: hidden; }
 @media (max-width: 760px) {
   .plans { grid-template-columns: 1fr; }
   .plan.price-card { padding: 26px; }
-  .plan .price-num b { font-size: 60px; }
+  .plan .price-num b { font-size: 52px; }
 }
 
 .lp-login { padding: 8px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--text-2); transition: color .2s, background .2s; }

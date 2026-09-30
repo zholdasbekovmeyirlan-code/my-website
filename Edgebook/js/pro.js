@@ -172,7 +172,7 @@
       const W = 1080, H = 1350;
       canvas.width = W; canvas.height = H;
       const c = canvas.getContext('2d');
-      try { await Promise.all(['700 60px Inter', '600 40px Inter', '400 200px "Instrument Serif"', '400 40px Michroma', '600 40px "JetBrains Mono"'].map(f => document.fonts.load(f))); } catch (e) { /* offline fonts */ }
+      try { await Promise.all(['700 60px Inter', '600 40px Inter', '700 200px Onest', '400 40px Michroma', '600 40px "Geist Mono"'].map(f => document.fonts.load(f))); } catch (e) { /* offline fonts */ }
       const list = periodTrades(period);
       const st = stats(list);
       const bal = +S().balance || 0;
@@ -216,10 +216,10 @@
       c.fillText(t('net_pnl').toUpperCase(), 80, 318);
       const big = hide ? (bal ? (st.net >= 0 ? '+' : '−') + Math.abs(st.net / bal * 100).toFixed(2) + '%' : rfmt(st.totalR, true)) : money(st.net, { sign: true });
       let fs = 200;
-      do { c.font = '400 ' + fs + 'px "Instrument Serif", Georgia, serif'; fs -= 6; } while (c.measureText(big).width > W - 160 && fs > 80);
+      do { c.font = '700 ' + fs + 'px Onest, Inter, sans-serif'; fs -= 6; } while (c.measureText(big).width > W - 160 && fs > 80);
       const bg2 = c.createLinearGradient(0, 330, 0, 500); bg2.addColorStop(0, up ? '#8ff5c4' : '#ffa1a9'); bg2.addColorStop(1, tone);
       c.fillStyle = bg2; c.fillText(big, 74, 480);
-      c.font = '500 32px "JetBrains Mono", monospace'; c.fillStyle = 'rgba(255,255,255,.62)';
+      c.font = '500 32px "Geist Mono", monospace'; c.fillStyle = 'rgba(255,255,255,.62)';
       const subParts = [rfmt(st.totalR, true)];
       if (!hide && bal) subParts.push((st.net >= 0 ? '+' : '−') + Math.abs(st.net / bal * 100).toFixed(2) + '%');
       subParts.push(t('trades_n', { n: st.closed }));
@@ -251,7 +251,7 @@
         const x = 80 + (i % 2) * (bw + 24), y = 920 + Math.floor(i / 2) * (bh + 24);
         rr(c, x, y, bw, bh, 26); c.fillStyle = 'rgba(255,255,255,.045)'; c.fill(); c.strokeStyle = 'rgba(255,255,255,.08)'; c.stroke();
         c.font = '600 24px Inter, sans-serif'; c.fillStyle = 'rgba(255,255,255,.5)'; c.fillText(b[0].toUpperCase(), x + 30, y + 52);
-        let f2 = 52; do { c.font = '600 ' + f2 + 'px "JetBrains Mono", monospace'; f2 -= 2; } while (c.measureText(b[1]).width > bw - 60 && f2 > 24);
+        let f2 = 52; do { c.font = '600 ' + f2 + 'px "Geist Mono", monospace'; f2 -= 2; } while (c.measureText(b[1]).width > bw - 60 && f2 > 24);
         c.fillStyle = '#ffffff'; c.fillText(b[1], x + 30, y + 115);
       });
 

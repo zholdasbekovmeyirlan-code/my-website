@@ -4,8 +4,8 @@
 
 :root {
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --display: 'Instrument Serif', Georgia, serif;
-  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --display: 'Onest', 'Inter', system-ui, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --r-sm: 8px; --r: 12px; --r-lg: 18px; --r-xl: 24px;
   --side-w: 248px;
   --ease: cubic-bezier(.2, .8, .2, 1);
@@ -116,7 +116,7 @@ h1, h2, h3, p { margin: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 
 .mono { font-family: var(--mono); font-feature-settings: 'zero', 'tnum'; letter-spacing: -.01em; }
-.display { font-family: var(--display); font-weight: 400; letter-spacing: -.01em; }
+.display { font-family: var(--display); font-weight: 600; letter-spacing: -.035em; }
 .pos { color: var(--up); }
 .neg { color: var(--down); }
 .muted { color: var(--text-3); }
@@ -208,7 +208,7 @@ kbd {
   padding: 22px 0 18px; margin-bottom: 8px;
   background: linear-gradient(var(--bg) 60%, transparent);
 }
-.tb-title h1 { font: 400 34px/1.05 var(--display); letter-spacing: -.015em; }
+.tb-title h1 { font: 600 29px/1.1 var(--display); letter-spacing: -.035em; }
 .tb-title p { color: var(--text-3); font-size: 13px; margin-top: 4px; white-space: nowrap; }
 .tb-title { min-width: 0; }
 .tb-title p { overflow: hidden; text-overflow: ellipsis; }
@@ -303,7 +303,7 @@ kbd {
 
 /* hello */
 .hello { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 6px 0 20px; flex-wrap: wrap; }
-.hello h2 { font-size: 44px; line-height: 1.05; margin-top: 6px; }
+.hello h2 { font-size: 36px; line-height: 1.08; margin-top: 6px; }
 .hello-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 .pill {
   display: inline-flex; align-items: center; gap: 7px;
@@ -554,14 +554,14 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
   background: var(--accent-soft); color: var(--accent); box-shadow: 0 0 0 10px var(--accent-faint);
 }
 .empty-art .ic { width: 32px; height: 32px; }
-.empty h3 { font: 400 30px/1.1 var(--display); }
+.empty h3 { font: 600 25px/1.15 var(--display); letter-spacing: -.03em; }
 .empty p { color: var(--text-3); max-width: 420px; margin: 8px auto 22px; }
 .empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 /* ---------- calendar ---------- */
 .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
 .cal-nav { display: flex; align-items: center; gap: 10px; }
-.cal-nav h2 { font-size: 34px; min-width: 220px; text-align: center; }
+.cal-nav h2 { font-size: 28px; min-width: 220px; text-align: center; }
 .cal-nav h2 span { color: var(--text-3); }
 .cal-card { padding: 14px; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) 120px; gap: 6px; }
@@ -617,7 +617,7 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .j-item b { display: block; font-weight: 500; font-size: 13px; }
 .j-item small { color: var(--text-3); font-size: 11.5px; }
 .j-item .mono { font-size: 12.5px; font-weight: 600; }
-.j-main .card-head h2 { font-size: 34px; margin-top: 4px; }
+.j-main .card-head h2 { font-size: 28px; margin-top: 4px; }
 .j-day-stats { display: flex; gap: 22px; }
 .j-day-stats div { display: flex; flex-direction: column; align-items: flex-end; }
 .j-day-stats span { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
@@ -664,13 +664,13 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .modal.open .modal-panel { opacity: 1; transform: none; }
 .modal-panel > form { display: flex; flex-direction: column; min-height: 0; max-height: inherit; }
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }
-.modal-head h2 { font-size: 32px; line-height: 1.1; margin-top: 4px; }
+.modal-head h2 { font-size: 26px; line-height: 1.15; margin-top: 4px; }
 .modal-body { padding: 20px 24px; overflow-y: auto; }
 .modal-foot { display: flex; align-items: center; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); }
 .confirm { padding: 28px 24px 0; text-align: center; }
 .confirm .modal-foot { margin: 24px -24px 0; justify-content: flex-end; }
 .confirm-ic { width: 52px; height: 52px; border-radius: 16px; margin: 0 auto 16px; display: grid; place-items: center; color: var(--down); background: var(--down-soft); }
-.confirm h3 { font: 400 26px/1.15 var(--display); }
+.confirm h3 { font: 600 21px/1.2 var(--display); letter-spacing: -.025em; }
 .confirm p { color: var(--text-2); margin-top: 8px; }
 .kbd-list kbd { font-size: 12px; padding: 4px 8px; }
 
@@ -865,7 +865,7 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
   .cmdk-btn span, .cmdk-btn kbd { display: none; }
   .modal-panel.palette { margin-top: 0; border-radius: 22px 22px 0 0; }
   .btn kbd, .search kbd { display: none; }
-  .hello h2 { font-size: 34px; }
+  .hello h2 { font-size: 28px; }
   .kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
   .kpi { padding: 14px; }
   .hide-sm { display: none; }
@@ -888,7 +888,7 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
   .modal-head { padding: 18px 18px 14px; }
   .modal-body { padding: 16px 18px; }
   .modal-foot { padding: 14px 18px calc(14px + env(safe-area-inset-bottom)); flex-wrap: wrap; }
-  .cal-nav h2 { font-size: 26px; min-width: 0; }
+  .cal-nav h2 { font-size: 22px; min-width: 0; }
   .cal-grid { gap: 4px; }
   .cal-dow { padding: 4px; font-size: 10px; letter-spacing: .04em; }
   .cal-cell { min-height: 58px; padding: 6px; border-radius: 9px; }
@@ -924,7 +924,7 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .acc-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .acc-msg { font-size: 13px; min-height: 18px; }
 .acc-msg.ok { color: var(--up); } .acc-msg.err { color: var(--down); }
-.acc-plan-name { font: 400 26px/1.1 var(--display); margin-bottom: 10px; }
+.acc-plan-name { font: 600 21px/1.15 var(--display); letter-spacing: -.025em; margin-bottom: 10px; }
 .acc-plan-name span { font: 500 13px var(--mono); color: var(--text-3); margin-left: 6px; }
 .acc-perks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .acc-perks li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-2); }
@@ -1096,7 +1096,7 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
   display: inline-block; padding: 8px 18px; border-radius: 999px; font: 400 18px/1 'Michroma', var(--font); letter-spacing: .3em; color: #fff;
   background: linear-gradient(135deg, #c084fc, #7c3aed); box-shadow: 0 16px 40px -12px rgba(147, 51, 234, .8);
 }
-.welcome h2 { font-size: 40px; line-height: 1.05; margin-top: 22px; }
+.welcome h2 { font-size: 32px; line-height: 1.1; margin-top: 22px; }
 .welcome > p { color: var(--text-2); margin-top: 10px; }
 .welcome-list { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 8px; text-align: left; }
 .welcome-list li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
