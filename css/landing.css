@@ -616,3 +616,32 @@ body.intro-on { overflow: hidden; }
 .ai-input svg { width: 16px; height: 16px; }
 @media (max-width: 1100px) { .split-rev { grid-template-columns: 1fr; } .split-rev .split-visual { order: 0; } }
 @media (max-width: 760px) { .ai-msg { max-width: 100%; font-size: 13.5px; } }
+
+/* ---------- hero brand (big ENTRYX) ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.hero-brand {
+  position: relative; display: block; width: fit-content; margin: 0 auto;
+  font: 400 clamp(40px, 10.5vw, 140px)/1 'Michroma', var(--display); letter-spacing: .14em; margin-right: auto; padding-left: .14em;
+}
+.hero-brand::after {
+  content: ''; position: absolute; left: 8%; right: 8%; top: 18%; bottom: -10%; z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(168, 85, 247, .38), transparent); filter: blur(46px);
+}
+.hero-brand i {
+  display: inline-block; font-style: normal;
+  background: linear-gradient(180deg, #ffffff 8%, #e3e5ea 42%, #9a9eaa 78%, #6b6f7a 100%);
+  background-size: 100% 220%; background-position: 50% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  opacity: 0; transform: translateY(.22em); filter: blur(14px);
+}
+.hero-brand i.x { background-image: linear-gradient(135deg, #f5ecff 0%, #c084fc 38%, #a855f7 62%, #6d28d9 100%); }
+.ready .hero-brand i {
+  animation: letterIn 1s cubic-bezier(.2, .8, .2, 1) forwards, sheen 7s ease-in-out 2s infinite alternate;
+  animation-delay: calc(var(--i) * 80ms + 60ms), calc(var(--i) * 120ms + 2s);
+}
+@keyframes letterIn { to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes sheen { to { background-position: 50% 100%; } }
+.hero-tag { display: block; margin-top: .5em; font: 600 clamp(22px, 3.3vw, 44px)/1.15 var(--display); letter-spacing: -.035em; color: var(--text); }
+@media (prefers-reduced-motion: reduce) {
+  .hero-brand i { opacity: 1; transform: none; filter: none; animation: none !important; }
+}
