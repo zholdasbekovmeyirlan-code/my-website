@@ -38,7 +38,7 @@
     if ('MutationObserver' in window) new MutationObserver(run).observe(el, { childList: true });
   }
 
-  keepSplit($('.hero-title'), 'hw');
+  keepSplit($('.hero-tag'), 'hw');
 
   /* ---------- intro ---------- */
   const intro = $('#intro');

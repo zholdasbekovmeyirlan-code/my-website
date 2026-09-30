@@ -9,7 +9,7 @@
     kk: {
       nav_features: 'Мүмкіндіктер', nav_analytics: 'Аналитика', nav_how: 'Қалай жұмыс істейді', nav_faq: 'Сұрақтар', nav_open: 'Тегін бастау', nav_login: 'Кіру',
       hero_badge: 'Тегін бастау · Карта қажет емес · 30 секундта тіркелу',
-      hero_title: 'Трейдингіңіздің<br><em>жасырын <span class="nw">edge-ін</span></em> табыңыз.',
+      hero_tag: 'Кәсіби трейдерлердің <em>журналы.</em>',
       hero_sub: 'EntryX әр мәмілені, эмоцияны және қатені нақты сандарға айналдырады. Қай сетап ақша әкелетінін, қай әдет оны ұрлайтынын бір көзқараста көресіз.',
       cta_primary: 'Тегін бастау', cta_secondary: 'Демоны көру',
       hero_note: 'Карта қажет емес &nbsp;·&nbsp; Google арқылы бір басу &nbsp;·&nbsp; Қазақша және English',
@@ -70,7 +70,7 @@
     en: {
       nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
       hero_badge: 'Free to start · No card required · Sign up in 30 seconds',
-      hero_title: 'Find the <em>hidden edge</em><br>in your trading.',
+      hero_tag: 'The journal <em>serious traders</em> keep.',
       hero_sub: 'EntryX turns every trade, emotion and mistake into hard numbers. See which setups make you money — and which habits quietly take it back.',
       cta_primary: 'Start for free', cta_secondary: 'Explore the demo',
       hero_note: 'No card required &nbsp;·&nbsp; One click with Google &nbsp;·&nbsp; Kazakh & English',
