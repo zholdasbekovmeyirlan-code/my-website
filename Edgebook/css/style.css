@@ -1091,6 +1091,8 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .sc-seg button { flex: 1; }
 .sc-actions { display: flex; flex-direction: column; gap: 10px; }
 .sc-actions .btn { width: 100%; height: 44px; }
+.sc-empty { color: var(--warn); }
+.sc-actions .btn:disabled { opacity: .45; cursor: not-allowed; }
 .welcome { padding: 34px 28px 0; text-align: center; }
 .welcome-badge {
   display: inline-block; padding: 8px 18px; border-radius: 999px; font: 400 18px/1 'Michroma', var(--font); letter-spacing: .3em; color: #fff;
