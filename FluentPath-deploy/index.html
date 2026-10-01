@@ -578,6 +578,37 @@
     </div>
   </div>
 
+  <!-- Study music (YouTube embed) -->
+  <div class="music-widget" id="musicWidget">
+    <button type="button" class="music-toggle" id="musicToggle" title="Music" aria-label="Music">
+      🎵
+    </button>
+    <div class="music-panel glass hidden" id="musicPanel">
+      <div class="music-head">
+        <strong>Study music</strong>
+        <button type="button" class="icon-btn music-x" id="musicClose" aria-label="Close">✕</button>
+      </div>
+      <p class="muted music-note">Justin Bieber — Confident</p>
+      <div class="music-frame-wrap">
+        <iframe
+          id="musicFrame"
+          title="Justin Bieber Confident"
+          src="https://www.youtube.com/embed/47YClVMlthI?enablejsapi=1&rel=0&autoplay=1"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div class="music-links">
+        <button type="button" class="chip-btn active" data-yt="47YClVMlthI">Confident 🔥</button>
+        <button type="button" class="chip-btn" data-yt="qnD1hwjR3WU">Confident Audio</button>
+        <button type="button" class="chip-btn" data-yt="jfKfPfyJRdk">Lofi</button>
+        <button type="button" class="chip-btn" data-yt="DWcJFNfaw9c">Piano</button>
+      </div>
+      <a class="music-open" id="musicOpenTab" href="https://www.youtube.com/watch?v=47YClVMlthI" target="_blank" rel="noopener">YouTube-та ашу ↗</a>
+    </div>
+  </div>
+
   <div class="toast hidden" id="toast"></div>
   <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
