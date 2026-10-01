@@ -1,9 +1,6 @@
-# Edgebook — static site
+# EntryX — static site (no build step)
 [build]
   publish = "."
-
-[functions]
-  directory = "netlify/functions"
 
 [[headers]]
   for = "/*"
