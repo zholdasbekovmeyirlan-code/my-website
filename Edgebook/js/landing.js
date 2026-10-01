@@ -300,6 +300,9 @@
   let rt, lastW = window.innerWidth;
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (Math.abs(window.innerWidth - lastW) > 20) { lastW = window.innerWidth; drawMock(); } }, 150); });
 
+  // Until crypto checkout is configured, don't promise a payment method that isn't live yet.
+  if (!(window.EDGEBOOK_CONFIG || {}).payFunction) { const fp = $('#faqPay'); if (fp) fp.remove(); }
+
   applyLang();
   onScroll();
 })();
