@@ -13,6 +13,8 @@ window.EDGEBOOK_CONFIG = {
   // Social sign-in buttons. Each must also be enabled in Supabase → Authentication → Providers.
   // Supported here: 'google', 'github', 'apple'
   oauthProviders: ['google', 'github'],
+  // false = only the buttons above (no email/password form on the sign-in page)
+  emailAuth: false,
 
   // Crypto payments: slug of the `pay` Edge Function (last part of its URL). Empty = off.
   payFunction: '',

@@ -94,6 +94,10 @@
     const pw = $('[name=password]');
     pw.autocomplete = mode === 'in' ? 'current-password' : 'new-password';
     $('#switchLine').innerHTML = mode === 'in' ? T('sw_in') : mode === 'up' ? T('sw_up') : T('sw_back');
+    // Social-only sign-in: hide the email/password form (password reset links still work).
+    if (C.emailAuth === false && (mode === 'in' || mode === 'up') && showSocial) {
+      $('#orLine').hidden = true; $('#form').hidden = true; $('#switchLine').innerHTML = '';
+    } else $('#form').hidden = false;
     $('#card').classList.remove('swap'); void $('#card').offsetWidth; $('#card').classList.add('swap');
   }
   function setMode(m) { mode = m; msg(''); paint(); const f = mode === 'reset' ? $('[name=password]') : $('[name=email]'); if (f) f.focus(); }
