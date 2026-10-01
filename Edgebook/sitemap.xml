@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://zholdasbekovmeyirlan-code.github.io/my-website/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://zholdasbekovmeyirlan-code.github.io/my-website/login.html</loc><priority>0.6</priority></url>
-  <url><loc>https://zholdasbekovmeyirlan-code.github.io/my-website/legal.html</loc><priority>0.3</priority></url>
+  <url><loc>https://entryxx.netlify.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://entryxx.netlify.app/login.html</loc><priority>0.6</priority></url>
+  <url><loc>https://entryxx.netlify.app/legal.html</loc><priority>0.3</priority></url>
 </urlset>
