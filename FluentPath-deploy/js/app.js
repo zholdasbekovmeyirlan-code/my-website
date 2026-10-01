@@ -1217,26 +1217,6 @@
       $("#mainNav").classList.toggle("open");
     });
 
-    // YouTube study music widget
-    const musicPanel = $("#musicPanel");
-    const musicFrame = $("#musicFrame");
-    const musicOpenTab = $("#musicOpenTab");
-    $("#musicToggle")?.addEventListener("click", () => {
-      musicPanel?.classList.toggle("hidden");
-    });
-    $("#musicClose")?.addEventListener("click", () => {
-      musicPanel?.classList.add("hidden");
-    });
-    $all("[data-yt]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.yt;
-        if (!id || !musicFrame) return;
-        $all("[data-yt]").forEach((b) => b.classList.toggle("active", b === btn));
-        musicFrame.src = `https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&autoplay=1`;
-        if (musicOpenTab) musicOpenTab.href = `https://www.youtube.com/watch?v=${id}`;
-      });
-    });
-
     $("#themeToggle")?.addEventListener("click", () => {
       state.theme = state.theme === "light" ? "dark" : "light";
       applyTheme();
