@@ -1397,7 +1397,7 @@
     PRO.maybeWelcome();
     checkReturnFromPayment();
   });
-  // Back from the Cryptomus payment page (?paid=1): wait for the webhook to switch the plan on.
+  // Back from the NOWPayments payment page (?paid=1): wait for the webhook to switch the plan on.
   function checkReturnFromPayment() {
     if (!/[?&]paid=1/.test(location.search) || !Cloud.user) return;
     history.replaceState(null, '', location.pathname + '#/settings');
