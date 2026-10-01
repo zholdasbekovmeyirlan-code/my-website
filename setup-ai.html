@@ -69,7 +69,7 @@
     <pre data-show="supabase/functions/coach-lite/index.ts">Жүктеліп жатыр…</pre>
   </div>
 
-  <h1 style="margin-top:48px">ENTRY<span>X</span> · Крипто төлем (Cryptomus)</h1>
+  <h1 style="margin-top:48px">ENTRY<span>X</span> · Крипто төлем (NOWPayments)</h1>
   <p class="lead">Клиент USDT/BTC/ETH-пен төлейді → Pro өзі қосылады. Кілт енгізу жоқ, ақша қайтару жоқ.</p>
 
   <div class="step">
@@ -80,13 +80,14 @@
   </div>
 
   <div class="step warn">
-    <h2><span class="n">6</span> Cryptomus аккаунт</h2>
+    <h2><span class="n">6</span> NOWPayments кілттері</h2>
     <ul>
-      <li><b>cryptomus.com</b> → тіркелу → <b>Business</b> → <b>Create merchant</b> (сайт: <code class="k">zholdasbekovmeyirlan-code.github.io</code>).</li>
-      <li>Мерчант ішінде <b>Settings → API</b>: <b>Merchant ID</b> (UUID) және <b>Payment API key</b> көшіріңіз.</li>
+      <li><b>Settings → Payments → API keys</b> → <b>Add new key</b> → кілтті көшіріңіз.</li>
+      <li><b>Settings → Payments → Instant payment notifications</b> → <b>IPN secret key</b> жасап, көшіріңіз.</li>
+      <li><b>Set balance</b> / <b>Payout wallet</b>: ақша түсетін әмиян (мысалы Bybit USDT TRC20 мекенжайы).</li>
       <li>Supabase → <b>Edge Functions → Secrets</b>:<br>
-        <code class="k">CRYPTOMUS_MERCHANT</code> = Merchant ID<br>
-        <code class="k">CRYPTOMUS_API_KEY</code> = Payment API key</li>
+        <code class="k">NOWPAYMENTS_API_KEY</code> = API key<br>
+        <code class="k">NOWPAYMENTS_IPN_SECRET</code> = IPN secret key</li>
     </ul>
     <p>⚠️ Кілттерді ешкімге жібермеңіз, тек Supabase-ке қойыңыз.</p>
   </div>
@@ -95,7 +96,7 @@
     <h2><span class="n">7</span> Edge Function: <code class="k">pay</code></h2>
     <p>Supabase → <b>Edge Functions</b> → <b>Deploy a new function</b> → <b>Via Editor</b> → барлық үлгі кодты өшіріп, мынаны қойыңыз → <b>Deploy</b>.</p>
     <div class="bar"><button data-src="supabase/functions/pay/index.ts">Көшіру</button><span class="meta"></span></div>
-    <p>Кейін: функцияның <b>Settings</b> бетінде <b>Verify JWT</b> <b>өшірулі</b> болсын. Функцияның URL-інің соңғы бөлігін (мысалы <code class="k">clever-processor</code> сияқты) маған жазыңыз — сайтқа мен қосамын.</p>
+    <p>1-жолда <code class="k">// EntryX — Pro payments via NOWPayments</code> тұруы керек. Кейін функцияның <b>Settings</b> бетінде <b>Verify JWT</b> <b>өшірулі</b> болсын. Функцияның URL-інің соңғы бөлігін маған жазыңыз.</p>
     <pre data-show="supabase/functions/pay/index.ts">Жүктеліп жатыр…</pre>
   </div>
 </div>

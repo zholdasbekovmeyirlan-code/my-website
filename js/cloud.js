@@ -129,7 +129,7 @@
     },
     async signOut() { await this._client.auth.signOut(); },
 
-    /* Cryptomus: the `pay` Edge Function creates an invoice and returns its URL */
+    /* NOWPayments: the `pay` Edge Function creates an invoice and returns its URL */
     async startCheckout(interval) {
       const token = await this.accessToken();
       if (!token) throw new Error('auth');
