@@ -99,6 +99,58 @@
     <p>1-жолда <code class="k">// EntryX — Pro payments via NOWPayments</code> тұруы керек. Кейін функцияның <b>Settings</b> бетінде <b>Verify JWT</b> <b>өшірулі</b> болсын. Функцияның URL-інің соңғы бөлігін маған жазыңыз.</p>
     <pre data-show="supabase/functions/pay/index.ts">Жүктеліп жатыр…</pre>
   </div>
+
+  <h1 style="margin-top:48px">ENTRY<span>X</span> · Telegram бот</h1>
+  <p class="lead">Pro пайдаланушыларға: күндік есеп, P&amp;L, сетаптар, тәуекел, prop және AI коуч — Telegram-да.</p>
+
+  <div class="step">
+    <h2><span class="n">8</span> @BotFather: бот жасау</h2>
+    <ul>
+      <li>Telegram-да <b>@BotFather</b> ашып, <code class="k">/newbot</code> жазыңыз.</li>
+      <li>Аты: <code class="k">EntryX</code> · логин: мысалы <code class="k">entryx_journal_bot</code> (соңы <b>bot</b> болуы керек).</li>
+      <li>BotFather берген <b>token</b>-ды көшіріңіз (<code class="k">123456:ABC...</code>). Ешкімге жібермеңіз.</li>
+      <li>(Қаласаңыз) <code class="k">/setuserpic</code> → логотипті жіберіңіз.</li>
+    </ul>
+  </div>
+
+  <div class="step warn">
+    <h2><span class="n">9</span> Құпиялар (Supabase → Edge Functions → Secrets)</h2>
+    <p><code class="k">TELEGRAM_BOT_TOKEN</code> = BotFather token</p>
+    <p><code class="k">TELEGRAM_WEBHOOK_SECRET</code> = төмендегі батырма жасаған құпия сөз:</p>
+    <div class="bar"><button id="genSecret">Құпия сөз жасау және көшіру</button><code class="k" id="secretOut" style="user-select:all"></code></div>
+    <p class="meta">Бұл сөз тек сіздің браузеріңізде жасалады. Оны 12-қадамда да қолданасыз.</p>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">10</span> SQL: бот кестелері</h2>
+    <p>Supabase → <b>SQL Editor</b> → <b>New query</b> → қойыңыз → <b>Run</b>.</p>
+    <div class="bar"><button data-src="supabase/005_telegram.sql">Көшіру</button><span class="meta"></span></div>
+    <pre data-show="supabase/005_telegram.sql">Жүктеліп жатыр…</pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">11</span> Edge Function: бот</h2>
+    <p><b>Deploy a new function → Via Editor</b> → үлгі кодты толық өшіріп, мынаны қойыңыз → <b>Deploy</b>. Сосын функцияның <b>Settings</b> бетінде <b>Verify JWT</b> өшірулі болсын.</p>
+    <div class="bar"><button data-src="supabase/functions/tg/index.ts">Көшіру</button><span class="meta"></span></div>
+    <p>1-жолдан кейін <code class="k">// EntryX — Telegram bot</code> тұруы керек.</p>
+    <pre data-show="supabase/functions/tg/index.ts">Жүктеліп жатыр…</pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">12</span> Ботты іске қосу</h2>
+    <p>Функция URL-інің соңғы бөлігі (мысалы <code class="k">clever-processor</code>) және 9-қадамдағы құпия сөз:</p>
+    <div class="bar"><input id="slugIn" placeholder="function slug" style="flex:1;min-width:180px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b0c10;color:var(--text)">
+      <input id="secIn" placeholder="webhook secret" style="flex:1;min-width:180px;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0b0c10;color:var(--text)"></div>
+    <div class="bar"><a id="setupLink" class="k" target="_blank" rel="noopener" style="display:none"><button type="button">Ботты іске қосу ↗</button></a></div>
+    <p>Ашылған бетте <code class="k">"webhook":true</code> шықса — бот дайын ✅. Сосын маған боттың логинін жазыңыз (сайтқа «Telegram-ды қосу» батырмасын шығарамын).</p>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">13</span> (Қосымша) Кешкі күндік есеп</h2>
+    <p>Supabase → <b>Database → Extensions</b>: <b>pg_cron</b> және <b>pg_net</b> қосыңыз. Сосын 12-қадамды толтырып, мына SQL-ді көшіріп → <b>Run</b>:</p>
+    <div class="bar"><button id="cronCopy">Көшіру</button></div>
+    <pre id="cronSql">12-қадамдағы өрістерді толтырыңыз.</pre>
+  </div>
 </div>
 <script>
   const cache = {};
@@ -131,6 +183,25 @@
     b.textContent = 'Көшірілді ✓'; b.classList.add('done');
     setTimeout(() => { b.textContent = 'Көшіру'; b.classList.remove('done'); }, 2500);
   }));
+  // ---- Telegram helpers (everything stays in this browser) ----
+  const SB = 'https://cxxlikhearnbirqnnhmn.supabase.co';
+  document.getElementById('genSecret').addEventListener('click', e => {
+    const a = new Uint8Array(24); crypto.getRandomValues(a);
+    const sec = Array.from(a, b => 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 57]).join('');
+    document.getElementById('secretOut').textContent = sec;
+    document.getElementById('secIn').value = sec; upd();
+    const ok = fallbackCopy(sec); e.target.textContent = ok ? 'Көшірілді ✓' : 'Белгілеп көшіріңіз';
+  });
+  const upd = () => {
+    const slug = document.getElementById('slugIn').value.trim().replace(/^.*functions\/v1\//, '').replace(/[^a-z0-9-]/gi, '');
+    const sec = document.getElementById('secIn').value.trim();
+    const a = document.getElementById('setupLink');
+    if (slug && sec) { a.href = SB + '/functions/v1/' + slug + '?setup=' + encodeURIComponent(sec); a.style.display = ''; } else a.style.display = 'none';
+    document.getElementById('cronSql').textContent = slug && sec ? "select cron.unschedule('entryx-tg-remind') where exists (select 1 from cron.job where jobname = 'entryx-tg-remind');\nselect cron.schedule('entryx-tg-remind', '0 * * * *', $$\n  select net.http_post(\n    url     := '" + SB + "/functions/v1/" + slug + "',\n    headers := '{\"Content-Type\": \"application/json\", \"x-entryx-cron\": \"" + sec + "\"}'::jsonb,\n    body    := '{\"cron\": \"remind\"}'::jsonb\n  );\n$$);" : '12-қадамдағы өрістерді толтырыңыз.';
+  };
+  document.getElementById('slugIn').addEventListener('input', upd);
+  document.getElementById('secIn').addEventListener('input', upd);
+  document.getElementById('cronCopy').addEventListener('click', e => { const ok = fallbackCopy(document.getElementById('cronSql').textContent); e.target.textContent = ok ? 'Көшірілді ✓' : 'Белгілеп көшіріңіз'; });
 </script>
 </body>
 </html>

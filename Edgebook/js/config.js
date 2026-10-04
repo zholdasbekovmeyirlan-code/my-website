@@ -13,6 +13,9 @@ window.EDGEBOOK_CONFIG = {
   // Social sign-in buttons. Each must also be enabled in Supabase → Authentication → Providers.
   // Supported here: 'google', 'github', 'apple'
   oauthProviders: ['google', 'github'],
+  // Telegram bot username from @BotFather (without @). Empty = hide the Telegram card.
+  telegramBot: '',
+
   // false = only the buttons above (no email/password form on the sign-in page)
   emailAuth: false,
 

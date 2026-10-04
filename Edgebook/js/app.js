@@ -652,7 +652,7 @@
     const s = S();
     let bytes = 0;
     try { bytes = new Blob([localStorage.getItem(Store.key()) || '']).size; } catch (e) { bytes = new Blob([JSON.stringify(Store.state)]).size; }
-    v.innerHTML = accountCard() +
+    v.innerHTML = accountCard() + telegramCard() +
       '<div class="grid g-2 settings">' +
       '<div class="card"><div class="card-head"><div><h3>' + t('profile') + '</h3><p>' + t('profile_sub') + '</p></div></div>' +
       '<form id="setForm" class="form-grid">' +
@@ -681,6 +681,7 @@
     }
 
     bindAccount();
+    bindTelegram();
     $('#setForm').addEventListener('submit', e => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -1078,6 +1079,43 @@
     }
     return '<div class="card acc-card">' + head(email + ' · ' + badge, '<button class="btn btn-ghost btn-sm" data-action="sign-out">' + t('sign_out') + '</button>') +
       '<div class="acc-grid"><div class="acc-upsell"><div class="acc-plan-name">' + t('upgrade_title') + '</div>' + perks + '</div>' + buy + '</div></div>';
+  }
+
+  /* ---------- Telegram bot ---------- */
+  function telegramCard() {
+    const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot;
+    if (!bot || !Cloud.enabled || !Cloud.user) return '';
+    return '<div class="card tg-card" id="tgCard"><div class="tg-ic">' + icon('send') + '</div><div class="tg-copy"><h3>' + t('tg_title') + '</h3><p>' + t('tg_sub') + '</p></div>' +
+      '<div class="tg-actions" id="tgActions"><span class="muted small">…</span></div></div>';
+  }
+  function bindTelegram() {
+    const box = $('#tgActions');
+    if (!box) return;
+    const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot.replace(/^@/, '');
+    const paint = link => {
+      box.innerHTML = link
+        ? '<span class="tg-on">✓ ' + t('tg_connected', { u: link.username ? '@' + esc(link.username) : 'Telegram' }) + '</span>' +
+          '<a class="btn btn-primary btn-sm" href="https://t.me/' + esc(bot) + '" target="_blank" rel="noopener">' + t('tg_open') + '</a>' +
+          '<button class="btn btn-ghost btn-sm" id="tgUnlink">' + t('tg_unlink') + '</button>'
+        : '<button class="btn btn-primary" id="tgConnect">' + icon('send') + t('tg_connect') + '</button>';
+      const c = $('#tgConnect');
+      if (c) c.addEventListener('click', () => {
+        if (!hasPro()) { proUpsell('pro_f7'); return; }
+        const w = window.open('', '_blank');   // open now so Safari doesn't block the popup after the await
+        c.disabled = true;
+        Cloud.tgCode().then(code => {
+          const url = 'https://t.me/' + bot + '?start=' + code;
+          if (w) w.location.href = url; else location.href = url;
+          toast(t('tg_wait'));
+          let n = 0;
+          const poll = () => Cloud.tgStatus().then(l => { if (l) { paint(l); toast(t('tg_done'), 'ok'); } else if (++n < 60) setTimeout(poll, 3000); else c.disabled = false; });
+          setTimeout(poll, 3000);
+        }).catch(e => { if (w) w.close(); c.disabled = false; toast(t('tg_err') + ' (' + (e.message || e) + ')', 'err'); });
+      });
+      const u = $('#tgUnlink');
+      if (u) u.addEventListener('click', () => Cloud.tgUnlink().then(() => { paint(null); toast(t('tg_unlinked'), 'ok'); }));
+    };
+    Cloud.tgStatus().then(paint).catch(() => paint(null));
   }
 
   function bindAccount() {
