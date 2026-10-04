@@ -14,7 +14,7 @@ window.EDGEBOOK_CONFIG = {
   // Supported here: 'google', 'github', 'apple'
   oauthProviders: ['google', 'github'],
   // Telegram bot username from @BotFather (without @). Empty = hide the Telegram card.
-  telegramBot: '',
+  telegramBot: 'entryx_journal_bot',
 
   // false = only the buttons above (no email/password form on the sign-in page)
   emailAuth: false,
