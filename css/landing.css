@@ -665,3 +665,12 @@ body.intro-on { overflow: hidden; }
 .ready .hero-film { opacity: .9; }
 .hero-film ~ .wave { opacity: .45 !important; }
 @media (max-width: 760px) { .hero-film { inset: 0 0 120px; } .hero-film::after { background: linear-gradient(180deg, rgba(5, 6, 8, .55), rgba(5, 6, 8, .35) 60%, rgba(5, 6, 8, .6)); } }
+
+/* ---------- photo layers (Higgsfield) — subtle, masked, text stays readable ---------- */
+.final-photo { position: absolute; inset: 0; background-size: cover; background-position: center bottom; opacity: .55; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.35) 35%, #000 75%); mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.35) 35%, #000 75%); }
+.final-card > .final-photo + .final-glow { opacity: .7; }
+.ai-photo { position: absolute; inset: -14% -14%; background-size: cover; background-position: center; opacity: .65; pointer-events: none; z-index: 0;
+  -webkit-mask-image: radial-gradient(closest-side, #000 50%, transparent); mask-image: radial-gradient(closest-side, #000 50%, transparent); }
+#coach .split-visual > .ai-card { position: relative; z-index: 1; background: rgba(12, 13, 17, .82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+@media (max-width: 760px) { .final-photo { opacity: .4; } .ai-photo { inset: -4% -4%; opacity: .4; } }
