@@ -388,6 +388,7 @@ main > section.programs { background: var(--bg-2); }
 .footer { border-top: 1px solid var(--line); padding: 40px 0 34px; overflow: hidden; }
 .footer__giant { display: block; width: min(92%, 1400px); height: auto; margin: 10px auto 40px; opacity: .1; transition: opacity .8s; user-select: none; }
 .footer__giant:hover { opacity: .35; }
+.footer__demo { width: 100%; font-size: .78rem; color: #6f6f78; }
 .footer__in { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: .85rem; }
 
 /* WhatsApp */

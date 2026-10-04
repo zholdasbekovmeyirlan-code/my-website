@@ -350,8 +350,14 @@ if (finePointer && !reduceMotion) {
 
 /* ---------- early-signup form (Netlify Forms) ---------- */
 const form = $("#joinForm"), msg = $("#formMsg");
+if (!cfg.demo) $("#footerDemo").hidden = true;
 form.addEventListener("submit", e => {
   e.preventDefault();
+  if (cfg.demo) {
+    msg.className = "form__msg";
+    msg.textContent = t("form_demo");
+    return;
+  }
   fetch("/", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },

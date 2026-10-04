@@ -6,6 +6,10 @@ window.TFC_CONFIG = {
   // Ашылу күні (ISO форматы). Белгілі болса, сайтта кері санақ шығады: "2026-12-01T10:00:00+05:00"
   openingDate: "",
 
+  // Демо режимі: форма деректерді ешқайда жібермейді, төменде "Демо-концепт" белгісі шығады.
+  // Клуб мақұлдап, сайт ресми түрде Netlify-ға шыққанда false қылыңыз.
+  demo: true,
+
   instagramClub: "https://www.instagram.com/toktarfight_club/",
   instagramFounder: "https://www.instagram.com/erkebulan_toktar/",
   phone: "",                      // "+7 700 000 00 00"
