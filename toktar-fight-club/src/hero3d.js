@@ -3,9 +3,8 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { buildWolf } from "./wolf.js";
+import { buildEmblem } from "./emblem.js";
 
-const BG = 0x0b0b0d;
 
 function textRingTexture() {
   const c = document.createElement("canvas");
@@ -48,11 +47,12 @@ function fireEnvironment(renderer) {
     m.lookAt(0, 0, 0);
     env.add(m);
   };
-  panel(0xffffff, 1.8, 6, 2, [-5, 6, 4]);
+  panel(0xffffff, 3, 6, 2, [-5, 6, 4]);
+  panel(0xfff4e6, 1.6, 10, 3, [0, 8, 2]);
   panel(0xff6a2b, 2.6, 8, 3, [6, -3, 3]);
   panel(0xff8a40, 1.6, 10, 2, [0, 2, -8]);
   panel(0xff5a20, 1.2, 3, 8, [-7, -1, -2]);
-  panel(0x8a96a8, 0.35, 12, 12, [0, 0, 9]);
+  panel(0xd8d0c4, 1.1, 12, 12, [0, 0, 9]);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const tex = pmrem.fromScene(env, 0.02).texture;
   pmrem.dispose();
@@ -127,7 +127,7 @@ function makeEmbers(n, pixelRatio) {
 export function initHero(canvas) {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
   } catch (e) {
     return null;
   }
@@ -137,7 +137,7 @@ export function initHero(canvas) {
   renderer.toneMappingExposure = 0.95;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(BG);
+  renderer.setClearColor(0x000000, 0); // transparent: the gym photo shows through behind the canvas
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 60);
   camera.position.set(0, 0, 8);
 
@@ -145,7 +145,7 @@ export function initHero(canvas) {
 
   const rig = new THREE.Group();
   scene.add(rig);
-  const { group: wolf, eyeMat } = buildWolf();
+  const { group: wolf } = buildEmblem({ height: 2.3 });
   rig.add(wolf);
 
   // lights follow the emblem's position but not its scale (keeps brightness equal on every screen)
@@ -201,7 +201,7 @@ export function initHero(canvas) {
     const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     const halfW = halfH * camera.aspect;
     if (camera.aspect > 1.05) base = { x: Math.min(halfW * 0.56, 4), y: 0, s: Math.min(1.15, halfH * 0.46) };
-    else base = { x: 0, y: halfH * 0.5, s: Math.min(halfW * 0.54, 0.9) };
+    else base = { x: 0, y: halfH * 0.56, s: Math.min(halfW * 0.48, 0.85) };
   }
   layout();
   addEventListener("resize", layout);
@@ -228,7 +228,6 @@ export function initHero(canvas) {
     wolf.rotation.y = mx * 0.5 + Math.sin(t * 0.45) * 0.14 + scrollP * Math.PI + (1 - e) * Math.PI * 1.5;
     wolf.rotation.x = my * 0.25 + Math.sin(t * 0.6) * 0.03;
     ringSpin.rotation.y = t * 0.22;
-    eyeMat.emissiveIntensity = 3.5 + Math.sin(t * 3) * 0.8;
 
     lights.position.copy(rig.position);
     glow.position.set(rig.position.x, rig.position.y, rig.position.z - 1.4);

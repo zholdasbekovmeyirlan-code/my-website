@@ -28,6 +28,8 @@ window.TFC_I18N = {
     bag_lvl_3: "Күшті!",
     bag_lvl_4: "НОКАУТ!",
 
+    hero_slogan_1: "Қасқыр рухы.",
+    hero_slogan_2: "Чемпион тәртібі.",
     hero_badge: "Жақында ашылады",
     hero_title_1: "Toktar",
     hero_title_2: "Fight Club",
@@ -156,6 +158,8 @@ window.TFC_I18N = {
     bag_lvl_3: "Мощно!",
     bag_lvl_4: "НОКАУТ!",
 
+    hero_slogan_1: "Дух волка.",
+    hero_slogan_2: "Дисциплина чемпиона.",
     hero_badge: "Скоро открытие",
     hero_title_1: "Toktar",
     hero_title_2: "Fight Club",

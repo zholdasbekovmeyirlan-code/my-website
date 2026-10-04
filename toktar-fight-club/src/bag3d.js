@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { OUTLINE, T_SHAPE, EYE_R, EYE_L, wolfPath2D } from "./wolf.js";
+import { MARK, WORDMARK } from "./logoData.js";
 
 const BG = 0x111114;
 const BAG_R = 0.62;
@@ -48,42 +48,33 @@ function bagTextures() {
     band(H * 0.07, H * 0.05);
     band(H * 0.86, H * 0.05);
 
-    // front logo (u = 0.5 faces the camera)
+    // front print of the club logo (u = 0.5 faces the camera)
     g.fillStyle = "#000";
     g.fillRect(0, 0, W, H);
-    const cx = W / 2, logoY = H * 0.36, s = H * 0.13;
-    for (const ctx of [b, g]) {
+    const drawLogo = (ctx, data, cx, top, height, fill) => {
+      const [, , vw, vh] = data.viewBox;
+      const k = height / vh;
       ctx.save();
-      ctx.lineJoin = "round";
-      ctx.strokeStyle = "#ff6a2b";
-      ctx.lineWidth = 7;
-      ctx.stroke(wolfPath2D(OUTLINE, cx, logoY, s));
-      ctx.fillStyle = "#e8e8ec";
-      ctx.fill(wolfPath2D(T_SHAPE, cx, logoY, s));
-      ctx.fillStyle = "#ff6a2b";
-      ctx.fill(wolfPath2D(EYE_R, cx, logoY, s));
-      ctx.fill(wolfPath2D(EYE_L, cx, logoY, s));
-      ctx.fillStyle = "#ff6a2b";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = `700 ${Math.round(H * 0.12)}px Oswald, Impact, sans-serif`;
-      if ("letterSpacing" in ctx) ctx.letterSpacing = "10px";
-      ctx.fillText("TOKTAR", cx, H * 0.6);
-      ctx.fillStyle = "#cfcfd6";
-      ctx.font = `600 ${Math.round(H * 0.04)}px Oswald, Impact, sans-serif`;
-      if ("letterSpacing" in ctx) ctx.letterSpacing = "18px";
-      ctx.fillText("FIGHT CLUB", cx, H * 0.69);
+      ctx.translate(cx - (vw * k) / 2, top);
+      ctx.scale(k, k);
+      ctx.fillStyle = fill;
+      for (const d of data.paths) ctx.fill(new Path2D(d), "evenodd");
       ctx.restore();
-    }
-    // keep only orange parts glowing
-    g.globalCompositeOperation = "multiply";
-    g.fillStyle = "#ff8040";
-    g.fillRect(0, 0, W, H);
-    g.globalCompositeOperation = "source-over";
+    };
+    const metal = (ctx, y0, y1) => {
+      const grd = ctx.createLinearGradient(0, y0, 0, y1);
+      grd.addColorStop(0, "#f2efe8"); grd.addColorStop(0.45, "#a9a39a"); grd.addColorStop(0.6, "#e4e0d8"); grd.addColorStop(1, "#8a857d");
+      return grd;
+    };
+    const markTop = H * 0.2, markH = H * 0.36, wordTop = H * 0.61, wordH = H * 0.11;
+    drawLogo(b, MARK, W / 2, markTop, markH, metal(b, markTop, markTop + markH));
+    drawLogo(b, WORDMARK, W / 2, wordTop, wordH, metal(b, wordTop, wordTop + wordH));
+    // a faint glow on the print so it reads under the dark lighting
+    drawLogo(g, MARK, W / 2, markTop, markH, "#3a3530");
+    drawLogo(g, WORDMARK, W / 2, wordTop, wordH, "#3a3530");
     map.needsUpdate = emap.needsUpdate = true;
   };
   draw();
-  if (document.fonts) document.fonts.ready.then(draw);
   return { map, emap };
 }
 
@@ -203,7 +194,7 @@ export function initBag(canvas, ui) {
 
   const { map, emap } = bagTextures();
   const bagMat = new THREE.MeshPhysicalMaterial({
-    map, emissiveMap: emap, emissive: 0xffffff, emissiveIntensity: 0.55,
+    map, emissiveMap: emap, emissive: 0xffffff, emissiveIntensity: 1,
     roughness: 0.62, metalness: 0.05, clearcoat: 0.15, clearcoatRoughness: 0.5, envMapIntensity: 0.45
   });
   const bagHolder = new THREE.Group();

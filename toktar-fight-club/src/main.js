@@ -240,6 +240,15 @@ ScrollTrigger.create({
     heroCanvas.style.visibility = s.progress < 0.995 ? "visible" : "hidden";
   }
 });
+// the fixed gym photo behind the hero: slow zoom while leaving, hidden once covered
+ScrollTrigger.create({
+  trigger: ".hero", start: "top top", end: "bottom top",
+  onUpdate: s => { $("#heroBg").style.visibility = s.progress < 0.995 ? "visible" : "hidden"; }
+});
+if (!reduceMotion) {
+  gsap.to(".hero-bg__img", { scale: 1.16, yPercent: 4, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+  gsap.fromTo(".about-photo__img", { yPercent: -10 }, { yPercent: 0, ease: "none", scrollTrigger: { trigger: ".about-photo", start: "top bottom", end: "bottom top", scrub: true } });
+}
 gsap.to("#heroIn", {
   yPercent: -18, opacity: 0, ease: "none",
   scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true }
@@ -384,9 +393,10 @@ const fontsReady = document.fonts ? Promise.race([document.fonts.ready, wait(250
 Promise.all([fontsReady, wait(reduceMotion ? 300 : 2000)]).then(() => {
   const chars = $$(".hero__title .split").flatMap(splitChars);
   const tl = gsap.timeline();
-  tl.to("#loader", { clipPath: "inset(0 0 100% 0)", duration: 1, ease: "power4.inOut" })
-    .add(revealPage, "-=0.55")
-    .from(chars, { yPercent: 115, rotate: 6, duration: 1, stagger: 0.035, ease: "power4.out" }, "-=0.45")
+  if (!revealed) tl.to("#loader", { clipPath: "inset(0 0 100% 0)", duration: 1, ease: "power4.inOut" });
+  tl.add(revealPage, revealed ? 0 : "-=0.55")
+    .from(".hero__wordmark", { clipPath: "inset(0 100% 0 0)", opacity: 0, duration: 1.3, ease: "power3.inOut", clearProps: "clipPath,opacity" }, "-=0.5")
+    .from(chars, { yPercent: 115, rotate: 6, duration: 1, stagger: 0.03, ease: "power4.out" }, "-=0.9")
     .from(".hero__fade", { y: 30, opacity: 0, duration: 0.9, stagger: 0.1, ease: "power3.out", clearProps: "transform,opacity" }, "-=0.75")
     .from("#nav", { yPercent: -100, duration: 0.8, ease: "power3.out", clearProps: "transform" }, "<");
 });
