@@ -1524,7 +1524,7 @@
     let n = 0;
     const tick = () => Cloud.refreshProfile().then(() => {
       if (Cloud.isPaid) { toast(t('plan_active'), 'ok'); Cloud.syncNow(); render(); return; }
-      if (++n < 36) setTimeout(tick, 5000); else toast(t('still_free'), 'err');
+      if (++n < 180) setTimeout(tick, n < 24 ? 5000 : 10000); else toast(t('still_free'), 'err');
     });
     tick();
   }
