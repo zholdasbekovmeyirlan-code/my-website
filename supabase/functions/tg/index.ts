@@ -516,7 +516,8 @@ Deno.serve(async (req) => {
     await tg("setMyCommands", { commands: toCmds(COMMANDS.en), language_code: "en" });
     await tg("setMyDescription", { description: "EntryX — трейдинг журналыңыз Telegram-да: P&L, сетаптар, тәуекел, күндік есеп және AI коуч." });
     await tg("setMyShortDescription", { short_description: "EntryX трейдинг журналы · AI коуч" });
-    return json({ webhook: hook.ok === true, url: self });
+    const me = await tg("getMe", {});
+    return json({ webhook: hook.ok === true, url: self, bot: me.result?.username ?? null, error: hook.ok ? undefined : hook.description, token_ok: me.ok === true });
   }
   if (req.method !== "POST") return json({ ok: true });
 
