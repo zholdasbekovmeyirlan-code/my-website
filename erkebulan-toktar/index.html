@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Еркебұлан Тоқтар — фан-сайт</title>
+<meta name="description" content="Еркебұлан Тоқтар туралы бейресми фан-сайт: актер, желілік танымал тұлға.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0f; --surface:#17171b; --line:#2a2a31; --text:#f3f3f5; --muted:#a3a3ad;
+  --accent:#e5b33a; --accent-2:#c8402f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+h1,h2,h3{font-family:Oswald,Impact,sans-serif;text-transform:uppercase;letter-spacing:.02em;line-height:1.1}
+
+nav{position:sticky;top:0;z-index:10;background:rgba(13,13,15,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+.logo{font-family:Oswald,sans-serif;font-weight:700;font-size:1.25rem;text-decoration:none}
+.logo span{color:var(--accent)}
+nav ul{display:flex;gap:20px;list-style:none;font-size:.9rem}
+nav ul a{text-decoration:none;color:var(--muted)}
+nav ul a:hover{color:var(--text)}
+@media(max-width:640px){nav ul{display:none}}
+
+.hero{position:relative;min-height:88vh;display:flex;align-items:center;overflow:hidden;
+  background:radial-gradient(circle at 75% 30%,rgba(229,179,58,.18),transparent 55%),
+             radial-gradient(circle at 15% 80%,rgba(200,64,47,.18),transparent 50%),var(--bg)}
+.hero .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center}
+.tag{display:inline-block;border:1px solid var(--accent);color:var(--accent);padding:4px 12px;border-radius:999px;font-size:.8rem;margin-bottom:20px}
+.hero h1{font-size:clamp(2.8rem,8vw,5.5rem)}
+.hero h1 em{font-style:normal;color:var(--accent);display:block}
+.hero p{color:var(--muted);font-size:1.1rem;margin:20px 0 32px;max-width:520px}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600}
+.btn-main{background:var(--accent);color:#111}
+.btn-ghost{border:1px solid var(--line)}
+.btn:hover{opacity:.85}
+.portrait{aspect-ratio:4/5;border-radius:20px;border:1px solid var(--line);
+  background:linear-gradient(160deg,#24242b,#111114);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.portrait img{width:100%;height:100%;object-fit:cover}
+.portrait .initials{font-family:Oswald,sans-serif;font-size:8rem;color:var(--accent);opacity:.9}
+.portrait small{position:absolute;bottom:14px;color:var(--muted);font-size:.75rem}
+@media(max-width:800px){.hero .wrap{grid-template-columns:1fr}.portrait{max-width:360px}}
+
+section{padding:88px 0;border-top:1px solid var(--line)}
+.sec-title{font-size:clamp(2rem,5vw,3rem);margin-bottom:12px}
+.sec-title span{color:var(--accent)}
+.lead{color:var(--muted);max-width:640px;margin-bottom:40px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px}
+.stat b{display:block;font-family:Oswald,sans-serif;font-size:2.2rem;color:var(--accent)}
+.stat span{color:var(--muted);font-size:.9rem}
+
+.films{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.film{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;transition:border-color .2s,transform .2s}
+.film:hover{border-color:var(--accent);transform:translateY(-3px)}
+.film h3{font-size:1.15rem;margin-bottom:6px}
+.film p{color:var(--muted);font-size:.85rem}
+
+.ring{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.ring-card{background:linear-gradient(135deg,var(--accent-2),#6d1d14);border-radius:20px;padding:40px}
+.ring-card h3{font-size:2rem;margin-bottom:12px}
+@media(max-width:800px){.ring{grid-template-columns:1fr}}
+
+.socials{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.social{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;text-decoration:none}
+.social:hover{border-color:var(--accent)}
+.social .ic{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.ig{background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)}
+.yt{background:#ff0000}
+.kp{background:#ff6600}
+.social small{display:block;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#" class="logo">ЕРКЕБҰЛАН <span>ТОҚТАР</span></a>
+    <ul>
+      <li><a href="#about">Өмірбаян</a></li>
+      <li><a href="#films">Фильмдер</a></li>
+      <li><a href="#ring">Ринг</a></li>
+      <li><a href="#social">Әлеуметтік желі</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <div class="tag">Актер · Блогер · Ринг</div>
+      <h1>Еркебұлан <em>Тоқтар</em></h1>
+      <p>Қазақстандық актер және желілік танымал тұлға. Кино мен сериалдарда ойнайды, бокс рингіне шыққан, Instagram-да 2,5 миллионнан астам жазылушысы бар.</p>
+      <div class="btns">
+        <a class="btn btn-main" href="#films">Фильмдерін көру</a>
+        <a class="btn btn-ghost" href="https://www.instagram.com/erkebulan_toktar/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="portrait">
+      <!-- Сурет қосу үшін: <img src="img/photo.jpg" alt="Еркебұлан Тоқтар"> -->
+      <div class="initials">ЕТ</div>
+      <small>Суретті рұқсатпен осында қойыңыз</small>
+    </div>
+  </div>
+</header>
+
+<section id="about">
+  <div class="wrap">
+    <h2 class="sec-title">Өмір<span>баян</span></h2>
+    <p class="lead">Еркебұлан Тоқтар 1995 жылы желтоқсанда туған. Ол экранда да, әлеуметтік желіде де танымал: көрермендер оны комедиялық және драмалық рөлдерінен біледі.</p>
+    <div class="stats">
+      <div class="stat"><b>1995</b><span>Туған жылы (желтоқсан)</span></div>
+      <div class="stat"><b>1,8 м</b><span>Бойы</span></div>
+      <div class="stat"><b>2,5 млн+</b><span>Instagram жазылушысы</span></div>
+      <div class="stat"><b>10+</b><span>Фильм мен жоба</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="films">
+  <div class="wrap">
+    <h2 class="sec-title">Фильм<span>дер</span></h2>
+    <p class="lead">Еркебұлан ойнаған таңдаулы фильмдер мен жобалар.</p>
+    <div class="films">
+      <div class="film"><h3>Женатый холостяк</h3><p>Комедия</p></div>
+      <div class="film"><h3>Strawberry Princess</h3><p>Фильм</p></div>
+      <div class="film"><h3>Zero</h3><p>Фильм</p></div>
+      <div class="film"><h3>Мен үшін өмір сүр</h3><p>Живи для меня</p></div>
+      <div class="film"><h3>Афган</h3><p>Фильм</p></div>
+      <div class="film"><h3>Арлан</h3><p>Фильм</p></div>
+      <div class="film"><h3>Решающий раунд</h3><p>Шешуші раунд</p></div>
+      <div class="film"><h3>Научи меня жить</h3><p>Өмір сүруді үйрет</p></div>
+      <div class="film"><h3>Женюсь на дочке богача</h3><p>Комедия</p></div>
+      <div class="film"><h3>Режиссер</h3><p>Фильм</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="ring">
+  <div class="wrap ring">
+    <div>
+      <h2 class="sec-title">Ринг<span>те</span></h2>
+      <p class="lead">Еркебұлан тек экранда емес, бокс рингінде де өзін сынап көрді. Шыдамдылық, тәртіп және жеңіске деген құштарлық оның басты қасиеттері.</p>
+    </div>
+    <div class="ring-card">
+      <h3>Ешқашан берілме</h3>
+      <p>Спорт пен кино. Екеуі де еңбек пен ерік-жігерді қажет етеді.</p>
+    </div>
+  </div>
+</section>
+
+<section id="social">
+  <div class="wrap">
+    <h2 class="sec-title">Әлеуметтік <span>желі</span></h2>
+    <p class="lead">Еркебұланды осы жерлерден бақылай аласыз.</p>
+    <div class="socials">
+      <a class="social" href="https://www.instagram.com/erkebulan_toktar/" target="_blank" rel="noopener">
+        <div class="ic ig">IG</div><div>Instagram<small>@erkebulan_toktar · 2,5 млн+</small></div>
+      </a>
+      <a class="social" href="https://www.youtube.com/results?search_query=%D0%95%D1%80%D0%BA%D0%B5%D0%B1%D1%83%D0%BB%D0%B0%D0%BD+%D0%A2%D0%BE%D0%BA%D1%82%D0%B0%D1%80" target="_blank" rel="noopener">
+        <div class="ic yt">▶</div><div>YouTube<small>Сұхбаттар мен видеолар</small></div>
+      </a>
+      <a class="social" href="https://www.kinopoisk.ru/index.php?kp_query=%D0%95%D1%80%D0%BA%D0%B5%D0%B1%D1%83%D0%BB%D0%B0%D0%BD+%D0%A2%D0%BE%D0%BA%D1%82%D0%B0%D1%80" target="_blank" rel="noopener">
+        <div class="ic kp">K</div><div>Кинопоиск<small>Толық фильмография</small></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Бұл — жанкүйерлер жасаған бейресми фан-сайт. Еркебұлан Тоқтардың ресми сайты емес.
+  </div>
+</footer>
+
+</body>
+</html>
