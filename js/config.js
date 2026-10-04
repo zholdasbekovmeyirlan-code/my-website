@@ -20,7 +20,7 @@ window.EDGEBOOK_CONFIG = {
   emailAuth: false,
 
   // Crypto payments: slug of the `pay` Edge Function (last part of its URL). Empty = off.
-  payFunction: '',
+  payFunction: 'smart-api',
 
   // Lemon Squeezy → Store → Products → Share (checkout links for each variant; unused when payFunction is set)
   checkout: {
