@@ -1191,3 +1191,20 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .tg-banner span { color: var(--text-3); font-size: 13px; }
 @media (max-width: 760px) { .tg-banner { flex-wrap: wrap; } .tg-banner > div { flex-basis: calc(100% - 60px); } }
 @media (max-width: 760px) { .tg-nav { display: none; } }
+
+/* ---------- charts ---------- */
+.td-chart-wrap { margin-bottom: 18px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); overflow: hidden; }
+.td-chart-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.td-chart-head b { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.td-chart-head b svg { width: 16px; height: 16px; color: var(--accent-2); }
+.td-chart { position: relative; height: 340px; }
+.td-chart-msg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-3); font-size: 13px; }
+.td-chart-lock { display: flex; align-items: center; gap: 14px; padding: 18px; background: radial-gradient(120% 160% at 0% 0%, var(--accent-tint), transparent 60%); }
+.td-chart-lock > svg { width: 28px; height: 28px; color: var(--accent-2); flex: none; }
+.td-chart-lock > div { flex: 1; } .td-chart-lock b { display: block; } .td-chart-lock span { color: var(--text-3); font-size: 13px; }
+.chart-page { display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 520px; }
+.chart-bar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.chart-bar .input { max-width: 260px; text-transform: uppercase; }
+.chart-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.chart-box { flex: 1; min-height: 0; }
+@media (max-width: 760px) { .td-chart { height: 260px; } .chart-page { height: calc(100dvh - 170px); } .chart-quick { margin-left: 0; } .chart-bar .input { max-width: none; flex: 1; } }

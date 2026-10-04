@@ -13,6 +13,7 @@
     trades: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
     calendar: '<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/>',
     analytics: '<path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/>',
+    chart: '<path d="M7 4v3M7 15v5M17 4v5M17 17v3"/><rect x="5" y="7" width="4" height="8" rx="1"/><rect x="15" y="9" width="4" height="8" rx="1"/>',
     journal: '<path d="M5 4.5A1.5 1.5 0 016.5 3H19v15H6.5A1.5 1.5 0 005 19.5z"/><path d="M5 19.5A1.5 1.5 0 006.5 21H19v-3"/><path d="M9 7.5h6M9 11h4"/>',
     settings: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
@@ -46,7 +47,7 @@
   const MOD = MAC ? '⌘' : 'Ctrl ';
   const icon = (n, c) => '<svg class="ic ' + (c || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
 
-  const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'journal', 'coach', 'rules', 'settings'];
+  const ROUTES = ['dashboard', 'trades', 'calendar', 'analytics', 'chart', 'journal', 'coach', 'rules', 'settings'];
   let PRO = null;
   const hasPro = () => !Cloud.enabled || Cloud.isPro;
   const EMOTIONS = ['calm', 'confident', 'fomo', 'fear', 'greed', 'revenge', 'bored'];
@@ -919,6 +920,7 @@
       '<div><span>R</span><b class="mono ' + cls(x.r) + '">' + rfmt(x.r, true) + '</b></div>' +
       '<div><span>' + t('hold') + '</span><b class="mono">' + holdLabel(x.holdMin) + '</b></div>' +
       '<div><span>' + t('execution') + '</span><b class="stars-ro">' + [1, 2, 3, 4, 5].map(n => '<i class="' + ((x.rating || 0) >= n ? 'on' : '') + '">' + icon('star') + '</i>').join('') + '</b></div></div>' +
+      tradeChartBlock(x) +
       '<div class="td-grid"><ul class="stat-list">' +
       row(t('opened'), x.openedAt ? dateLabel(x.openedAt) : '—') + row(t('closed'), x.closedAt ? dateLabel(x.closedAt) : '—') +
       row(t('col_entry'), '<span class="mono">' + numfmt(x.entryN) + '</span>') + row(t('col_exit'), '<span class="mono">' + numfmt(x.exitN) + '</span>') +
@@ -939,8 +941,63 @@
       '</div>' +
       '<div class="modal-foot"><button class="btn btn-ghost danger-text" data-action="delete-trade" data-id="' + x.id + '">' + icon('trash') + t('delete') + '</button><div class="spacer"></div>' +
       '<button class="btn btn-ghost" data-action="duplicate-trade" data-id="' + x.id + '">' + t('duplicate') + '</button>' +
-      '<button class="btn btn-primary" data-action="edit-trade" data-id="' + x.id + '">' + icon('edit') + t('edit') + '</button></div>', 'md');
+      '<button class="btn btn-primary" data-action="edit-trade" data-id="' + x.id + '">' + icon('edit') + t('edit') + '</button></div>', 'lg');
+    mountTradeChart(x);
   }
+
+  /* ---------- trade chart (replay for crypto, TradingView widget otherwise) ---------- */
+  function tradeChartBlock(x) {
+    if (!window.TradeChart || !x.symbol) return '';
+    if (!hasPro()) {
+      return '<div class="td-chart-wrap locked"><div class="td-chart-lock">' + icon('chart') + '<div><b>' + t('tc_pro_t') + '</b><span>' + t('tc_pro_x') + '</span></div>' +
+        '<button class="btn btn-primary btn-sm" data-action="tc-upsell">' + icon('sparkle') + t('see_pro') + '</button></div></div>';
+    }
+    const crypto = !!TradeChart.binanceSymbol(x.symbol);
+    return '<div class="td-chart-wrap"><div class="td-chart-head"><b>' + icon('chart') + t('tc_title') + '</b><span class="muted small" id="tcNote"></span><div class="spacer"></div>' +
+      (crypto ? '<div class="seg seg-sm" id="tcSeg"><button data-tc="replay" class="on">' + t('tc_trade') + '</button><button data-tc="live">TradingView</button></div>' : '') +
+      '</div><div class="td-chart" id="tdChart"><div class="td-chart-msg">' + t('tc_loading') + '</div></div></div>';
+  }
+  function mountTradeChart(x) {
+    const el = $('#tdChart');
+    if (!el) return;
+    const note = $('#tcNote');
+    const labels = { entry: t('col_entry'), exit: t('col_exit'), stop: 'SL', target: 'TP' };
+    const live = () => { if (note) note.textContent = TradeChart.binanceSymbol(x.symbol) ? '' : t('tc_note_live'); TradeChart.widget(el, x.symbol, { market: x.market, lang: S().lang, compact: true }); };
+    const replay = () => {
+      el.innerHTML = '<div class="td-chart-msg">' + t('tc_loading') + '</div>';
+      TradeChart.replay(el, x, { labels }).then(r => {
+        if (r === 'ok') { if (note) note.textContent = t('tc_note_replay'); return; }
+        live();
+      }).catch(() => { el.innerHTML = '<div class="td-chart-msg">' + t('tc_err') + '</div>'; });
+    };
+    $$('#tcSeg button').forEach(b => b.addEventListener('click', () => {
+      $$('#tcSeg button').forEach(o => o.classList.toggle('on', o === b));
+      if (b.dataset.tc === 'live') live(); else replay();
+    }));
+    if (TradeChart.binanceSymbol(x.symbol)) replay(); else live();
+  }
+
+  /* ---------- Chart page: TradingView for any market ---------- */
+  VIEWS.chart = function (v) {
+    const syms = [...new Set(Store.all().map(x => x.symbol).filter(Boolean))].slice(0, 40);
+    let last = 'BTCUSDT'; try { last = localStorage.getItem('entryx:chart-symbol') || syms[0] || 'BTCUSDT'; } catch (e) { /* storage blocked */ }
+    v.innerHTML = '<div class="card flush chart-page"><form class="chart-bar" id="chartForm">' +
+      '<input class="input mono" id="chartSym" list="chartSyms" value="' + esc(last) + '" placeholder="BTCUSDT, EURUSD, XAUUSD, NVDA…" autocomplete="off" spellcheck="false"/>' +
+      '<datalist id="chartSyms">' + syms.map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
+      '<button class="btn btn-primary" type="submit">' + t('chart_open') + '</button>' +
+      '<div class="chart-quick">' + ['BTCUSDT', 'ETHUSDT', 'XAUUSD', 'EURUSD', 'NAS100', 'NVDA'].map(s => '<button type="button" class="chip" data-sym="' + s + '">' + s + '</button>').join('') + '</div>' +
+      '</form><div class="chart-box" id="chartBox"></div></div>';
+    const show = s => {
+      s = String(s || '').trim().toUpperCase(); if (!s) return;
+      $('#chartSym').value = s;
+      try { localStorage.setItem('entryx:chart-symbol', s); } catch (e) { /* storage blocked */ }
+      const sym = s === 'NAS100' ? 'CAPITALCOM:US100' : s;
+      TradeChart.widget($('#chartBox'), sym, { lang: S().lang });
+    };
+    $('#chartForm').addEventListener('submit', e => { e.preventDefault(); show($('#chartSym').value); });
+    $$('[data-sym]', v).forEach(b => b.addEventListener('click', () => show(b.dataset.sym)));
+    show(last);
+  };
 
   function dayDetail(day) {
     const list = Store.all().filter(x => x.day === day);
@@ -1048,7 +1105,7 @@
     const P = (window.EDGEBOOK_CONFIG || {}).pricing || { currency: '$', monthly: 12, yearly: 99 };
     const save = Math.round((1 - P.yearly / (P.monthly * 12)) * 100);
     const SOON = [];
-    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f3', 'pro_f4', 'pro_f5', 'pro_f2', 'pro_f6', 'pro_f7'].map(k =>
+    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f8', 'pro_f3', 'pro_f4', 'pro_f5', 'pro_f2', 'pro_f6', 'pro_f7'].map(k =>
       '<li' + (SOON.includes(k) ? ' class="soon"' : '') + '>' + t(k) + (SOON.includes(k) ? ' <span class="soon-chip">' + t('soon') + '</span>' : '') + '</li>').join('') + '</ul>';
     const head = (sub, right) => '<div class="card-head"><div><h3>' + t('acc_title') + '</h3><p>' + sub + '</p></div>' + (right || '') + '</div>';
 
@@ -1369,6 +1426,7 @@
         Cloud.refreshProfile().then(p => { if (Cloud.isPro) { toast(t('plan_active'), 'ok'); Cloud.syncNow(); } else toast(t('still_free'), 'err'); });
         break;
       case 'sync-now': Cloud.syncNow(); break;
+      case 'tc-upsell': proUpsell('pro_f8'); break;
       case 'tg-hide': try { localStorage.setItem('entryx:tg-banner:' + Cloud.user.id, '1'); } catch (err) { /* storage blocked */ } render(); break;
       case 'sign-out': Cloud.signOut().then(() => { location.replace('login.html'); }); break;
     }
@@ -1409,7 +1467,7 @@
       if (ui.route === 'trades') { const i = $('#tq'); if (i) i.focus(); }
       else { location.hash = '#/trades'; setTimeout(() => { const i = $('#tq'); if (i) i.focus(); }, 30); }
     }
-    else if (/^[1-8]$/.test(e.key)) location.hash = '#/' + ROUTES[+e.key - 1];
+    else if (/^[1-9]$/.test(e.key)) location.hash = '#/' + ROUTES[+e.key - 1];
   });
 
   let rsTimer, lastW = window.innerWidth;
