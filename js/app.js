@@ -92,7 +92,7 @@
     const x = d instanceof Date ? d : new Date(d);
     const m = I18N.months()[x.getMonth()];
     if (o === 'short') return x.getDate() + ' ' + m.slice(0, 3);
-    if (o === 'full') return x.getDate() + ' ' + m + ' ' + x.getFullYear();
+    if (o === 'full') return x.getDate() + ' ' + (I18N.monthsGen ? I18N.monthsGen()[x.getMonth()] : m) + ' ' + x.getFullYear();
     if (o === 'time') return U.pad(x.getHours()) + ':' + U.pad(x.getMinutes());
     return x.getDate() + ' ' + m.slice(0, 3) + ', ' + U.pad(x.getHours()) + ':' + U.pad(x.getMinutes());
   }
@@ -236,7 +236,7 @@
       '<div class="tb-actions">' +
       '<button class="cmdk-btn" data-action="palette" aria-label="' + t('search_btn') + '">' + icon('search') + '<span>' + t('search_short') + '</span><kbd>' + MOD + 'K</kbd></button>' +
       (showRange ? '<div class="seg range" role="tablist">' + ranges.map(r => '<button class="' + (ui.range === r[0] ? 'on' : '') + '" data-range="' + r[0] + '">' + r[1] + '</button>').join('') + '</div>' : '') +
-      '<div class="seg seg-sm lang">' + ['kk', 'en'].map(l => '<button class="' + (s.lang === l ? 'on' : '') + '" data-lang="' + l + '">' + l.toUpperCase() + '</button>').join('') + '</div>' +
+      '<div class="seg seg-sm lang">' + ['kk', 'ru', 'en'].map(l => '<button class="' + (s.lang === l ? 'on' : '') + '" data-lang="' + l + '">' + l.toUpperCase() + '</button>').join('') + '</div>' +
       '<button class="icon-btn" data-action="theme" title="' + t('theme') + '">' + icon(s.theme === 'dark' ? 'sun' : 'moon') + '</button>' +
       '<button class="btn btn-primary" data-action="new-trade">' + icon('plus') + '<span>' + t('new_trade') + '</span><kbd>N</kbd></button>' +
       '</div>';
@@ -676,7 +676,7 @@
       '<label class="field"><span>' + t('your_name') + '</span><input class="input" name="name" value="' + esc(s.name) + '" placeholder="Trader"/></label>' +
       '<label class="field"><span>' + t('start_balance') + '</span><input class="input mono" name="balance" type="number" step="any" value="' + esc(s.balance) + '"/></label>' +
       '<label class="field"><span>' + t('currency') + '</span><select class="select" name="currency">' + CURRENCIES.map(c => '<option' + (c === s.currency ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></label>' +
-      '<label class="field"><span>' + t('language') + '</span><select class="select" name="lang"><option value="kk"' + (s.lang === 'kk' ? ' selected' : '') + '>Қазақша</option><option value="en"' + (s.lang === 'en' ? ' selected' : '') + '>English</option></select></label>' +
+      '<label class="field"><span>' + t('language') + '</span><select class="select" name="lang"><option value="kk"' + (s.lang === 'kk' ? ' selected' : '') + '>Қазақша</option><option value="ru"' + (s.lang === 'ru' ? ' selected' : '') + '>Русский</option><option value="en"' + (s.lang === 'en' ? ' selected' : '') + '>English</option></select></label>' +
       '<label class="field full"><span>' + t('setups_list') + '</span><input class="input" name="setups" value="' + esc((s.setups || []).join(', ')) + '"/><small>' + t('setups_hint') + '</small></label>' +
       '<div class="full"><button class="btn btn-primary" type="submit">' + t('save') + '</button></div>' +
       '</form></div>' +
@@ -1255,7 +1255,7 @@
     const cmds = ROUTES.map((r, i) => ({ group: 'nav', icon: r, label: t('nav_' + r), hint: String(i + 1), run: () => { location.hash = '#/' + r; } })).concat([
       { group: 'act', icon: 'plus', label: t('new_trade'), hint: 'N', run: () => tradeForm() },
       { group: 'act', icon: S().theme === 'dark' ? 'sun' : 'moon', label: t('cmd_theme'), hint: 'T', run: () => { Store.set('theme', S().theme === 'dark' ? 'light' : 'dark'); render(); } },
-      { group: 'act', icon: 'sparkle', label: t('cmd_lang'), run: () => { Store.set('lang', S().lang === 'kk' ? 'en' : 'kk'); Store.set('langChosen', true); render(); } },
+      { group: 'act', icon: 'sparkle', label: t('cmd_lang'), run: () => { Store.set('lang', { kk: 'ru', ru: 'en', en: 'kk' }[S().lang] || 'kk'); Store.set('langChosen', true); render(); } },
       { group: 'act', icon: 'download', label: t('export_csv'), run: () => { exportCSV(); toast(t('exported'), 'ok'); } },
       { group: 'act', icon: 'download', label: t('export_json'), run: () => { download('edgebook-backup-' + U.dayKey(new Date()) + '.json', Store.exportJSON(), 'application/json'); toast(t('exported'), 'ok'); } },
       { group: 'act', icon: 'keyboard', label: t('shortcuts'), run: () => shortcuts() }
@@ -1495,7 +1495,7 @@
   if (!Store.state.settings.seeded) {
     if (!Store.state.settings.langChosen) {
       const navLang = (navigator.language || '').toLowerCase();
-      Store.state.settings.lang = navLang.startsWith('en') ? 'en' : 'kk';
+      Store.state.settings.lang = navLang.startsWith('en') ? 'en' : navLang.startsWith('ru') ? 'ru' : 'kk';
     }
     Store.seedDemo(Store.state.settings.lang);
   }

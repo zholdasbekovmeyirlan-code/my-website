@@ -92,6 +92,36 @@ const L: Record<string, Record<string, string>> = {
     unknown: "Түсінбедім 🤔 /menu басыңыз немесе сұрағыңызды толығырақ жазыңыз.",
     wd: "Жс,Дс,Сс,Ср,Бс,Жм,Сб",
   },
+  ru: {
+    welcome: "👋 <b>Добро пожаловать в бот EntryX!</b>\n\nЯ знаю ваш торговый дневник: P&L, сетапы, эмоции, риск и AI-коуч — всё в Telegram.\n\n<b>Чтобы подключить:</b> на сайте нажмите <b>Настройки → Telegram → Подключить</b>.",
+    linked: "✅ <b>Аккаунт подключён!</b>\n\nТеперь ваш дневник здесь. Пользуйтесь меню ниже или просто задайте вопрос — ответит AI-коуч.",
+    bad_code: "⚠️ Срок действия ссылки истёк. Нажмите <b>Настройки → Telegram → Подключить</b> на сайте ещё раз.",
+    not_linked: "🔗 Сначала подключите аккаунт: на сайте <b>Настройки → Telegram → Подключить</b>.",
+    not_pro: "🔒 Бот — функция <b>Pro</b>, а ваш период Pro закончился. Продлите Pro на сайте.",
+    no_cloud: "☁️ Вашего дневника ещё нет в облаке. Откройте сайт один раз — он синхронизируется автоматически.",
+    menu: "📋 <b>Меню</b> — что показать?",
+    today: "Сегодня", week: "7 дней", month: "Этот месяц", all: "Всё время",
+    b_today: "📊 Сегодня", b_week: "📅 Неделя", b_month: "🗓 Месяц", b_setups: "🎯 Сетапы", b_last: "🧾 Последние сделки",
+    b_risk: "🛡 Риск", b_prop: "🏆 Проп", b_insights: "💡 Инсайты", b_ask: "✨ Вопрос AI", b_remind: "⏰ Напоминание", b_open: "🌐 Открыть дневник",
+    pnl: "P&L", trades: "Сделок", wr: "Винрейт", pf: "PF", avgr: "Ср. R", best: "Лучшая", worst: "Худшая", fees: "Комиссии",
+    open_pos: "Открытых позиций", empty: "В этом периоде нет закрытых сделок.", streak_w: "🔥 Серия прибылей", streak_l: "🧊 Серия убытков",
+    setups_t: "🎯 <b>Сетапы</b> (последние 90 дней)", top: "Самые прибыльные", bottom: "Самые убыточные", no_setup: "(без сетапа)",
+    last_t: "🧾 <b>Последние сделки</b>",
+    risk_t: "🛡 <b>Риск за сегодня</b>", risk_off: "Риск-менеджер выключен. Включите его на сайте в разделе <b>Правила</b>.",
+    loss_today: "Убыток за сегодня", limit: "лимит", trades_today: "Сделок сегодня", stop: "⛔ <b>СТОП.</b> Вы достигли дневного лимита. Продолжайте завтра.", near: "⚠️ Вы близко к лимиту — осторожно.", ok: "✅ Всё в рамках ваших правил.",
+    prop_t: "🏆 <b>Проп-челлендж</b>", prop_off: "Трекер проп-челленджа выключен. Включите его на сайте в разделе <b>Правила</b>.",
+    profit: "Прибыль", target: "Цель", maxdd: "Макс. убыток", days: "Торговых дней", passed: "🎉 Цель достигнута!", failed: "❌ Лимит нарушен.",
+    ins_t: "💡 <b>Инсайты</b> (последние 90 дней)", ins_day: "Лучший день недели", ins_badday: "Худший день недели", ins_hour: "Лучший час", ins_badhour: "Худший час",
+    ins_emo: "Самая дорогая эмоция", ins_mk: "Самая дорогая ошибка", ins_side: "Long / Short",
+    ask_hint: "✨ Просто напишите вопрос, например:\n<i>«Почему я ушёл в минус на этой неделе?»</i>\n<i>«В какие часы мне лучше не торговать?»</i>",
+    thinking: "🤔 Читаю ваш дневник…", ai_limit: "Вопросы к AI на этот месяц закончились.", ai_busy: "AI сейчас занят. Повторите через минуту.", ai_off: "AI-коуч ещё не настроен.",
+    remind_on: "⏰ Буду присылать дневной отчёт каждый день в <b>{h}:00</b>.", remind_off: "🔕 Дневной отчёт выключен.", remind_help: "⏰ Время дневного отчёта: <b>{h}</b>.\nИзменить: <code>/remind 20</code> · Выключить: <code>/remind off</code>",
+    unlinked: "👋 Аккаунт отключён.",
+    eve_t: "🌙 <b>Итоги дня</b>", eve_none: "Сегодня сделок не было. Отдых — тоже стратегия 🙂", eve_journal: "📝 Не забудьте закрыть дневник за сегодня: что получилось, какой урок?",
+    help: "<b>Команды</b>\n/today — сегодня\n/week — 7 дней\n/month — этот месяц\n/all — всё время\n/setups — сетапы\n/insights — инсайты\n/last — последние сделки\n/risk — риск\n/prop — проп-челлендж\n/remind — дневной отчёт\n/ask — AI-коуч\n/unlink — отключить\n\nИли просто напишите вопрос — ответит AI.",
+    unknown: "Не понял 🤔 Нажмите /menu или напишите вопрос подробнее.",
+    wd: "Вс,Пн,Вт,Ср,Чт,Пт,Сб",
+  },
   en: {
     welcome: "👋 <b>Welcome to the EntryX bot!</b>\n\nI know your trading journal: P&L, setups, emotions, risk and an AI coach — all in Telegram.\n\n<b>To connect:</b> on the website open <b>Settings → Telegram → Connect</b>.",
     linked: "✅ <b>Account connected!</b>\n\nYour journal is here now. Use the menu below or just ask me anything — the AI coach will answer.",
@@ -123,8 +153,8 @@ const L: Record<string, Record<string, string>> = {
     wd: "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
   },
 };
-const EMO: Record<string, [string, string]> = { calm: ["Сабырлы", "Calm"], confident: ["Сенімді", "Confident"], fomo: ["FOMO", "FOMO"], fear: ["Қорқыныш", "Fear"], greed: ["Ашкөздік", "Greed"], revenge: ["Кек", "Revenge"], bored: ["Жалығу", "Bored"] };
-const MK: Record<string, [string, string]> = { early_exit: ["Ерте шығу", "Early exit"], late_entry: ["Кеш кіру", "Late entry"], moved_stop: ["Стопты жылжыту", "Moved stop"], oversize: ["Үлкен көлем", "Oversized"], no_plan: ["Жоспарсыз", "No plan"], chased: ["Бағаны қуу", "Chased price"] };
+const EMO: Record<string, [string, string, string]> = { calm: ["Сабырлы", "Calm", "Спокойствие"], confident: ["Сенімді", "Confident", "Уверенность"], fomo: ["FOMO", "FOMO", "FOMO"], fear: ["Қорқыныш", "Fear", "Страх"], greed: ["Ашкөздік", "Greed", "Жадность"], revenge: ["Кек", "Revenge", "Месть"], bored: ["Жалығу", "Bored", "Скука"] };
+const MK: Record<string, [string, string, string]> = { early_exit: ["Ерте шығу", "Early exit", "Ранний выход"], late_entry: ["Кеш кіру", "Late entry", "Поздний вход"], moved_stop: ["Стопты жылжыту", "Moved stop", "Сдвинул стоп"], oversize: ["Үлкен көлем", "Oversized", "Большой объём"], no_plan: ["Жоспарсыз", "No plan", "Без плана"], chased: ["Бағаны қуу", "Chased price", "Погоня за ценой"] };
 
 /* ---------------- journal maths (mirrors js/store.js + app.js) ---------------- */
 const num = (v: unknown) => { if (v === "" || v == null) return null; const n = Number(v); return isFinite(n) ? n : null; };
@@ -176,7 +206,7 @@ function localHour(tz: string) {
 }
 
 /* ---------------- per-user context ---------------- */
-type Ctx = { chat: number; link: any; data: any; lang: "kk" | "en"; T: (k: string, v?: Record<string, unknown>) => string; trades: any[] };
+type Ctx = { chat: number; link: any; data: any; lang: "kk" | "ru" | "en"; T: (k: string, v?: Record<string, unknown>) => string; trades: any[] };
 function money(v: number | null, cur: string, sign = false) {
   if (v == null || !isFinite(v)) return "—";
   const body = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -195,9 +225,9 @@ function isProProfile(p: any) {
   return paid || (p.trial_until && new Date(p.trial_until).getTime() > now);
 }
 
-async function loadCtx(chat: number, langHint?: string): Promise<{ ctx?: Ctx; error?: string; lang: "kk" | "en" }> {
+async function loadCtx(chat: number, langHint?: string): Promise<{ ctx?: Ctx; error?: string; lang: "kk" | "ru" | "en" }> {
   const links = await db(`telegram_links?chat_id=eq.${chat}&select=*`);
-  const lang0: "kk" | "en" = langHint === "en" ? "en" : "kk";
+  const lang0: "kk" | "ru" | "en" = langHint === "en" ? "en" : langHint === "ru" ? "ru" : "kk";
   if (!links?.length) return { error: "not_linked", lang: lang0 };
   const link = links[0];
   const [profiles, journals] = await Promise.all([
@@ -205,7 +235,8 @@ async function loadCtx(chat: number, langHint?: string): Promise<{ ctx?: Ctx; er
     db(`journals?user_id=eq.${link.user_id}&select=data`),
   ]);
   const data = journals?.[0]?.data;
-  const lang: "kk" | "en" = data?.settings?.lang === "en" ? "en" : data?.settings?.lang === "kk" ? "kk" : lang0;
+  const sl = data?.settings?.lang;
+  const lang: "kk" | "ru" | "en" = sl === "en" || sl === "ru" || sl === "kk" ? sl : lang0;
   if (!isProProfile(profiles?.[0])) return { error: "not_pro", lang };
   if (!data) return { error: "no_cloud", lang };
   const T = (k: string, v?: Record<string, unknown>) => (L[lang][k] ?? k).replace(/\{(\w+)\}/g, (_, n) => String(v?.[n] ?? ""));
@@ -280,7 +311,7 @@ function insightsView(c: Ctx) {
     out.push(`⏰ ${c.T("ins_hour")}: <b>${byH[0].k}</b> ${money(byH[0].s.net, cur, true)}`);
     const w = byH[byH.length - 1]; if (w.s.net < 0) out.push(`🕳 ${c.T("ins_badhour")}: <b>${w.k}</b> ${money(w.s.net, cur, true)}`);
   }
-  const li = c.lang === "en" ? 1 : 0;
+  const li = c.lang === "en" ? 1 : c.lang === "ru" ? 2 : 0;
   const emo = groupBy(list, (x) => x.emotion || null).sort((a, b) => a.s.net - b.s.net)[0];
   if (emo && emo.s.net < 0) out.push(`😤 ${c.T("ins_emo")}: <b>${esc(EMO[emo.k]?.[li] ?? emo.k)}</b> ${money(emo.s.net, cur, true)} (${emo.s.closed})`);
   const mk = groupBy(list, (x) => (Array.isArray(x.mistakes) ? x.mistakes : [])).sort((a, b) => a.s.net - b.s.net)[0];
@@ -340,7 +371,7 @@ const SYSTEM = `You are the EntryX AI coach inside the EntryX Telegram bot. The 
 - Never give buy/sell/hold calls, entry/exit levels, price predictions or investment advice; redirect to process and risk.
 - If unrelated to trading, say in one sentence that you are a trading coach.
 - If data is marked as demo, mention once that it is sample data.
-- Reply in the language of the <lang> tag (kk = Kazakh, en = English) unless the trader writes in another language.
+- Reply in the language of the <lang> tag (kk = Kazakh, ru = Russian, en = English) unless the trader writes in another language.
 - This is Telegram: short paragraphs, bullet lists with "-", **bold** for key numbers, no tables, no headings, under 180 words.`;
 function aiContext(c: Ctx) {
   const d = c.data, s = d.settings || {};
@@ -435,7 +466,8 @@ async function handle(update: any) {
   const chat: number | undefined = msg?.chat?.id ?? cb?.message?.chat?.id;
   if (!chat || (msg && msg.chat.type !== "private")) return;
   const from = msg?.from ?? cb?.from;
-  const hint = String(from?.language_code || "").startsWith("en") ? "en" : "kk";
+  const lc = String(from?.language_code || "");
+  const hint = lc.startsWith("en") ? "en" : lc.startsWith("ru") ? "ru" : "kk";
   if (cb) await tg("answerCallbackQuery", { callback_query_id: cb.id });
   let cmd = cb ? String(cb.data || "") : "";
   let arg = "";
@@ -499,6 +531,7 @@ async function handle(update: any) {
 
 const COMMANDS = {
   kk: [["menu", "Мәзір"], ["today", "Бүгінгі нәтиже"], ["week", "Соңғы 7 күн"], ["month", "Осы ай"], ["setups", "Сетаптар"], ["insights", "Инсайттар"], ["last", "Соңғы мәмілелер"], ["risk", "Бүгінгі тәуекел"], ["prop", "Prop челлендж"], ["ask", "AI коучқа сұрақ"], ["remind", "Күндік есеп уақыты"], ["help", "Көмек"]],
+  ru: [["menu", "Меню"], ["today", "Итоги дня"], ["week", "Последние 7 дней"], ["month", "Этот месяц"], ["setups", "Сетапы"], ["insights", "Инсайты"], ["last", "Последние сделки"], ["risk", "Риск за сегодня"], ["prop", "Проп-челлендж"], ["ask", "Вопрос AI-коучу"], ["remind", "Время дневного отчёта"], ["help", "Помощь"]],
   en: [["menu", "Menu"], ["today", "Today's results"], ["week", "Last 7 days"], ["month", "This month"], ["setups", "Setups"], ["insights", "Insights"], ["last", "Last trades"], ["risk", "Today's risk"], ["prop", "Prop challenge"], ["ask", "Ask the AI coach"], ["remind", "Daily report time"], ["help", "Help"]],
 };
 
@@ -514,6 +547,7 @@ Deno.serve(async (req) => {
     const toCmds = (l: string[][]) => l.map(([command, description]) => ({ command, description }));
     await tg("setMyCommands", { commands: toCmds(COMMANDS.kk) });
     await tg("setMyCommands", { commands: toCmds(COMMANDS.en), language_code: "en" });
+    await tg("setMyCommands", { commands: toCmds(COMMANDS.ru), language_code: "ru" });
     await tg("setMyDescription", { description: "EntryX — трейдинг журналыңыз Telegram-да: P&L, сетаптар, тәуекел, күндік есеп және AI коуч." });
     await tg("setMyShortDescription", { short_description: "EntryX трейдинг журналы · AI коуч" });
     const me = await tg("getMe", {});

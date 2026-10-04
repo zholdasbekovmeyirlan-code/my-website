@@ -38,7 +38,7 @@ The trader's own journal data is provided below inside <journal> tags: summary s
 - Never give buy/sell/hold calls, entry or exit levels for specific assets, price predictions, or personalised investment advice; redirect to process and risk.
 - If a question is unrelated to trading or EntryX, say in one sentence that you are a trading coach.
 - If the journal has too little data, say what is missing and how to log it. If the data is marked as demo data, mention once that insights are based on sample trades.
-- Reply in the language given by the <lang> tag (kk = Kazakh, en = English) unless the trader writes in another language.
+- Reply in the language given by the <lang> tag (kk = Kazakh, ru = Russian, en = English) unless the trader writes in another language.
 - Short paragraphs and bullet lists, **bold** for key numbers, no tables, no code blocks, under 250 words unless asked for a full review.`;
 
 Deno.serve(async (req) => {
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
   let body: { messages?: { role?: unknown; content?: unknown }[]; context?: unknown; lang?: unknown };
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
-  const lang = body.lang === "en" ? "en" : "kk";
+  const lang = body.lang === "en" ? "en" : body.lang === "ru" ? "ru" : "kk";
   const context = String(body.context ?? "").slice(0, 80000);
   const messages = (Array.isArray(body.messages) ? body.messages : [])
     .slice(-16)

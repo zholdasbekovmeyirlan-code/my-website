@@ -194,7 +194,16 @@
       const emotionAdj = { calm: 0.05, confident: 0.03, fomo: -0.18, fear: -0.06, greed: -0.12, revenge: -0.25, bored: -0.1 };
       const mistakesPool = ['early_exit', 'late_entry', 'moved_stop', 'oversize', 'no_plan', 'chased'];
 
-      const notes = lang === 'en' ? [
+      const notes = lang === 'ru' ? [
+        'Чистый сетап, дождался ретеста перед входом.',
+        'Вошёл на закрытии 5m свечи выше диапазона, объём подтвердил.',
+        'Выбило стопом перед движением — стоп был слишком близко для волатильности.',
+        'По плану. Половину закрыл на 1R, остаток трейлил.',
+        'Погнался за свечой. Нужно ждать свой уровень.',
+        'Всплеск на новостях, спред расширился. Лучше было не торговать.',
+        'Отличное терпение сегодня — лучшая сделка недели.',
+        'Из страха рано забрал прибыль, оставил 2R на столе.'
+      ] : lang === 'en' ? [
         'Clean setup, waited for the retest before entering.',
         'Entered on the 5m close above range high, volume confirmed.',
         'Stopped out before the move — stop was too tight for the volatility.',
@@ -290,13 +299,19 @@
       });
 
       const journal = {};
-      const plans = lang === 'en'
+      const plans = lang === 'ru'
+        ? ['Только A+ сетапы на уровнях старшего ТФ. Макс 3 сделки. Стоп после 2 убытков.', 'CPI в 15:30 — без сделок за 30 минут до и после.', 'Направление: long выше VWAP. Фокус на NAS100 и BTC.']
+        : lang === 'en'
         ? ['Only A+ setups at HTF levels. Max 3 trades. Stop after 2 losses.', 'CPI at 15:30 — no trades 30 min before and after.', 'Bias: long above VWAP. Focus on NAS100 and BTC.']
         : ['Тек HTF деңгейлердегі A+ сетаптар. Макс 3 мәміле. 2 шығыннан кейін тоқтау.', 'CPI 15:30-да — 30 минут бұрын және кейін сауда жоқ.', 'Бағыт: VWAP-тан жоғары long. NAS100 мен BTC-ке фокус.'];
-      const reviews = lang === 'en'
+      const reviews = lang === 'ru'
+        ? ['Хорошо отработал план. Терпение окупилось.', 'Овертрейд после первого убытка — нужен жёсткий дневной стоп.', 'Хороший риск-менеджмент, один небрежный вход.']
+        : lang === 'en'
         ? ['Executed the plan well. Patience paid off.', 'Overtraded after the first loss — need a hard daily stop.', 'Good risk management, one sloppy entry.']
         : ['Жоспарды жақсы орындадым. Шыдамдылық ақталды.', 'Бірінші шығыннан кейін овертрейд — күндік қатаң стоп керек.', 'Тәуекел басқару жақсы, бір салақ кіру.'];
-      const lessons = lang === 'en'
+      const lessons = lang === 'ru'
+        ? ['Жди закрытия свечи.', 'По пятницам уменьшай объём.', 'Лучшие сделки скучные.']
+        : lang === 'en'
         ? ['Wait for the candle close.', 'Size down on Fridays.', 'The best trades feel boring.']
         : ['Свеча жабылуын күт.', 'Жұмада көлемді азайт.', 'Ең жақсы мәмілелер жалықтырады.'];
       const daysWithTrades = [...new Set(trades.map(t => t.openedAt.slice(0, 10)))];

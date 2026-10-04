@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Onest:wght@500;600;700&family=Michroma&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=1791107776" />
+  <link rel="stylesheet" href="css/style.css?v=1791108902" />
   <style>
     body.legal { background: #050608; }
     .lg-top { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: rgba(5, 6, 8, .82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
@@ -41,7 +41,7 @@
     .lg-sec a, .lg-wrap a.inline { color: var(--accent); }
     .fill { color: var(--accent); font-weight: 600; }
     [data-lang-block] { display: none; }
-    html[lang="kk"] [data-lang-block="kk"], html[lang="en"] [data-lang-block="en"] { display: block; }
+    html[lang="kk"] [data-lang-block="kk"], html[lang="ru"] [data-lang-block="ru"], html[lang="en"] [data-lang-block="en"] { display: block; }
     @media (max-width: 720px) { .lg-tabs { display: none; } .lg-wrap h1 { font-size: 40px; } .lg-sec h2 { font-size: 30px; } }
   </style>
 </head>
@@ -49,11 +49,11 @@
   <header class="lg-top">
     <a class="lg-logo" href="index.html"><img class="logo-mark" src="img/entryx-mark.svg" alt="" /><span class="wordmark">ENTRY<b>X</b></span></a>
     <nav class="lg-tabs">
-      <a href="#terms"><span data-lang-block="kk">Шарттар</span><span data-lang-block="en">Terms</span></a>
-      <a href="#privacy"><span data-lang-block="kk">Құпиялылық</span><span data-lang-block="en">Privacy</span></a>
-      <a href="#refund"><span data-lang-block="kk">Төлем</span><span data-lang-block="en">Payments</span></a>
+      <a href="#terms"><span data-lang-block="kk">Шарттар</span><span data-lang-block="ru">Условия</span><span data-lang-block="en">Terms</span></a>
+      <a href="#privacy"><span data-lang-block="kk">Құпиялылық</span><span data-lang-block="ru">Конфиденциальность</span><span data-lang-block="en">Privacy</span></a>
+      <a href="#refund"><span data-lang-block="kk">Төлем</span><span data-lang-block="ru">Оплата</span><span data-lang-block="en">Payments</span></a>
     </nav>
-    <div class="seg seg-sm lang"><button data-lang="kk">KK</button><button data-lang="en">EN</button></div>
+    <div class="seg seg-sm lang"><button data-lang="kk">KK</button><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
   </header>
 
   <main class="lg-wrap">
@@ -113,6 +113,66 @@
           <li>Pro таңдалған мерзімге (ай немесе жыл) төленеді және сол мерзімнің соңына дейін жұмыс істейді.</li>
           <li>Жазылымнан кез келген уақытта бас тартуға болады, сонда келесі төлем алынбайды.</li>
           <li>Төлем кезінде техникалық ақау болса (мысалы, ақша екі рет алынса), <a class="js-email" href="#"></a> мекенжайына жазыңыз, біз мәселені шешеміз.</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- ======================= RUSSIAN ======================= -->
+    <div data-lang-block="ru">
+      <h1>Правовая информация</h1>
+      <p class="lg-meta">Последнее обновление: <span class="js-date"></span></p>
+
+      <section class="lg-sec" id="terms-ru">
+        <h2>Условия использования</h2>
+        <p>Эти условия регулируют использование веб-приложения <b>EntryX</b> («Сервис»). Владелец Сервиса — <span class="js-owner fill"></span> («мы»), <span class="js-country"></span>. Регистрируясь или используя Сервис, вы соглашаетесь с этими условиями.</p>
+        <h3>1. Сервис</h3>
+        <p>EntryX — инструмент для записи, анализа сделок и ведения торгового дневника. План Free бесплатный. План Pro — платный и даёт дополнительные возможности (например, облачную синхронизацию).</p>
+        <h3>2. Не финансовый совет</h3>
+        <p>EntryX не даёт инвестиционных, финансовых или торговых советов. Все метрики, инсайты и отчёты носят исключительно информационный характер. Вы несёте полную ответственность за свои торговые решения и их результаты. Торговля связана с высоким риском, вы можете потерять капитал.</p>
+        <h3>3. Аккаунт</h3>
+        <p>Вы отвечаете за достоверность данных аккаунта и безопасность доступа к нему. Запрещено использовать Сервис в незаконных целях, получать доступ к чужим аккаунтам или мешать работе Сервиса.</p>
+        <h3>4. Оплата</h3>
+        <p>Pro оплачивается заранее на месяц или на год. Платежи принимаются в криптовалюте (USDT, BTC, ETH и др.) через платёжного провайдера <b>NOWPayments</b>. После подтверждения платежа в блокчейне Pro включается автоматически. Повторных автоматических списаний нет: по окончании срока вы продлеваете Pro вручную, а новый срок добавляется к концу текущего.</p>
+        <h3>5. Ваши данные</h3>
+        <p>Сделки и записи, которые вы вносите, принадлежат вам. Вы можете в любой момент экспортировать их в JSON или CSV. Как мы обрабатываем данные — описано в Политике конфиденциальности ниже.</p>
+        <h3>6. Доступность и ограничение ответственности</h3>
+        <p>Сервис предоставляется «как есть». Мы не гарантируем его бесперебойную или безошибочную работу. В пределах, допускаемых законом, наша ответственность ограничена суммой, которую вы заплатили за Сервис за последние 12 месяцев. Рекомендуем регулярно делать резервные копии.</p>
+        <h3>7. Изменения</h3>
+        <p>Мы можем обновлять эти условия. О существенных изменениях сообщим на сайте или по email. Продолжение использования Сервиса означает согласие с обновлёнными условиями.</p>
+        <h3>8. Контакты</h3>
+        <p>По вопросам: <a class="js-email" href="#"></a></p>
+      </section>
+
+      <section class="lg-sec" id="privacy-ru">
+        <h2>Политика конфиденциальности</h2>
+        <h3>Какие данные мы собираем</h3>
+        <ul>
+          <li><b>Аккаунт:</b> email, а при входе через Google или GitHub — имя и email, которые передаёт этот провайдер.</li>
+          <li><b>Данные дневника:</b> сделки, записи и скриншоты, которые вы вносите. На Free они хранятся только в вашем браузере (localStorage). На Pro — дополнительно в нашей облачной базе данных.</li>
+          <li><b>Оплата:</b> платёж обрабатывает NOWPayments. Мы храним только номер заказа, план, сумму и дату. Ключи кошелька мы никогда не видим.</li>
+        </ul>
+        <h3>Как мы используем данные</h3>
+        <p>Только для работы Сервиса: вход, синхронизация, управление подпиской и связь с вами. Мы не продаём ваши данные и не используем их для рекламы. В Сервисе нет рекламных трекеров.</p>
+        <h3>Сторонние сервисы</h3>
+        <ul>
+          <li><b>Supabase</b> — аутентификация и облачная база данных (Pro).</li>
+          <li><b>NOWPayments</b> — криптовалютные платежи.</li>
+          <li><b>Google, GitHub</b> — вход, если вы их выберете.</li>
+          <li><b>Google Fonts, jsDelivr</b> — загрузка шрифтов и библиотек (они могут видеть ваш IP-адрес).</li>
+        </ul>
+        <h3>Безопасность</h3>
+        <p>Доступ к данным в облаке есть только у вашего аккаунта — это обеспечивают правила доступа на уровне базы данных (Row Level Security). Всё соединение шифруется по HTTPS.</p>
+        <h3>Ваши права</h3>
+        <p>Вы можете в любой момент экспортировать, исправить или удалить свои данные. Чтобы полностью удалить аккаунт и все данные в облаке, напишите на <a class="js-email" href="#"></a> — мы сделаем это в течение 30 дней.</p>
+      </section>
+
+      <section class="lg-sec" id="refund-ru">
+        <h2>Условия оплаты</h2>
+        <p>Перед оплатой вы можете <b>7 дней бесплатно</b> попробовать Pro: пробный период включается автоматически при регистрации. Поэтому после оплаты <b>деньги не возвращаются</b>.</p>
+        <ul>
+          <li>Pro оплачивается на выбранный срок (месяц или год) и работает до его окончания.</li>
+          <li>Автоматических повторных списаний нет — продление только по вашему желанию.</li>
+          <li>Если при оплате произошёл технический сбой (например, двойное списание), напишите на <a class="js-email" href="#"></a> — мы решим вопрос.</li>
         </ul>
       </section>
     </div>
@@ -178,32 +238,32 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=1791107776"></script>
-  <script src="js/store.js?v=1791107776"></script>
+  <script src="js/config.js?v=1791108902"></script>
+  <script src="js/store.js?v=1791108902"></script>
   <script>
     (function () {
       var C = (window.EDGEBOOK_CONFIG || {}).legal || {};
       var lang = 'kk';
-      try { Store.load(); var s = Store.state.settings; lang = (s.langChosen || s.seeded) ? s.lang : ((navigator.language || '').toLowerCase().indexOf('en') === 0 ? 'en' : 'kk'); } catch (e) {}
+      try { Store.load(); var s = Store.state.settings; var nl = (navigator.language || '').toLowerCase(); lang = (s.langChosen || s.seeded) ? s.lang : (nl.indexOf('en') === 0 ? 'en' : nl.indexOf('ru') === 0 ? 'ru' : 'kk'); } catch (e) {}
       function apply() {
         document.documentElement.lang = lang;
         document.querySelectorAll('[data-lang]').forEach(function (b) { b.classList.toggle('on', b.dataset.lang === lang); });
-        var ph = lang === 'kk' ? '[сайт иесі]' : '[owner]';
+        var ph = lang === 'kk' ? '[сайт иесі]' : lang === 'ru' ? '[владелец]' : '[owner]';
         var eph = lang === 'kk' ? '[email]' : '[email]';
         document.querySelectorAll('.js-owner').forEach(function (e) { e.textContent = C.owner || ph; e.classList.toggle('fill', !C.owner); });
         document.querySelectorAll('.js-country').forEach(function (e) { e.textContent = C.country || ''; });
         document.querySelectorAll('.js-email').forEach(function (e) { e.textContent = C.email || eph; e.href = C.email ? 'mailto:' + C.email : '#'; });
         document.querySelectorAll('.js-date').forEach(function (e) { e.textContent = '2026-09-29'; });
         // English anchors mirror the Kazakh ones
-        if (lang === 'en' && /^#(terms|privacy|refund)$/.test(location.hash)) {
-          var t = document.getElementById(location.hash.slice(1) + '-en'); if (t) t.scrollIntoView();
+        if (lang !== 'kk' && /^#(terms|privacy|refund)$/.test(location.hash)) {
+          var t = document.getElementById(location.hash.slice(1) + '-' + lang); if (t) t.scrollIntoView();
         }
       }
       document.addEventListener('click', function (e) {
         var b = e.target.closest('[data-lang]');
         if (b) { lang = b.dataset.lang; try { Store.state.settings.lang = lang; Store.state.settings.langChosen = true; Store.save(); } catch (err) {} apply(); }
         var a = e.target.closest('.lg-tabs a');
-        if (a && lang === 'en') { e.preventDefault(); var t = document.getElementById(a.getAttribute('href').slice(1) + '-en'); if (t) t.scrollIntoView({ behavior: 'smooth' }); }
+        if (a && lang !== 'kk') { e.preventDefault(); var t = document.getElementById(a.getAttribute('href').slice(1) + '-' + lang); if (t) t.scrollIntoView({ behavior: 'smooth' }); }
       });
       apply();
     })();

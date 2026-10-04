@@ -27,6 +27,25 @@
       ok_reset: 'Құпиясөз жаңартылды. Журнал ашылуда…', redirecting: 'Журнал ашылуда…', offline: 'Сервермен байланыс жоқ. Интернетті тексеріңіз.',
       legal: 'Жалғастыру арқылы сіз <a href="legal.html#terms">Шарттармен</a> және <a href="legal.html#privacy">Құпиялылық саясатымен</a> келісесіз. Қаржылық кеңес емес.'
     },
+    ru: {
+      art_title: 'Каждая сделка —<br><em>урок.</em>', art_sub: 'Превратите историю торговли в реальное преимущество.', art_equity: 'Капитал · 90 дней',
+      pt1: 'Автоматический P&L, R и 30+ метрик', pt2: 'Реальная цена эмоций и ошибок', pt3: 'Pro: один дневник на всех устройствах',
+      in_title: 'С возвращением', in_sub: 'Войдите в свой дневник.',
+      up_title: 'Создайте аккаунт', up_sub: 'Бесплатно. Карта не нужна.',
+      forgot_title: 'Восстановление пароля', forgot_sub: 'Введите email, и мы пришлём ссылку.',
+      reset_title: 'Новый пароль', reset_sub: 'Минимум 6 символов.',
+      or_email: 'или через email', password: 'Пароль', forgot: 'Забыли?',
+      btn_in: 'Войти', btn_up: 'Создать аккаунт', btn_forgot: 'Отправить ссылку', btn_reset: 'Сохранить',
+      sw_in: 'Нет аккаунта? <a href="#" data-mode="up">Регистрация</a>', sw_up: 'Уже есть аккаунт? <a href="#" data-mode="in">Войти</a>',
+      sw_back: '<a href="#" data-mode="in">← Назад ко входу</a>',
+      cont: 'Продолжить через {p}',
+      err_email: 'Введите корректный email.', err_pw: 'Пароль должен быть не короче 6 символов.',
+      err_creds: 'Неверный email или пароль.', err_confirm: 'Сначала перейдите по ссылке подтверждения в письме.',
+      err_exists: 'Этот email уже зарегистрирован. Попробуйте войти.', err_provider: 'Этот способ входа ещё не включён.', err_generic: 'Ошибка: {m}',
+      ok_check: 'Мы отправили ссылку подтверждения на <b>{e}</b>. Перейдите по ней.', ok_reset_sent: 'Ссылка отправлена. Проверьте почту.',
+      ok_reset: 'Пароль обновлён. Открываем дневник…', redirecting: 'Открываем дневник…', offline: 'Нет связи с сервером. Проверьте интернет.',
+      legal: 'Продолжая, вы соглашаетесь с <a href="legal.html#terms">Условиями</a> и <a href="legal.html#privacy">Политикой конфиденциальности</a>. Не является финансовым советом.'
+    },
     en: {
       art_title: 'Every trade is<br>a <em>lesson.</em>', art_sub: 'Turn your trading history into a real edge.', art_equity: 'Equity · 90 days',
       pt1: 'Automatic P&L, R and 30+ metrics', pt2: 'The real cost of emotions and mistakes', pt3: 'Pro: one journal on every device',
@@ -58,7 +77,8 @@
   /* ---------- state ---------- */
   Store.load();
   const s = Store.state.settings;
-  let lang = s.langChosen || s.seeded ? s.lang : ((navigator.language || '').toLowerCase().startsWith('en') ? 'en' : 'kk');
+  const nl = (navigator.language || '').toLowerCase();
+  let lang = s.langChosen || s.seeded ? s.lang : (nl.startsWith('en') ? 'en' : nl.startsWith('ru') ? 'ru' : 'kk');
   if (!L[lang]) lang = 'kk';
   const params = new URLSearchParams(location.search);
   let mode = params.get('mode') === 'up' ? 'up' : 'in';
