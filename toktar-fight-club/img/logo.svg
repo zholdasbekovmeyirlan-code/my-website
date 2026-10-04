@@ -1,7 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <!-- Wolf head with a "T" cut — simplified mark; replace with the club's original logo file -->
-  <path d="M18 10 L44 34 L60 30 L76 34 L102 10 L98 52 L88 76 L60 112 L32 76 L22 52 Z" fill="#2b2b30" stroke="#c9c9cf" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M26 22 L42 38 L34 50 Z M94 22 L78 38 L86 50 Z" fill="#c9c9cf" opacity=".55"/>
-  <path d="M36 46 L84 46 L84 56 L66 56 L66 96 L60 104 L54 96 L54 56 L36 56 Z" fill="#e8e8ec"/>
-  <path d="M40 62 L50 66 L42 70 Z M80 62 L70 66 L78 70 Z" fill="#ff6a2b"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 250">
+  <!-- Simplified Toktar Fight Club wolf mark; replace with the club's original logo file -->
+  <path d="M120 75 L146 67 L184 7 L194 83 L204 117 L220 145 L186 161 L182 187 L146 211 L120 239 L94 211 L58 187 L54 161 L20 145 L36 117 L46 83 L56 7 L94 67 Z" fill="#2b2b30" stroke="#c9c9cf" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M78 89 H162 V105 H131 V187 L120 199 L109 187 V105 H78 Z" fill="#ececf0"/>
+  <path d="M138 117 L168 111 L146 128 Z M102 117 L72 111 L94 128 Z" fill="#ff6a2b"/>
 </svg>

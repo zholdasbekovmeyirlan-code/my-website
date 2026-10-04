@@ -8,15 +8,29 @@
   <meta name="theme-color" content="#0b0b0d">
   <meta property="og:title" content="Toktar Fight Club">
   <meta property="og:description" content="Еркебұлан Тоқтардың жекпе-жек клубы. Жақында ашылады.">
-  <meta property="og:image" content="img/logo.svg">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="fonts/oswald-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/oswald-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="is-loading">
 
+<!-- LOADER -->
+<div class="loader" id="loader" aria-hidden="true">
+  <svg class="loader__wolf" viewBox="0 0 240 250">
+    <path class="lw-outline" d="M120 75 L146 67 L184 7 L194 83 L204 117 L220 145 L186 161 L182 187 L146 211 L120 239 L94 211 L58 187 L54 161 L20 145 L36 117 L46 83 L56 7 L94 67 Z"/>
+    <path class="lw-t" d="M78 89 H162 V105 H131 V187 L120 199 L109 187 V105 H78 Z"/>
+    <path class="lw-eye" d="M138 117 L168 111 L146 128 Z"/>
+    <path class="lw-eye" d="M102 117 L72 111 L94 128 Z"/>
+  </svg>
+  <div class="loader__num"><span id="loaderNum">0</span><small>%</small></div>
+  <div class="loader__name">TOKTAR <span>FIGHT CLUB</span></div>
+</div>
+
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"><span id="cursorLabel"></span></div>
+<div class="grain" aria-hidden="true"></div>
 <div class="progress" id="progress"></div>
 
 <!-- NAV -->
@@ -29,6 +43,7 @@
     <nav class="nav__links" id="navLinks">
       <a href="#about" data-i18n="nav_about"></a>
       <a href="#programs" data-i18n="nav_programs"></a>
+      <a href="#bag" data-i18n="nav_bag"></a>
       <a href="#founder" data-i18n="nav_founder"></a>
       <a href="#schedule" data-i18n="nav_schedule"></a>
       <a href="#prices" data-i18n="nav_prices"></a>
@@ -45,69 +60,78 @@
   </div>
 </header>
 
+<canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+
+<main>
 <!-- HERO -->
 <section class="hero" id="top">
-  <div class="hero__bg" aria-hidden="true">
-    <img src="img/logo.svg" alt="" class="hero__wolf">
-    <div class="hero__glow"></div>
-  </div>
-  <div class="wrap hero__in">
-    <span class="badge reveal"><i class="dot"></i><span data-i18n="hero_badge"></span></span>
-    <h1 class="hero__title reveal">
-      <span data-i18n="hero_title_1"></span>
-      <em data-i18n="hero_title_2"></em>
+  <img src="img/logo.svg" class="hero__fallback" id="heroFallback" alt="" hidden>
+  <div class="wrap hero__in" id="heroIn">
+    <span class="badge hero__fade"><i class="dot"></i><span data-i18n="hero_badge"></span></span>
+    <h1 class="hero__title" aria-label="Toktar Fight Club">
+      <span class="line"><span class="split">TOKTAR</span></span>
+      <span class="line line--fire"><span class="split">FIGHT CLUB</span></span>
     </h1>
-    <p class="hero__lead reveal" data-i18n="hero_lead"></p>
+    <p class="hero__lead hero__fade" data-i18n="hero_lead"></p>
 
-    <div class="countdown reveal" id="countdown" hidden>
+    <div class="countdown hero__fade" id="countdown" hidden>
       <div><b id="cdD">00</b><span data-i18n="count_days"></span></div>
       <div><b id="cdH">00</b><span data-i18n="count_hours"></span></div>
       <div><b id="cdM">00</b><span data-i18n="count_min"></span></div>
       <div><b id="cdS">00</b><span data-i18n="count_sec"></span></div>
     </div>
 
-    <div class="hero__btns reveal">
-      <a href="#join" class="btn btn--fire" data-i18n="hero_cta"></a>
-      <a href="#about" class="btn btn--ghost" data-i18n="hero_more"></a>
+    <div class="hero__btns hero__fade">
+      <a href="#join" class="btn btn--fire" data-magnetic><span data-i18n="hero_cta"></span>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#bag" class="btn btn--ghost" data-magnetic data-i18n="hero_try"></a>
     </div>
-    <a class="hero__ig reveal" data-href="instagramClub" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2A3.2 3.2 0 1 1 12 8.8a3.2 3.2 0 0 1 0 6.4zM17.3 5.5a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zM12 2c-2.7 0-3 0-4.1.1C4.3 2.3 2.3 4.3 2.1 7.9 2 9 2 9.3 2 12s0 3 .1 4.1c.2 3.6 2.2 5.6 5.8 5.8 1.1.1 1.4.1 4.1.1s3 0 4.1-.1c3.6-.2 5.6-2.2 5.8-5.8.1-1.1.1-1.4.1-4.1s0-3-.1-4.1c-.2-3.6-2.2-5.6-5.8-5.8C15 2 14.7 2 12 2zm0 1.8c2.7 0 3 0 4 .1 2.6.1 3.9 1.4 4 4 .1 1 .1 1.3.1 4s0 3-.1 4c-.1 2.6-1.4 3.9-4 4-1 .1-1.3.1-4 .1s-3 0-4-.1c-2.6-.1-3.9-1.4-4-4-.1-1-.1-1.3-.1-4s0-3 .1-4c.1-2.6 1.4-3.9 4-4 1-.1 1.3-.1 4-.1z"/></svg>
-      @toktarfight_club · <span data-i18n="hero_follow"></span>
-    </a>
-  </div>
-  <div class="ticker" aria-hidden="true">
-    <div class="ticker__track">
-      <span>BOXING</span><span>MMA</span><span>DISCIPLINE</span><span>RESPECT</span><span>WOLF SPIRIT</span><span>TOKTAR FIGHT CLUB</span>
-      <span>BOXING</span><span>MMA</span><span>DISCIPLINE</span><span>RESPECT</span><span>WOLF SPIRIT</span><span>TOKTAR FIGHT CLUB</span>
+
+    <div class="hero__meta hero__fade">
+      <a class="hero__ig" data-href="instagramClub" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"/></svg>
+        @toktarfight_club · <span data-i18n="hero_follow"></span>
+      </a>
+      <div class="hero__scroll"><span data-i18n="hero_scroll"></span><i></i></div>
     </div>
   </div>
 </section>
+
+<!-- MARQUEE -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__row">
+    <div class="marquee__track">
+      <span>BOXING</span><i>✦</i><span>MMA</span><i>✦</i><span>DISCIPLINE</span><i>✦</i><span>RESPECT</span><i>✦</i><span>WOLF SPIRIT</span><i>✦</i>
+      <span>BOXING</span><i>✦</i><span>MMA</span><i>✦</i><span>DISCIPLINE</span><i>✦</i><span>RESPECT</span><i>✦</i><span>WOLF SPIRIT</span><i>✦</i>
+    </div>
+  </div>
+  <div class="marquee__row marquee__row--rev">
+    <div class="marquee__track marquee__track--outline">
+      <span>TOKTAR FIGHT CLUB</span><i>✦</i><span>ALMATY</span><i>✦</i><span>TOKTAR FIGHT CLUB</span><i>✦</i><span>NO LIMITS</span><i>✦</i>
+      <span>TOKTAR FIGHT CLUB</span><i>✦</i><span>ALMATY</span><i>✦</i><span>TOKTAR FIGHT CLUB</span><i>✦</i><span>NO LIMITS</span><i>✦</i>
+    </div>
+  </div>
+</div>
 
 <!-- ABOUT -->
 <section class="section" id="about">
   <div class="wrap">
     <p class="kicker reveal" data-i18n="about_kicker"></p>
-    <h2 class="title reveal" data-i18n="about_title"></h2>
-    <p class="lead reveal" data-i18n="about_text"></p>
+    <p class="statement" id="statement" data-i18n="about_statement"></p>
     <div class="features">
-      <article class="feature reveal">
-        <div class="feature__ic">
-          <svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12h-6v-7H9v7z"/></svg>
-        </div>
+      <article class="feature reveal" data-tilt>
+        <div class="feature__ic"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12h-6v-7H9v7z"/></svg></div>
         <h3 data-i18n="about_f1_t"></h3>
         <p data-i18n="about_f1_d"></p>
       </article>
-      <article class="feature reveal">
-        <div class="feature__ic">
-          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9L22 9.6l-5.4 4.8L18.2 22 12 18.3 5.8 22l1.6-7.6L2 9.6l7.1-.7z"/></svg>
-        </div>
+      <article class="feature reveal" data-tilt>
+        <div class="feature__ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9L22 9.6l-5.4 4.8L18.2 22 12 18.3 5.8 22l1.6-7.6L2 9.6l7.1-.7z"/></svg></div>
         <h3 data-i18n="about_f2_t"></h3>
         <p data-i18n="about_f2_d"></p>
       </article>
-      <article class="feature reveal">
-        <div class="feature__ic">
-          <svg viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm8 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM1 21v-2c0-3 3-5 7-5s7 2 7 5v2zm15 0v-2c0-1.5-.6-2.8-1.6-3.8 3.4.1 6.6 1.6 6.6 3.8v2z"/></svg>
-        </div>
+      <article class="feature reveal" data-tilt>
+        <div class="feature__ic"><svg viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm8 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM1 21v-2c0-3 3-5 7-5s7 2 7 5v2zm15 0v-2c0-1.5-.6-2.8-1.6-3.8 3.4.1 6.6 1.6 6.6 3.8v2z"/></svg></div>
         <h3 data-i18n="about_f3_t"></h3>
         <p data-i18n="about_f3_d"></p>
       </article>
@@ -115,48 +139,87 @@
   </div>
 </section>
 
-<!-- PROGRAMS -->
-<section class="section section--dark" id="programs">
-  <div class="wrap">
-    <p class="kicker reveal" data-i18n="prog_kicker"></p>
-    <h2 class="title reveal" data-i18n="prog_title"></h2>
-    <div class="programs">
-      <article class="program program--big reveal">
-        <span class="program__num">01</span>
-        <h3 data-i18n="prog_1_t"></h3>
-        <p data-i18n="prog_1_d"></p>
-        <span class="chip" data-i18n="prog_level"></span>
-      </article>
-      <article class="program reveal">
-        <span class="program__num">02</span>
-        <h3 data-i18n="prog_2_t"></h3>
-        <p data-i18n="prog_2_d"></p>
-      </article>
-      <article class="program reveal">
-        <span class="program__num">03</span>
-        <h3 data-i18n="prog_3_t"></h3>
-        <p data-i18n="prog_3_d"></p>
-      </article>
-      <article class="program reveal">
-        <span class="program__num">04</span>
-        <h3 data-i18n="prog_4_t"></h3>
-        <p data-i18n="prog_4_d"></p>
-      </article>
-      <article class="program reveal">
-        <span class="program__num">05</span>
-        <h3 data-i18n="prog_5_t"></h3>
-        <p data-i18n="prog_5_d"></p>
-      </article>
+<!-- PROGRAMS (pinned horizontal on desktop) -->
+<section class="programs" id="programs">
+  <div class="programs__head wrap">
+    <p class="kicker" data-i18n="prog_kicker"></p>
+    <h2 class="title" data-i18n="prog_title"></h2>
+  </div>
+  <div class="h-track" id="hTrack">
+    <article class="pcard pcard--hot" data-tilt>
+      <span class="pcard__num">01</span>
+      <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M6 10V7a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H9a3 3 0 0 1-3-3v-1"/><path d="M6 10a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2"/><path d="M8 17v3h8v-3"/><path d="M10 9h5"/></svg>
+      <h3 data-i18n="prog_1_t"></h3>
+      <p data-i18n="prog_1_d"></p>
+      <span class="chip" data-i18n="prog_level"></span>
+    </article>
+    <article class="pcard" data-tilt>
+      <span class="pcard__num">02</span>
+      <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M9.5 6h5L18 9.5v5L14.5 18h-5L6 14.5v-5z"/></svg>
+      <h3 data-i18n="prog_2_t"></h3>
+      <p data-i18n="prog_2_d"></p>
+    </article>
+    <article class="pcard" data-tilt>
+      <span class="pcard__num">03</span>
+      <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M8 8a4 4 0 1 1 8 0"/><path d="M6 10h12l1 6a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5z"/></svg>
+      <h3 data-i18n="prog_3_t"></h3>
+      <p data-i18n="prog_3_d"></p>
+    </article>
+    <article class="pcard" data-tilt>
+      <span class="pcard__num">04</span>
+      <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>
+      <h3 data-i18n="prog_4_t"></h3>
+      <p data-i18n="prog_4_d"></p>
+    </article>
+    <article class="pcard" data-tilt>
+      <span class="pcard__num">05</span>
+      <svg class="pcard__icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+      <h3 data-i18n="prog_5_t"></h3>
+      <p data-i18n="prog_5_d"></p>
+    </article>
+    <article class="pcard pcard--cta">
+      <h3 data-i18n="prog_cta_t"></h3>
+      <a href="#join" class="btn btn--fire" data-magnetic data-i18n="nav_cta"></a>
+    </article>
+  </div>
+</section>
+
+<!-- INTERACTIVE BAG -->
+<section class="section bag" id="bag">
+  <div class="wrap bag__in">
+    <div class="bag__body">
+      <p class="kicker reveal" data-i18n="bag_kicker"></p>
+      <h2 class="title reveal" data-i18n="bag_title"></h2>
+      <p class="lead reveal" data-i18n="bag_text"></p>
+      <div class="meter reveal">
+        <div class="meter__top"><span data-i18n="bag_power"></span><b><span id="powerNum">0</span>%</b></div>
+        <div class="meter__bar"><i id="powerBar"></i></div>
+        <div class="meter__level" id="powerLevel"></div>
+      </div>
+      <div class="bag__stats reveal">
+        <div><b id="hitCount">0</b><span data-i18n="bag_hits"></span></div>
+        <div><b id="hitBest">0%</b><span data-i18n="bag_best"></span></div>
+      </div>
+      <a href="#join" class="btn btn--fire reveal" data-magnetic data-i18n="bag_cta"></a>
+    </div>
+    <div class="bag__stage reveal">
+      <canvas id="bagCanvas" aria-label="3D punching bag"></canvas>
+      <img src="img/logo.svg" class="bag__fallback" id="bagFallback" alt="" hidden>
+      <div class="bag__hint" id="bagHint"><span class="tap"></span><span data-i18n="bag_hint"></span></div>
+      <div class="bag__ko" id="bagKo" data-i18n="bag_lvl_4"></div>
     </div>
   </div>
 </section>
 
 <!-- FOUNDER -->
-<section class="section" id="founder">
+<section class="section section--dark" id="founder">
   <div class="wrap founder">
     <div class="founder__photo reveal">
       <!-- Рұқсаты бар фотоны img/founder.jpg атымен салыңыз: ол автоматты түрде шығады -->
       <img src="img/founder.jpg" alt="Еркебұлан Тоқтар" onerror="this.remove()">
+      <svg class="founder__wolf" viewBox="0 0 240 250" aria-hidden="true">
+        <path d="M120 75 L146 67 L184 7 L194 83 L204 117 L220 145 L186 161 L182 187 L146 211 L120 239 L94 211 L58 187 L54 161 L20 145 L36 117 L46 83 L56 7 L94 67 Z"/>
+      </svg>
       <span class="founder__initials">ЕТ</span>
     </div>
     <div class="founder__body">
@@ -164,47 +227,47 @@
       <h2 class="title reveal" data-i18n="founder_title"></h2>
       <p class="lead reveal" data-i18n="founder_text"></p>
       <div class="founder__stats reveal">
-        <div><b>2,5M+</b><span data-i18n="founder_stat_1"></span></div>
-        <div><b>10+</b><span data-i18n="founder_stat_2"></span></div>
+        <div><b data-count="2.5" data-decimals="1" data-suffix="M+">2,5M+</b><span data-i18n="founder_stat_1"></span></div>
+        <div><b data-count="10" data-suffix="+">10+</b><span data-i18n="founder_stat_2"></span></div>
         <div><b data-i18n="founder_ring"></b><span data-i18n="founder_stat_3"></span></div>
       </div>
-      <a class="btn btn--ghost reveal" data-href="instagramFounder" target="_blank" rel="noopener" data-i18n="founder_follow"></a>
+      <a class="btn btn--ghost reveal" data-href="instagramFounder" target="_blank" rel="noopener" data-magnetic data-i18n="founder_follow"></a>
     </div>
   </div>
 </section>
 
 <!-- SCHEDULE -->
-<section class="section section--dark" id="schedule">
+<section class="section" id="schedule">
   <div class="wrap">
     <p class="kicker reveal" data-i18n="sch_kicker"></p>
     <h2 class="title reveal" data-i18n="sch_title"></h2>
     <p class="lead reveal" data-i18n="sch_text"></p>
     <div class="tabs reveal" id="schTabs" role="tablist"></div>
-    <div class="slots reveal" id="schSlots"></div>
+    <div class="slots" id="schSlots"></div>
   </div>
 </section>
 
 <!-- PRICES -->
-<section class="section" id="prices">
+<section class="section section--dark" id="prices">
   <div class="wrap">
     <p class="kicker reveal" data-i18n="price_kicker"></p>
     <h2 class="title reveal" data-i18n="price_title"></h2>
     <p class="lead reveal" data-i18n="price_text"></p>
     <div class="prices">
-      <article class="price reveal">
+      <article class="price reveal" data-tilt>
         <h3 data-i18n="price_1_t"></h3>
         <p data-i18n="price_1_d"></p>
         <div class="price__val" data-i18n="price_soon"></div>
         <a href="#join" class="btn btn--ghost" data-i18n="price_btn"></a>
       </article>
-      <article class="price price--hot reveal">
+      <article class="price price--hot reveal" data-tilt>
         <span class="price__tag" data-i18n="price_popular"></span>
         <h3 data-i18n="price_2_t"></h3>
         <p data-i18n="price_2_d"></p>
         <div class="price__val" data-i18n="price_soon"></div>
         <a href="#join" class="btn btn--fire" data-i18n="price_btn"></a>
       </article>
-      <article class="price reveal">
+      <article class="price reveal" data-tilt>
         <h3 data-i18n="price_3_t"></h3>
         <p data-i18n="price_3_d"></p>
         <div class="price__val" data-i18n="price_soon"></div>
@@ -213,7 +276,6 @@
     </div>
   </div>
 </section>
-
 
 <!-- JOIN FORM -->
 <section class="section join-sec" id="join">
@@ -287,8 +349,10 @@
     <div class="map reveal" id="map" hidden></div>
   </div>
 </section>
+</main>
 
 <footer class="footer">
+  <div class="footer__giant" aria-hidden="true">TOKTAR</div>
   <div class="wrap footer__in">
     <a href="#top" class="brand">
       <img src="img/logo.svg" alt="" width="32" height="32">
@@ -304,6 +368,6 @@
 
 <script src="js/config.js"></script>
 <script src="js/i18n.js"></script>
-<script src="js/app.js"></script>
+<script src="js/bundle.js"></script>
 </body>
 </html>
