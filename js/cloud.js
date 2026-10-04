@@ -89,6 +89,7 @@
       this.lastSync = u ? readMeta().lastSync || null : null;
       if (u) {
         await this.refreshProfile();
+        if (C.telegramBot) this.tgStatus().catch(() => null).then(() => this.emit());
         if (this.isPro) await this.syncNow();
       } else this.status = 'idle';
       this.emit();
@@ -131,7 +132,8 @@
 
     /* Telegram bot link (see supabase/005_telegram.sql) */
     async tgStatus() {
-      const { data } = await this._client.from('telegram_links').select('username, remind_hour').eq('user_id', this.user.id).maybeSingle();
+      const { data, error } = await this._client.from('telegram_links').select('username, remind_hour').eq('user_id', this.user.id).maybeSingle();
+      if (!error) this.tgLinked = !!data;
       return data || null;
     },
     async tgCode() {

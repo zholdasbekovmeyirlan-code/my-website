@@ -195,7 +195,7 @@
       '<span>' + t('nav_' + r) + '</span><kbd>' + (i + 1) + '</kbd></a>').join('');
     $('#sidebar').innerHTML =
       '<a class="brand" href="index.html" title="' + t('home') + '"><img class="logo-mark" src="img/entryx-mark.svg" alt="" /><span class="brand-name"><span class="wordmark">ENTRY<b>X</b></span><em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO' + (Cloud.isTrial ? ' · ' + t('days_left', { n: Cloud.trialDaysLeft }) : '') + '</b>' : '') + '</em></span></a>' +
-      '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
+      '<nav class="nav" aria-label="Main">' + nav + tgNav() + '</nav>' +
       '<div class="side-card">' +
       '<div class="side-card-label">' + t('equity') + (Cloud.isPro ? '<span class="sync-dot s-' + Cloud.status + '" title="' + t('sync_' + Cloud.status) + '"></span>' : '') + '</div>' +
       '<div class="side-card-value mono">' + money(eq) + '</div>' +
@@ -208,6 +208,22 @@
       (Cloud.user ? '<div class="side-user"><span class="avatar">' + esc((Cloud.user.email || '?').charAt(0).toUpperCase()) + '</span><div class="side-user-info"><b>' + esc(Cloud.user.email || '') + '</b><small>' + (Cloud.isPro ? 'Pro' : 'Free') + '</small></div>' +
         '<button class="icon-btn sm" data-action="sign-out" title="' + t('sign_out') + '" aria-label="' + t('sign_out') + '">' + icon('logout') + '</button></div>' : '') +
       '<div class="side-foot"><button class="kbd-hint" data-action="shortcuts">' + icon('keyboard') + t('shortcuts') + '</button></div>';
+  }
+
+  function tgNav() {
+    const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot;
+    if (!bot || !Cloud.user) return '';
+    return Cloud.tgLinked
+      ? '<a class="nav-item tg-nav" href="https://t.me/' + esc(bot.replace(/^@/, '')) + '" target="_blank" rel="noopener">' + TG_SVG + '<span>' + t('tg_nav') + '</span><i class="tg-dot on"></i></a>'
+      : '<a class="nav-item tg-nav" href="#/settings" data-tg-goto>' + TG_SVG + '<span>' + t('tg_nav') + '</span><i class="tg-dot"></i></a>';
+  }
+  // Dashboard nudge for Pro users who haven't linked the bot yet
+  function tgBanner() {
+    const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot;
+    let hidden = false; try { hidden = localStorage.getItem('entryx:tg-banner:' + (Cloud.user && Cloud.user.id)) === '1'; } catch (e) { /* storage blocked */ }
+    if (!bot || !Cloud.user || Cloud.tgLinked !== false || !hasPro() || hidden) return '';
+    return '<div class="tg-banner">' + TG_SVG + '<div><b>' + t('tg_banner_t') + '</b><span>' + t('tg_banner_x') + '</span></div>' +
+      '<a class="btn btn-primary btn-sm" href="#/settings" data-tg-goto>' + t('tg_connect') + '</a><button class="icon-btn sm" data-action="tg-hide" aria-label="close">' + icon('x') + '</button></div>';
   }
 
   function renderTopbar() {
@@ -318,7 +334,7 @@
       (open.length ? '<div class="pill accent">' + icon('bolt') + t('open_n', { n: open.length }) + '</div>' : '') +
       '<button class="pill pill-btn" data-action="share">' + icon('image') + t('share') + (hasPro() ? '' : ' <b class="pro-badge">PRO</b>') + '</button>' +
       '</div></div>' +
-      PRO.dashboardWidgets() +
+      tgBanner() + PRO.dashboardWidgets() +
 
       '<div class="grid kpis">' +
       kpi({ hero: true, icon: 'trades', label: t('net_pnl'), value: money(st.net, { sign: true }), cls: cls(st.net),
@@ -1032,7 +1048,7 @@
     const P = (window.EDGEBOOK_CONFIG || {}).pricing || { currency: '$', monthly: 12, yearly: 99 };
     const save = Math.round((1 - P.yearly / (P.monthly * 12)) * 100);
     const SOON = [];
-    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f3', 'pro_f4', 'pro_f5', 'pro_f2', 'pro_f6'].map(k =>
+    const perks = '<ul class="acc-perks">' + ['pro_f1', 'pro_f3', 'pro_f4', 'pro_f5', 'pro_f2', 'pro_f6', 'pro_f7'].map(k =>
       '<li' + (SOON.includes(k) ? ' class="soon"' : '') + '>' + t(k) + (SOON.includes(k) ? ' <span class="soon-chip">' + t('soon') + '</span>' : '') + '</li>').join('') + '</ul>';
     const head = (sub, right) => '<div class="card-head"><div><h3>' + t('acc_title') + '</h3><p>' + sub + '</p></div>' + (right || '') + '</div>';
 
@@ -1082,22 +1098,28 @@
   }
 
   /* ---------- Telegram bot ---------- */
+  const TG_SVG = '<svg class="tg-logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#29a9eb"/><path fill="#fff" d="M5.4 11.8 16.9 7.3c.5-.2 1 .1.8.9l-2 9.3c-.1.6-.5.8-1.1.5l-3-2.2-1.4 1.4c-.2.2-.3.3-.6.3l.2-3.1 5.6-5.1c.2-.2 0-.4-.4-.1l-6.9 4.4-3-.9c-.7-.2-.7-.6.3-1z"/></svg>';
   function telegramCard() {
     const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot;
     if (!bot || !Cloud.enabled || !Cloud.user) return '';
-    return '<div class="card tg-card" id="tgCard"><div class="tg-ic">' + icon('send') + '</div><div class="tg-copy"><h3>' + t('tg_title') + '</h3><p>' + t('tg_sub') + '</p></div>' +
+    return '<div class="card tg-card" id="tgCard"><div class="tg-ic">' + TG_SVG + '</div><div class="tg-copy"><h3>' + t('tg_title') + '</h3><p>' + t('tg_sub') + '</p></div>' +
       '<div class="tg-actions" id="tgActions"><span class="muted small">…</span></div></div>';
   }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-tg-goto]')) return;
+    setTimeout(() => { const c = $('#tgCard'); if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.classList.add('flash'); setTimeout(() => c.classList.remove('flash'), 1600); } }, 250);
+  });
   function bindTelegram() {
     const box = $('#tgActions');
     if (!box) return;
     const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot.replace(/^@/, '');
     const paint = link => {
+      if (Cloud.tgLinked !== !!link) { Cloud.tgLinked = !!link; renderSidebar(); }
       box.innerHTML = link
         ? '<span class="tg-on">✓ ' + t('tg_connected', { u: link.username ? '@' + esc(link.username) : 'Telegram' }) + '</span>' +
           '<a class="btn btn-primary btn-sm" href="https://t.me/' + esc(bot) + '" target="_blank" rel="noopener">' + t('tg_open') + '</a>' +
           '<button class="btn btn-ghost btn-sm" id="tgUnlink">' + t('tg_unlink') + '</button>'
-        : '<button class="btn btn-primary" id="tgConnect">' + icon('send') + t('tg_connect') + '</button>';
+        : '<button class="btn btn-primary" id="tgConnect">' + TG_SVG + t('tg_connect') + '</button>';
       const c = $('#tgConnect');
       if (c) c.addEventListener('click', () => {
         if (!hasPro()) { proUpsell('pro_f7'); return; }
@@ -1347,6 +1369,7 @@
         Cloud.refreshProfile().then(p => { if (Cloud.isPro) { toast(t('plan_active'), 'ok'); Cloud.syncNow(); } else toast(t('still_free'), 'err'); });
         break;
       case 'sync-now': Cloud.syncNow(); break;
+      case 'tg-hide': try { localStorage.setItem('entryx:tg-banner:' + Cloud.user.id, '1'); } catch (err) { /* storage blocked */ } render(); break;
       case 'sign-out': Cloud.signOut().then(() => { location.replace('login.html'); }); break;
     }
   });

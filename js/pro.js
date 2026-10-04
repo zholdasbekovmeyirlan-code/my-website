@@ -326,7 +326,7 @@
       const kind = Cloud.isPaid ? 'paid' : 'trial';
       const key = 'entryx:welcome:' + Cloud.user.id + ':' + kind;
       try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) { return; }
-      const feats = [['coach', 'wf_ai'], ['upload', 'wf_import'], ['image', 'wf_share'], ['shield', 'wf_risk'], ['target', 'wf_prop'], ['sparkle', 'wf_sync']];
+      const feats = [['coach', 'wf_ai'], ['send', 'wf_tg'], ['upload', 'wf_import'], ['image', 'wf_share'], ['shield', 'wf_risk'], ['target', 'wf_prop'], ['sparkle', 'wf_sync']];
       openModal('<div class="welcome"><div class="welcome-badge">PRO</div>' +
         '<h2 class="display">' + (kind === 'trial' ? t('wl_trial_t', { n: Cloud.trialDaysLeft }) : t('wl_paid_t')) + '</h2>' +
         '<p>' + t(kind === 'trial' ? 'wl_trial_x' : 'wl_paid_x') + '</p>' +
