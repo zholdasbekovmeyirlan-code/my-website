@@ -266,16 +266,24 @@
 
     function shareDialog() {
       if (!api.hasPro()) { api.proUpsell('pro_f4'); return; }
-      let period = 'month', hide = false;
+      // Nothing to show off yet → point the trader to logging a trade instead of a $0 card.
+      if (!periodTrades('all').length) { toast(t('sc_empty_all'), 'err'); return; }
+      let period = ['month', 'week', 'all'].find(p => periodTrades(p).length) || 'all', hide = false;
       openModal('<div class="modal-head"><div><div class="eyebrow">PRO</div><h2 class="display">' + t('sc_title') + '</h2></div><button class="icon-btn" data-close aria-label="close">' + icon('x') + '</button></div>' +
         '<div class="modal-body sc-body"><div class="sc-preview"><canvas id="scCanvas"></canvas></div><div class="sc-side">' +
         '<div class="field"><span>' + t('sc_period') + '</span><div class="seg sc-seg">' + ['today', 'week', 'month', 'all'].map(p => '<button type="button" data-p="' + p + '" class="' + (p === period ? 'on' : '') + '">' + t('sc_p_' + p) + '</button>').join('') + '</div></div>' +
         '<label class="check"><input type="checkbox" id="scHide"/><span>' + t('sc_hide') + '</span></label>' +
-        '<p class="hint">' + t('sc_hint') + '</p>' +
+        '<p class="hint">' + t('sc_hint') + '</p><p class="hint sc-empty" id="scEmpty" hidden>' + t('sc_empty') + '</p>' +
         '<div class="sc-actions"><button class="btn btn-primary" id="scDownload">' + icon('download') + t('sc_download') + '</button>' +
         (navigator.share ? '<button class="btn btn-ghost" id="scShare">' + icon('upload') + t('sc_share') + '</button>' : '') + '</div></div></div>', 'lg');
       const canvas = $('#scCanvas');
-      const redraw = () => drawCard(canvas, period, hide);
+      const redraw = () => {
+        const empty = !periodTrades(period).length;
+        $('#scEmpty').hidden = !empty;
+        $('#scDownload').disabled = empty; if ($('#scShare')) $('#scShare').disabled = empty;
+        canvas.style.opacity = empty ? '.35' : '';
+        drawCard(canvas, period, hide);
+      };
       $$('.sc-seg button').forEach(b => b.addEventListener('click', () => { period = b.dataset.p; $$('.sc-seg button').forEach(x => x.classList.toggle('on', x === b)); redraw(); }));
       $('#scHide').addEventListener('change', e => { hide = e.target.checked; redraw(); });
       const blob = () => new Promise(res => canvas.toBlob(res, 'image/png'));

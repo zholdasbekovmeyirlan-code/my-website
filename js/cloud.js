@@ -129,6 +129,18 @@
     },
     async signOut() { await this._client.auth.signOut(); },
 
+    /* Telegram bot link (see supabase/005_telegram.sql) */
+    async tgStatus() {
+      const { data } = await this._client.from('telegram_links').select('username, remind_hour').eq('user_id', this.user.id).maybeSingle();
+      return data || null;
+    },
+    async tgCode() {
+      const { data, error } = await this._client.rpc('tg_link_code');
+      if (error) throw error;
+      return data;
+    },
+    async tgUnlink() { await this._client.from('telegram_links').delete().eq('user_id', this.user.id); },
+
     /* NOWPayments: the `pay` Edge Function creates an invoice and returns its URL */
     async startCheckout(interval) {
       const token = await this.accessToken();
