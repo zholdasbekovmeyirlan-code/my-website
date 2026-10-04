@@ -12,11 +12,11 @@
       hero_tag: 'Кәсіби трейдерлердің <em>журналы.</em>',
       hero_sub: 'EntryX әр мәмілені, эмоцияны және қатені нақты сандарға айналдырады. Қай сетап ақша әкелетінін, қай әдет оны ұрлайтынын бір көзқараста көресіз.',
       cta_primary: 'Тегін бастау', cta_secondary: 'Демоны көру',
-      hero_note: 'Карта қажет емес &nbsp;·&nbsp; Google арқылы бір басу &nbsp;·&nbsp; Қазақша және English',
+      hero_note: 'Карта қажет емес &nbsp;·&nbsp; Google арқылы бір басу &nbsp;·&nbsp; Қазақша, Русский, English',
       mock_greet: 'Қайырлы күн', mock_new: '+ Жаңа мәміле', mock_equity: 'Капитал қисығы', mock_calendar: 'Қыркүйек',
       f_trade: 'Мәміле жазылды', f_wr: 'Ұтыс үлесі', f_ins: 'Инсайт', f_ins_text: 'Breakout — ең мықты сетапыңыз',
       marquee: 'Кез келген нарық үшін',
-      st1: 'метрика мен көрсеткіш', st2: 'мәміле — тіпті Free нұсқада', st3: 'тіл: қазақша және ағылшынша', st4: 'жеке, ешқандай бақылау жоқ',
+      st1: 'метрика мен көрсеткіш', st2: 'мәміле — тіпті Free нұсқада', st3: 'тіл: қазақша, орысша, ағылшынша', st4: 'жеке, ешқандай бақылау жоқ',
       feat_eyebrow: 'Мүмкіндіктер',
       feat_title: 'Кәсіби трейдерге<br>керектің <em>бәрі</em>.',
       feat_sub: 'Excel кестелері мен дәптерлерді ұмытыңыз. Бүкіл сауда тарихыңыз — бір әдемі жерде.',
@@ -67,17 +67,78 @@
       fc_title: 'Келесі мәмілеңізді<br><em>жазыңыз</em>.', fc_sub: 'Бір айдан кейін өз саудаңызды мүлде басқаша көресіз.',
       foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.', l_terms: 'Шарттар', l_privacy: 'Құпиялылық', l_refund: 'Төлем шарттары'
     },
+    ru: {
+      nav_features: 'Возможности', nav_analytics: 'Аналитика', nav_how: 'Как это работает', nav_faq: 'Вопросы', nav_open: 'Начать', nav_login: 'Войти',
+      hero_badge: 'Бесплатный старт · Карта не нужна · Регистрация за 30 секунд',
+      hero_tag: 'Дневник <em>профессиональных</em> трейдеров.',
+      hero_sub: 'EntryX превращает каждую сделку, эмоцию и ошибку в точные цифры. Видно, какие сетапы приносят деньги, а какие привычки их незаметно забирают.',
+      cta_primary: 'Начать бесплатно', cta_secondary: 'Смотреть демо',
+      hero_note: 'Карта не нужна &nbsp;·&nbsp; Вход через Google в один клик &nbsp;·&nbsp; Қазақша, Русский, English',
+      mock_greet: 'Добрый день', mock_new: '+ Новая сделка', mock_equity: 'Кривая капитала', mock_calendar: 'Сентябрь',
+      f_trade: 'Сделка записана', f_wr: 'Винрейт', f_ins: 'Инсайт', f_ins_text: 'Breakout — ваш сильнейший сетап',
+      marquee: 'Для любого рынка',
+      st1: 'метрик и разрезов', st2: 'сделок — даже на Free', st3: 'языка: казахский, русский, английский', st4: 'приватно, без слежки',
+      feat_eyebrow: 'Возможности',
+      feat_title: 'Всё, что <em>нужно</em><br>серьёзному трейдеру.',
+      feat_sub: 'Забудьте о таблицах и тетрадях. Вся история торговли — в одном красивом месте.',
+      t1_title: 'Кривая капитала и 30+ метрик', t1_text: 'Профит-фактор, матожидание, R, просадка, серии — считаются в реальном времени.',
+      t2_title: 'Календарь P&L', t2_text: 'Зелёные и красные дни — весь месяц одним взглядом.',
+      t3_title: 'Автоматические инсайты', t3_text: 'EntryX читает ваши данные и подсказывает, что изменить.',
+      ti_1: '<b>Breakout</b> — в среднем +0.89R', ti_2: 'Торговля на <b>мести</b>: −$186', ti_3: 'Лучший час — <b>10:00</b>',
+      t4_title: 'Эмоции и ошибки', t4_text: 'Узнайте, сколько в долларах стоили вам FOMO и торговля на мести.',
+      e_calm: 'Спокойствие', e_revenge: 'Месть', e_greed: 'Жадность',
+      t5_title: 'Распределение R', t5_text: 'Истинная форма ваших результатов с учётом риска.',
+      t6_title: '100% приватно', t6_text: 'Free: данные только в вашем браузере. Pro: защищённое облако, доступное только вам.',
+      t7_title: 'Создан для скорости', t7_text: 'Горячие клавиши и палитра ⌘K — без мыши.',
+      t8_title: 'Торговый дневник', t8_text: 'План до открытия, разбор дня и уроки — сохраняются по мере ввода.',
+      tj_plan: 'План', tj_plan_text: 'Только A+ сетапы на уровнях старшего ТФ. Макс 3 сделки. Стоп после 2 убытков.',
+      tj_lesson: 'Урок', tj_lesson_text: 'Лучшие сделки скучные.',
+      an_eyebrow: 'Аналитика',
+      an_title: 'Данные говорят<br><em>правду</em>.',
+      an_sub: 'Большинство трейдеров так и не узнают, почему теряют. EntryX разбирает каждую сделку по дням, часам, сетапам, эмоциям и ошибкам — и показывает настоящую причину.',
+      an_li1: 'P&L по дням недели и часам', an_li2: 'Сравнение Long и Short', an_li3: 'Разрезы по сетапам и эмоциям', an_li4: 'Качество исполнения и результат',
+      an_cta: 'Открыть аналитику', an_weekday: 'P&L по дням недели', example: 'Пример',
+      ins_a: 'Ваш самый прибыльный день — <b>понедельник</b> (+$2,456).', ins_b: 'Торговля на <b>мести</b> стоила вам −$186.',
+      how_eyebrow: 'Как это работает', how_title: 'Три шага.<br><em>Каждый день.</em>',
+      s1_t: 'Записывайте', s1_x: 'Вход, выход, стоп — за 30 секунд. P&L и R считаются автоматически.',
+      s2_t: 'Разбирайте', s2_x: 'Закройте день в дневнике, посмотрите календарь и графики.',
+      s3_t: 'Улучшайте', s3_x: 'Убирайте слабые сетапы, которые отмечают инсайты, и усиливайте то, что работает.',
+      quote: 'Рынок вам ничего не должен.<br>Но <em>ваши данные</em> расскажут всё.',
+      pr_eyebrow: 'Цены', pr_title: 'Начните бесплатно.<br><em>Растите с Pro.</em>',
+      pr_monthly: 'Месяц', pr_yearly: 'Год', pr_per_free: 'навсегда', pr_per_month: '/ мес', pr_per_year: '/ год', pr_save: 'Экономия {p}% при оплате за год',
+      pr_free_desc: 'Всё, что нужно частному трейдеру. Данные хранятся в вашем браузере.', pr_free_cta: 'Начать бесплатно', pr_popular: 'Популярный',
+      pf_1: 'Безлимит сделок', pf_2: 'Полная аналитика и инсайты', pf_3: 'Календарь P&L и дневник', pf_4: 'Скриншоты, теги, эмоции', pf_5: 'Экспорт JSON / CSV',
+      pr_pro_desc: 'Для серьёзных трейдеров. 7 дней бесплатно после регистрации — оставайтесь, только если понравится.', pr_pro_cta: '7 дней бесплатно',
+      pp_0: 'Всё из Free', pp_1: '🛡 Риск-менеджер — останавливает торговлю на мести', pp_2: '🏆 Трекер проп-челленджа (FTMO и др.)',
+      pp_6: '📲 Telegram-бот — дневной отчёт, предупреждения о риске, AI-коуч', pp_3: '📸 Карточки P&L для Instagram и Telegram', pp_4: 'Импорт от брокера и синхронизация на всех устройствах', pp_5: '✨ AI-коуч, который читает ваш дневник и даёт реальные советы',
+      ai_eyebrow: 'AI-коуч · Pro', ai_title: 'Коуч, который<br><em>читает</em> ваш дневник.',
+      ai_sub: 'Спрашивайте что угодно. AI анализирует ваши сделки, эмоции и ошибки и отвечает реальными цифрами. Без сигналов — он улучшает ваш процесс.',
+      ai_li1: 'За секунды объясняет, почему вы потеряли', ai_li2: 'Находит лучшие и худшие сетапы', ai_li3: 'Разбор недели и 3 конкретных совета',
+      ai_cta: 'Попробовать коуча', ai_online: 'прочитал ваш дневник', ai_ph: 'Спросите что угодно…',
+      ai_q: 'Почему я ушёл в минус в этом месяце?',
+      ai_a: 'Главная причина — <b>торговля по пятницам</b>: 9 сделок, <b class="neg">−$642</b>. Шесть из них открыты в состоянии <b>мести</b>, после двух убытков.<br><br><b>Совет:</b> останавливайтесь после 2 сделок по пятницам. Одно это изменило бы месяц на <b class="pos">+$410</b>.',
+      q6: 'Как оплатить Pro?', a6: 'Криптовалютой (USDT, BTC, ETH и др.) через NOWPayments. Pro включится автоматически после подтверждения — никаких ключей вводить не нужно. Сначала 7 дней бесплатно.',
+      q7: 'Что делает AI-коуч?', a7: 'В Pro AI-коуч читает статистику вашего дневника и отвечает реальными цифрами: почему вы потеряли, какие сетапы работают, в какие часы лучше не торговать. Он никогда не даёт торговых сигналов и прогнозов цены.',
+      faq_title: 'Частые<br><em>вопросы</em>',
+      q1: 'Где хранятся мои данные?', a1: 'На Free — только в вашем браузере. На Pro — ещё и в защищённом облаке, доступном только вам.',
+      q2: 'Нужна ли регистрация?', a2: 'Да, но это 30 секунд — один клик через Google или GitHub. На Free сделки хранятся на этом устройстве; Pro синхронизирует их на всех устройствах.',
+      q3: 'Какие рынки поддерживаются?', a3: 'Крипто, форекс, акции, фьючерсы, опционы — любой инструмент. Множители фьючерсов поддерживаются.',
+      q4: 'Как перенести данные на другое устройство?', a4: 'В Pro всё синхронизируется автоматически. На Free: Настройки → Резервная копия (JSON), затем «Восстановить копию» на новом устройстве.',
+      q5: 'Работает ли на телефоне?', a5: 'Да. Интерфейс полностью адаптирован для телефона: нижняя навигация и удобные формы.',
+      fc_title: 'Запишите<br><em>следующую сделку</em>.', fc_sub: 'Через месяц вы увидите свою торговлю совсем иначе.',
+      foot: 'Создано для трейдеров.', foot_disc: 'Не является финансовым советом.', l_terms: 'Условия', l_privacy: 'Конфиденциальность', l_refund: 'Условия оплаты'
+    },
     en: {
       nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
       hero_badge: 'Free to start · No card required · Sign up in 30 seconds',
       hero_tag: 'The journal <em>serious traders</em> keep.',
       hero_sub: 'EntryX turns every trade, emotion and mistake into hard numbers. See which setups make you money — and which habits quietly take it back.',
       cta_primary: 'Start for free', cta_secondary: 'Explore the demo',
-      hero_note: 'No card required &nbsp;·&nbsp; One click with Google &nbsp;·&nbsp; Kazakh & English',
+      hero_note: 'No card required &nbsp;·&nbsp; One click with Google &nbsp;·&nbsp; Kazakh, Russian & English',
       mock_greet: 'Good afternoon', mock_new: '+ New trade', mock_equity: 'Equity curve', mock_calendar: 'September',
       f_trade: 'Trade logged', f_wr: 'Win rate', f_ins: 'Insight', f_ins_text: 'Breakout is your strongest setup',
       marquee: 'Built for every market',
-      st1: 'metrics & breakdowns', st2: 'trades — even on Free', st3: 'languages: Kazakh & English', st4: 'private, zero tracking',
+      st1: 'metrics & breakdowns', st2: 'trades — even on Free', st3: 'languages: Kazakh, Russian & English', st4: 'private, zero tracking',
       feat_eyebrow: 'Features',
       feat_title: 'Everything a serious<br>trader <em>needs</em>.',
       feat_sub: 'Forget spreadsheets and notebooks. Your entire trading history, in one beautiful place.',
@@ -133,7 +194,8 @@
   /* ---------- language ---------- */
   Store.load();
   const s = Store.state.settings;
-  let lang = s.langChosen || s.seeded ? s.lang : ((navigator.language || '').toLowerCase().startsWith('en') ? 'en' : 'kk');
+  const nl = (navigator.language || '').toLowerCase();
+  let lang = s.langChosen || s.seeded ? s.lang : (nl.startsWith('en') ? 'en' : nl.startsWith('ru') ? 'ru' : 'kk');
   if (!L[lang]) lang = 'kk';
   I18N.use(() => lang);
 
@@ -158,7 +220,7 @@
     $$('[data-l]').forEach(el => { const v = L[lang][el.dataset.l]; if (v != null) el.innerHTML = v; });
     $$('[data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
     const d = new Date();
-    $('#mkDate').textContent = d.getDate() + ' ' + I18N.months()[d.getMonth()] + ' ' + d.getFullYear();
+    $('#mkDate').textContent = d.getDate() + ' ' + I18N.monthsGen()[d.getMonth()] + ' ' + d.getFullYear();
     drawMock();
     paintPrice();
   }

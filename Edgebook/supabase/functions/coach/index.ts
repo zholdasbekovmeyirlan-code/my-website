@@ -86,7 +86,7 @@ How to help:
 - If a question is unrelated to trading, markets, or using EntryX, answer in one short sentence that you are a trading coach, and offer a relevant alternative.
 - If the journal has too little data to answer, say what is missing and how to log it.
 - If the data is marked as demo data, mention once that insights are based on sample trades.
-- Reply in the language given by the <lang> tag (kk = Kazakh, en = English) unless the trader writes in another language, in which case use theirs.
+- Reply in the language given by the <lang> tag (kk = Kazakh, ru = Russian, en = English) unless the trader writes in another language, in which case use theirs.
 - Keep answers focused: short paragraphs and bullet lists, use **bold** for key numbers, no tables, no code blocks. Aim for under 250 words unless the trader asks for a full review.`;
 
 type InMsg = { role?: unknown; content?: unknown };
@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
   let body: { messages?: InMsg[]; context?: unknown; lang?: unknown };
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
 
-  const lang = body.lang === "en" ? "en" : "kk";
+  const lang = body.lang === "en" ? "en" : body.lang === "ru" ? "ru" : "kk";
   const context = String(body.context ?? "").slice(0, 80000);
   const messages: Anthropic.Beta.Messages.BetaMessageParam[] = (Array.isArray(body.messages) ? body.messages : [])
     .slice(-16)
