@@ -29,11 +29,29 @@
     if (/^[A-Z0-9]{2,12}USD$/.test(s) && !/^(EUR|GBP|AUD|NZD|XAU|XAG|USD)/.test(s)) s += 'T';   // BTCUSD → BTCUSDT
     return QUOTES.some(q => s.endsWith(q) && s.length > q.length + 1) ? s : null;
   }
+  /* Broker names for indices and metals → TradingView symbols that the free widget can show */
+  const ALIASES = {
+    'OANDA:NAS100USD': ['NAS100', 'NASDAQ', 'NASDAQ100', 'US100', 'USTEC', 'NDX', 'NQ', 'NQ1', 'MNQ', 'NAS', 'USTECH', 'TECH100'],
+    'OANDA:SPX500USD': ['US500', 'SPX500', 'SP500', 'SPX', 'ES', 'ES1', 'ES500', 'MES', 'S&P500', 'SNP500', 'USSPX500'],
+    'OANDA:US30USD': ['US30', 'DJ30', 'DOW', 'DOW30', 'DJI', 'YM', 'WS30'],
+    'OANDA:DE30EUR': ['GER40', 'DE40', 'DAX', 'DAX40', 'GER30', 'DE30'],
+    'OANDA:XAUUSD': ['XAUUSD', 'GOLD', 'GC', 'GC1', 'MGC', 'XAU'],
+    'OANDA:XAGUSD': ['XAGUSD', 'SILVER', 'SI', 'XAG'],
+    'TVC:USOIL': ['USOIL', 'WTI', 'CL', 'CL1', 'OIL', 'XTIUSD'],
+    'TVC:UKOIL': ['UKOIL', 'BRENT', 'XBRUSD'],
+    'TVC:DXY': ['DXY', 'USDX'],
+  };
+  const ALIAS = {};
+  Object.keys(ALIASES).forEach(k => ALIASES[k].forEach(a => { ALIAS[a] = k; }));
+
   /* Best-effort TradingView symbol for the widget */
   function tvSymbol(raw, market) {
     const s = String(raw || '').toUpperCase().replace(/\s+/g, '');
     if (!s) return 'BINANCE:BTCUSDT';
     if (s.includes(':')) return s;
+    const bare = s.replace(/[\/\-_.!]/g, '');
+    const alias = ALIAS[bare] || ALIAS[bare.replace(/(CASH|SPOT)$/, '')];
+    if (alias) return alias;
     const b = binanceSymbol(s);
     if (b) return 'BINANCE:' + b;
     const plain = s.replace(/[\/\-_]/g, '');
