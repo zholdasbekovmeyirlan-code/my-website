@@ -168,7 +168,18 @@
         if (!reply && err && err.code === 'not_pro') toast(t('ai_err_pro'), 'err');
       }
       paint();
-      setTimeout(() => ta.focus(), 50);
+      // Phones: size the chat to the space between the top bar and the bottom navigation
+      const card = v.querySelector('.coach');
+      const fit = () => {
+        if (!document.body.contains(card)) { window.removeEventListener('resize', fit); return; }
+        if (innerWidth > 720) { card.style.height = ''; return; }
+        const nav = document.querySelector('.sidebar');
+        const navH = nav ? nav.getBoundingClientRect().height : 0;
+        const top = card.getBoundingClientRect().top + scrollY;
+        card.style.height = Math.max(300, innerHeight - top - navH - 12) + 'px';
+      };
+      fit(); window.addEventListener('resize', fit);
+      if (innerWidth > 720) setTimeout(() => ta.focus(), 50);
     }
 
     api.VIEWS.coach = view;

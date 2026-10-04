@@ -645,3 +645,10 @@ body.intro-on { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .hero-brand i { opacity: 1; transform: none; filter: none; animation: none !important; }
 }
+@media (max-width: 760px) {
+  .lp-nav-inner { gap: 6px; padding: 0 6px 0 10px; }
+  .lp-nav-right { gap: 6px; }
+  .lp-nav-right .seg.lang button { padding: 0 7px; font-size: 11px; }
+  .lp-login { padding: 8px 4px; }
+}
+@media (max-width: 380px) { .lp-logo .wordmark { display: none; } }
