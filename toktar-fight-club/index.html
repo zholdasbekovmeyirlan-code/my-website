@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="kk">
+<html lang="kk" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,6 +13,16 @@
   <link rel="preload" href="fonts/oswald-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    /* If the main script never runs (blocked, truncated file, viewer without JS), never leave the loader on screen */
+    (function (d) {
+      var h = d.documentElement;
+      h.className = h.className.replace("no-js", "js");
+      function fail() { if (!window.__tfcBooted) h.classList.add("boot-failed"); }
+      window.addEventListener("load", function () { setTimeout(fail, 500); });
+      setTimeout(fail, 12000);
+    })(document);
+  </script>
 </head>
 <body class="is-loading">
 
@@ -41,20 +51,20 @@
       <span>TOKTAR<small>FIGHT CLUB</small></span>
     </a>
     <nav class="nav__links" id="navLinks">
-      <a href="#about" data-i18n="nav_about"></a>
-      <a href="#programs" data-i18n="nav_programs"></a>
-      <a href="#bag" data-i18n="nav_bag"></a>
-      <a href="#founder" data-i18n="nav_founder"></a>
-      <a href="#schedule" data-i18n="nav_schedule"></a>
-      <a href="#prices" data-i18n="nav_prices"></a>
-      <a href="#contact" data-i18n="nav_contact"></a>
+      <a href="#about" data-i18n="nav_about">Клуб туралы</a>
+      <a href="#programs" data-i18n="nav_programs">Бағыттар</a>
+      <a href="#bag" data-i18n="nav_bag">Соқ!</a>
+      <a href="#founder" data-i18n="nav_founder">Негізін қалаушы</a>
+      <a href="#schedule" data-i18n="nav_schedule">Кесте</a>
+      <a href="#prices" data-i18n="nav_prices">Абонемент</a>
+      <a href="#contact" data-i18n="nav_contact">Байланыс</a>
     </nav>
     <div class="nav__right">
       <div class="lang" role="group" aria-label="Language">
         <button data-lang="kk">ҚАЗ</button>
         <button data-lang="ru">РУС</button>
       </div>
-      <a href="#join" class="btn btn--fire btn--sm nav__cta" data-i18n="nav_cta"></a>
+      <a href="#join" class="btn btn--fire btn--sm nav__cta" data-i18n="nav_cta">Жазылу</a>
       <button class="burger-menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -67,33 +77,33 @@
 <section class="hero" id="top">
   <img src="img/logo.svg" class="hero__fallback" id="heroFallback" alt="" hidden>
   <div class="wrap hero__in" id="heroIn">
-    <span class="badge hero__fade"><i class="dot"></i><span data-i18n="hero_badge"></span></span>
+    <span class="badge hero__fade"><i class="dot"></i><span data-i18n="hero_badge">Жақында ашылады</span></span>
     <h1 class="hero__title" aria-label="Toktar Fight Club">
       <span class="line"><span class="split">TOKTAR</span></span>
       <span class="line line--fire"><span class="split">FIGHT CLUB</span></span>
     </h1>
-    <p class="hero__lead hero__fade" data-i18n="hero_lead"></p>
+    <p class="hero__lead hero__fade" data-i18n="hero_lead">Еркебұлан Тоқтардың жекпе-жек клубы. Мұнда әр жаттығу сені бұрынғыдан күшті етеді.</p>
 
     <div class="countdown hero__fade" id="countdown" hidden>
-      <div><b id="cdD">00</b><span data-i18n="count_days"></span></div>
-      <div><b id="cdH">00</b><span data-i18n="count_hours"></span></div>
-      <div><b id="cdM">00</b><span data-i18n="count_min"></span></div>
-      <div><b id="cdS">00</b><span data-i18n="count_sec"></span></div>
+      <div><b id="cdD">00</b><span data-i18n="count_days">күн</span></div>
+      <div><b id="cdH">00</b><span data-i18n="count_hours">сағат</span></div>
+      <div><b id="cdM">00</b><span data-i18n="count_min">минут</span></div>
+      <div><b id="cdS">00</b><span data-i18n="count_sec">секунд</span></div>
     </div>
 
     <div class="hero__btns hero__fade">
-      <a href="#join" class="btn btn--fire" data-magnetic><span data-i18n="hero_cta"></span>
+      <a href="#join" class="btn btn--fire" data-magnetic><span data-i18n="hero_cta">Алғашқылардың бірі бол</span>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
-      <a href="#bag" class="btn btn--ghost" data-magnetic data-i18n="hero_try"></a>
+      <a href="#bag" class="btn btn--ghost" data-magnetic data-i18n="hero_try">Қапшықты соғып көр</a>
     </div>
 
     <div class="hero__meta hero__fade">
       <a class="hero__ig" data-href="instagramClub" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"/></svg>
-        @toktarfight_club · <span data-i18n="hero_follow"></span>
+        @toktarfight_club · <span data-i18n="hero_follow">Instagram-да 20,5K+ жазылушы</span>
       </a>
-      <div class="hero__scroll"><span data-i18n="hero_scroll"></span><i></i></div>
+      <div class="hero__scroll"><span data-i18n="hero_scroll">Төмен айналдыр</span><i></i></div>
     </div>
   </div>
 </section>
@@ -117,23 +127,23 @@
 <!-- ABOUT -->
 <section class="section" id="about">
   <div class="wrap">
-    <p class="kicker reveal" data-i18n="about_kicker"></p>
-    <p class="statement" id="statement" data-i18n="about_statement"></p>
+    <p class="kicker reveal" data-i18n="about_kicker">Клуб туралы</p>
+    <p class="statement" id="statement" data-i18n="about_statement">Біз жай ғана зал ашпаймыз. Біз мінез шыңдалып, темір тәртіп қалыптасатын орта құрамыз. Мұнда әркім өз шегінен асады.</p>
     <div class="features">
       <article class="feature reveal" data-tilt>
         <div class="feature__ic"><svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12h-6v-7H9v7z"/></svg></div>
-        <h3 data-i18n="about_f1_t"></h3>
-        <p data-i18n="about_f1_d"></p>
+        <h3 data-i18n="about_f1_t">Заманауи зал</h3>
+        <p data-i18n="about_f1_d">Ринг, қапшықтар, функционалдық аймақ және ыңғайлы киім ауыстыратын бөлмелер.</p>
       </article>
       <article class="feature reveal" data-tilt>
         <div class="feature__ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9L22 9.6l-5.4 4.8L18.2 22 12 18.3 5.8 22l1.6-7.6L2 9.6l7.1-.7z"/></svg></div>
-        <h3 data-i18n="about_f2_t"></h3>
-        <p data-i18n="about_f2_d"></p>
+        <h3 data-i18n="about_f2_t">Тәжірибелі жаттықтырушылар</h3>
+        <p data-i18n="about_f2_d">Әр оқушыға жеке назар аударылады. Жаттығу жоспары сенің деңгейіңе қарай құрылады.</p>
       </article>
       <article class="feature reveal" data-tilt>
         <div class="feature__ic"><svg viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm8 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM1 21v-2c0-3 3-5 7-5s7 2 7 5v2zm15 0v-2c0-1.5-.6-2.8-1.6-3.8 3.4.1 6.6 1.6 6.6 3.8v2z"/></svg></div>
-        <h3 data-i18n="about_f3_t"></h3>
-        <p data-i18n="about_f3_d"></p>
+        <h3 data-i18n="about_f3_t">Мықты қауымдастық</h3>
+        <p data-i18n="about_f3_d">Бір мақсатқа ұмтылатын адамдар бар ортада жаттығу әлдеқайда оңай.</p>
       </article>
     </div>
   </div>
@@ -142,44 +152,44 @@
 <!-- PROGRAMS (pinned horizontal on desktop) -->
 <section class="programs" id="programs">
   <div class="programs__head wrap">
-    <p class="kicker" data-i18n="prog_kicker"></p>
-    <h2 class="title" data-i18n="prog_title"></h2>
+    <p class="kicker" data-i18n="prog_kicker">Бағыттар</p>
+    <h2 class="title" data-i18n="prog_title">Өз <span>жолыңды</span> таңда</h2>
   </div>
   <div class="h-track" id="hTrack">
     <article class="pcard pcard--hot" data-tilt>
       <span class="pcard__num">01</span>
       <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M6 10V7a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H9a3 3 0 0 1-3-3v-1"/><path d="M6 10a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2"/><path d="M8 17v3h8v-3"/><path d="M10 9h5"/></svg>
-      <h3 data-i18n="prog_1_t"></h3>
-      <p data-i18n="prog_1_d"></p>
-      <span class="chip" data-i18n="prog_level"></span>
+      <h3 data-i18n="prog_1_t">Бокс</h3>
+      <p data-i18n="prog_1_d">Техника, қозғалыс, соққы комбинациялары және спарринг.</p>
+      <span class="chip" data-i18n="prog_level">Барлық деңгейге</span>
     </article>
     <article class="pcard" data-tilt>
       <span class="pcard__num">02</span>
       <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M9.5 6h5L18 9.5v5L14.5 18h-5L6 14.5v-5z"/></svg>
-      <h3 data-i18n="prog_2_t"></h3>
-      <p data-i18n="prog_2_d"></p>
+      <h3 data-i18n="prog_2_t">ММА</h3>
+      <p data-i18n="prog_2_d">Соққы мен күрестің үйлесімі: тұрып та, партерде де жаттығасың.</p>
     </article>
     <article class="pcard" data-tilt>
       <span class="pcard__num">03</span>
       <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M8 8a4 4 0 1 1 8 0"/><path d="M6 10h12l1 6a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5z"/></svg>
-      <h3 data-i18n="prog_3_t"></h3>
-      <p data-i18n="prog_3_d"></p>
+      <h3 data-i18n="prog_3_t">Функционалдық дайындық</h3>
+      <p data-i18n="prog_3_d">Төзімділік, күш және жылдамдық. Кез келген спортқа мықты негіз.</p>
     </article>
     <article class="pcard" data-tilt>
       <span class="pcard__num">04</span>
       <svg class="pcard__icon" viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>
-      <h3 data-i18n="prog_4_t"></h3>
-      <p data-i18n="prog_4_d"></p>
+      <h3 data-i18n="prog_4_t">Балалар тобы</h3>
+      <p data-i18n="prog_4_d">Тәртіп, өзіне сенім және денсаулық. Балаларға арналған қауіпсіз жаттығулар.</p>
     </article>
     <article class="pcard" data-tilt>
       <span class="pcard__num">05</span>
       <svg class="pcard__icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
-      <h3 data-i18n="prog_5_t"></h3>
-      <p data-i18n="prog_5_d"></p>
+      <h3 data-i18n="prog_5_t">Жеке жаттығу</h3>
+      <p data-i18n="prog_5_d">Жаттықтырушымен жеке сабақ: нәтижеге жылдам жетудің жолы.</p>
     </article>
     <article class="pcard pcard--cta">
-      <h3 data-i18n="prog_cta_t"></h3>
-      <a href="#join" class="btn btn--fire" data-magnetic data-i18n="nav_cta"></a>
+      <h3 data-i18n="prog_cta_t">Қайсысын таңдарыңды білмейсің бе? Сынақ сабаққа кел.</h3>
+      <a href="#join" class="btn btn--fire" data-magnetic data-i18n="nav_cta">Жазылу</a>
     </article>
   </div>
 </section>
@@ -188,25 +198,25 @@
 <section class="section bag" id="bag">
   <div class="wrap bag__in">
     <div class="bag__body">
-      <p class="kicker reveal" data-i18n="bag_kicker"></p>
-      <h2 class="title reveal" data-i18n="bag_title"></h2>
-      <p class="lead reveal" data-i18n="bag_text"></p>
+      <p class="kicker reveal" data-i18n="bag_kicker">Интерактив</p>
+      <h2 class="title reveal" data-i18n="bag_title">Соққыңды <span>сына</span></h2>
+      <p class="lead reveal" data-i18n="bag_text">Қапшықты тышқанмен немесе саусақпен соқ. Тышқанды неғұрлым жылдам қозғалтсаң, соққы соғұрлым күшті болады.</p>
       <div class="meter reveal">
-        <div class="meter__top"><span data-i18n="bag_power"></span><b><span id="powerNum">0</span>%</b></div>
+        <div class="meter__top"><span data-i18n="bag_power">Соққы күші</span><b><span id="powerNum">0</span>%</b></div>
         <div class="meter__bar"><i id="powerBar"></i></div>
         <div class="meter__level" id="powerLevel"></div>
       </div>
       <div class="bag__stats reveal">
-        <div><b id="hitCount">0</b><span data-i18n="bag_hits"></span></div>
-        <div><b id="hitBest">0%</b><span data-i18n="bag_best"></span></div>
+        <div><b id="hitCount">0</b><span data-i18n="bag_hits">Соққы саны</span></div>
+        <div><b id="hitBest">0%</b><span data-i18n="bag_best">Рекорд</span></div>
       </div>
-      <a href="#join" class="btn btn--fire reveal" data-magnetic data-i18n="bag_cta"></a>
+      <a href="#join" class="btn btn--fire reveal" data-magnetic data-i18n="bag_cta">Нағыз жаттығуға жазыл</a>
     </div>
     <div class="bag__stage reveal">
       <canvas id="bagCanvas" aria-label="3D punching bag"></canvas>
       <img src="img/logo.svg" class="bag__fallback" id="bagFallback" alt="" hidden>
-      <div class="bag__hint" id="bagHint"><span class="tap"></span><span data-i18n="bag_hint"></span></div>
-      <div class="bag__ko" id="bagKo" data-i18n="bag_lvl_4"></div>
+      <div class="bag__hint" id="bagHint"><span class="tap"></span><span data-i18n="bag_hint">Қапшықты соқ!</span></div>
+      <div class="bag__ko" id="bagKo" data-i18n="bag_lvl_4">НОКАУТ!</div>
     </div>
   </div>
 </section>
@@ -223,15 +233,15 @@
       <span class="founder__initials">ЕТ</span>
     </div>
     <div class="founder__body">
-      <p class="kicker reveal" data-i18n="founder_kicker"></p>
-      <h2 class="title reveal" data-i18n="founder_title"></h2>
-      <p class="lead reveal" data-i18n="founder_text"></p>
+      <p class="kicker reveal" data-i18n="founder_kicker">Негізін қалаушы</p>
+      <h2 class="title reveal" data-i18n="founder_title">Еркебұлан <span>Тоқтар</span></h2>
+      <p class="lead reveal" data-i18n="founder_text">Актер, Instagram-да 2,5 млн-нан астам жазылушысы бар блогер, бокс рингіне шыққан спортшы. Еркебұлан спорт оны өзгерткенін біледі. Енді сол энергияны басқаларға беру үшін өз клубын ашып жатыр.</p>
       <div class="founder__stats reveal">
-        <div><b data-count="2.5" data-decimals="1" data-suffix="M+">2,5M+</b><span data-i18n="founder_stat_1"></span></div>
-        <div><b data-count="10" data-suffix="+">10+</b><span data-i18n="founder_stat_2"></span></div>
-        <div><b data-i18n="founder_ring"></b><span data-i18n="founder_stat_3"></span></div>
+        <div><b data-count="2.5" data-decimals="1" data-suffix="M+">2,5M+</b><span data-i18n="founder_stat_1">Instagram жазылушысы</span></div>
+        <div><b data-count="10" data-suffix="+">10+</b><span data-i18n="founder_stat_2">кино жобалары</span></div>
+        <div><b data-i18n="founder_ring">Бокс</b><span data-i18n="founder_stat_3">Рингте</span></div>
       </div>
-      <a class="btn btn--ghost reveal" data-href="instagramFounder" target="_blank" rel="noopener" data-magnetic data-i18n="founder_follow"></a>
+      <a class="btn btn--ghost reveal" data-href="instagramFounder" target="_blank" rel="noopener" data-magnetic data-i18n="founder_follow">Instagram-да бақылау</a>
     </div>
   </div>
 </section>
@@ -239,9 +249,9 @@
 <!-- SCHEDULE -->
 <section class="section" id="schedule">
   <div class="wrap">
-    <p class="kicker reveal" data-i18n="sch_kicker"></p>
-    <h2 class="title reveal" data-i18n="sch_title"></h2>
-    <p class="lead reveal" data-i18n="sch_text"></p>
+    <p class="kicker reveal" data-i18n="sch_kicker">Кесте</p>
+    <h2 class="title reveal" data-i18n="sch_title">Жаттығу <span>кестесі</span></h2>
+    <p class="lead reveal" data-i18n="sch_text">Таңертеңнен кешке дейін: жұмыс пен оқуға ыңғайлы уақытты таңда. Кесте ашылу алдында нақтыланады.</p>
     <div class="tabs reveal" id="schTabs" role="tablist"></div>
     <div class="slots" id="schSlots"></div>
   </div>
@@ -250,28 +260,28 @@
 <!-- PRICES -->
 <section class="section section--dark" id="prices">
   <div class="wrap">
-    <p class="kicker reveal" data-i18n="price_kicker"></p>
-    <h2 class="title reveal" data-i18n="price_title"></h2>
-    <p class="lead reveal" data-i18n="price_text"></p>
+    <p class="kicker reveal" data-i18n="price_kicker">Абонемент</p>
+    <h2 class="title reveal" data-i18n="price_title">Бағалар <span>жақында</span> жарияланады</h2>
+    <p class="lead reveal" data-i18n="price_text">Ашылу алдында жазылғандарға арнайы жеңілдік беріледі. Өтінім қалдырып, бағаны бірінші болып біл.</p>
     <div class="prices">
       <article class="price reveal" data-tilt>
-        <h3 data-i18n="price_1_t"></h3>
-        <p data-i18n="price_1_d"></p>
-        <div class="price__val" data-i18n="price_soon"></div>
-        <a href="#join" class="btn btn--ghost" data-i18n="price_btn"></a>
+        <h3 data-i18n="price_1_t">Сынақ сабақ</h3>
+        <p data-i18n="price_1_d">Залмен және жаттықтырушымен танысу</p>
+        <div class="price__val" data-i18n="price_soon">Жақында</div>
+        <a href="#join" class="btn btn--ghost" data-i18n="price_btn">Өтінім қалдыру</a>
       </article>
       <article class="price price--hot reveal" data-tilt>
-        <span class="price__tag" data-i18n="price_popular"></span>
-        <h3 data-i18n="price_2_t"></h3>
-        <p data-i18n="price_2_d"></p>
-        <div class="price__val" data-i18n="price_soon"></div>
-        <a href="#join" class="btn btn--fire" data-i18n="price_btn"></a>
+        <span class="price__tag" data-i18n="price_popular">Танымал</span>
+        <h3 data-i18n="price_2_t">Айлық абонемент</h3>
+        <p data-i18n="price_2_d">Таңдаған бағыт бойынша топтық сабақтар</p>
+        <div class="price__val" data-i18n="price_soon">Жақында</div>
+        <a href="#join" class="btn btn--fire" data-i18n="price_btn">Өтінім қалдыру</a>
       </article>
       <article class="price reveal" data-tilt>
-        <h3 data-i18n="price_3_t"></h3>
-        <p data-i18n="price_3_d"></p>
-        <div class="price__val" data-i18n="price_soon"></div>
-        <a href="#join" class="btn btn--ghost" data-i18n="price_btn"></a>
+        <h3 data-i18n="price_3_t">Жеке жаттығу</h3>
+        <p data-i18n="price_3_d">Жаттықтырушымен жеке сабақ</p>
+        <div class="price__val" data-i18n="price_soon">Жақында</div>
+        <a href="#join" class="btn btn--ghost" data-i18n="price_btn">Өтінім қалдыру</a>
       </article>
     </div>
   </div>
@@ -281,30 +291,30 @@
 <section class="section join-sec" id="join">
   <div class="wrap join">
     <div>
-      <p class="kicker reveal" data-i18n="form_kicker"></p>
-      <h2 class="title reveal" data-i18n="form_title"></h2>
-      <p class="lead reveal" data-i18n="form_text"></p>
+      <p class="kicker reveal" data-i18n="form_kicker">Ерте жазылу</p>
+      <h2 class="title reveal" data-i18n="form_title">Ашылуды <span>бірінші</span> біл</h2>
+      <p class="lead reveal" data-i18n="form_text">Өтінім қалдырыңыз: ашылу күні, бағалар және ерте жазылғандарға арналған жеңілдік туралы сізге өзіміз хабарласамыз.</p>
     </div>
     <form class="form reveal" name="early-signup" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="joinForm">
       <input type="hidden" name="form-name" value="early-signup">
       <p hidden><label>Bot <input name="bot-field"></label></p>
-      <label><span data-i18n="form_name"></span>
+      <label><span data-i18n="form_name">Атыңыз</span>
         <input type="text" name="name" required autocomplete="name">
       </label>
-      <label><span data-i18n="form_phone"></span>
+      <label><span data-i18n="form_phone">Телефон</span>
         <input type="tel" name="phone" required autocomplete="tel" placeholder="+7 7__ ___ __ __">
       </label>
-      <label><span data-i18n="form_program"></span>
+      <label><span data-i18n="form_program">Бағыт</span>
         <select name="program">
-          <option value="any" data-i18n="form_program_any"></option>
-          <option value="boxing" data-i18n="prog_1_t"></option>
-          <option value="mma" data-i18n="prog_2_t"></option>
-          <option value="functional" data-i18n="prog_3_t"></option>
-          <option value="kids" data-i18n="prog_4_t"></option>
-          <option value="personal" data-i18n="prog_5_t"></option>
+          <option value="any" data-i18n="form_program_any">Әлі шешкен жоқпын</option>
+          <option value="boxing" data-i18n="prog_1_t">Бокс</option>
+          <option value="mma" data-i18n="prog_2_t">ММА</option>
+          <option value="functional" data-i18n="prog_3_t">Функционалдық дайындық</option>
+          <option value="kids" data-i18n="prog_4_t">Балалар тобы</option>
+          <option value="personal" data-i18n="prog_5_t">Жеке жаттығу</option>
         </select>
       </label>
-      <button class="btn btn--fire" type="submit" data-i18n="form_submit"></button>
+      <button class="btn btn--fire" type="submit" data-i18n="form_submit">Жіберу</button>
       <p class="form__msg" id="formMsg" role="status"></p>
     </form>
   </div>
@@ -314,15 +324,15 @@
 <section class="section section--dark" id="faq">
   <div class="wrap faq">
     <div>
-      <p class="kicker reveal" data-i18n="faq_kicker"></p>
-      <h2 class="title reveal" data-i18n="faq_title"></h2>
+      <p class="kicker reveal" data-i18n="faq_kicker">Сұрақтар</p>
+      <h2 class="title reveal" data-i18n="faq_title">Жиі қойылатын <span>сұрақтар</span></h2>
     </div>
     <div class="faq__list">
-      <details class="reveal"><summary data-i18n="faq_1_q"></summary><p data-i18n="faq_1_a"></p></details>
-      <details class="reveal"><summary data-i18n="faq_2_q"></summary><p data-i18n="faq_2_a"></p></details>
-      <details class="reveal"><summary data-i18n="faq_3_q"></summary><p data-i18n="faq_3_a"></p></details>
-      <details class="reveal"><summary data-i18n="faq_4_q"></summary><p data-i18n="faq_4_a"></p></details>
-      <details class="reveal"><summary data-i18n="faq_5_q"></summary><p data-i18n="faq_5_a"></p></details>
+      <details class="reveal"><summary data-i18n="faq_1_q">Бұрын ешқашан жаттықпадым. Келе берсем бола ма?</summary><p data-i18n="faq_1_a">Әрине. Жаттықтырушылар деңгейіңізді анықтап, жаттығуды нөлден бастайды. Жаңадан келгендерге арналған топтар бар.</p></details>
+      <details class="reveal"><summary data-i18n="faq_2_q">Жаттығуға не алып келу керек?</summary><p data-i18n="faq_2_a">Спорттық киім, ауысымдық аяқкиім және су. Қолғап пен бинтті алғашқы сабақтарда клубтан алуға болады.</p></details>
+      <details class="reveal"><summary data-i18n="faq_3_q">Балаларды нешеден бастап қабылдайсыздар?</summary><p data-i18n="faq_3_a">Балалар тобы 6 жастан басталады. Сабақтар баланың жасы мен дайындығына қарай құрылады.</p></details>
+      <details class="reveal"><summary data-i18n="faq_4_q">Сынақ сабақ бар ма?</summary><p data-i18n="faq_4_a">Иә. Ерте жазылу формасын толтырыңыз, біз сізге хабарласып, сынақ сабаққа жазамыз.</p></details>
+      <details class="reveal"><summary data-i18n="faq_5_q">Спаррингке міндетті түрде шығу керек пе?</summary><p data-i18n="faq_5_a">Жоқ. Спарринг — өз еркіңіз. Көпшілік клубқа формаға келу және стресстен арылу үшін келеді.</p></details>
     </div>
   </div>
 </section>
@@ -330,19 +340,19 @@
 <!-- CONTACT -->
 <section class="section" id="contact">
   <div class="wrap">
-    <p class="kicker reveal" data-i18n="contact_kicker"></p>
-    <h2 class="title reveal" data-i18n="contact_title"></h2>
+    <p class="kicker reveal" data-i18n="contact_kicker">Байланыс</p>
+    <h2 class="title reveal" data-i18n="contact_title">Бізді <span>тап</span></h2>
     <div class="contacts">
       <div class="contact reveal">
-        <span data-i18n="contact_address"></span>
+        <span data-i18n="contact_address">Мекенжай</span>
         <b id="cAddress"></b>
       </div>
       <div class="contact reveal">
-        <span data-i18n="contact_phone"></span>
+        <span data-i18n="contact_phone">Телефон</span>
         <b id="cPhone"></b>
       </div>
       <div class="contact reveal">
-        <span data-i18n="contact_social"></span>
+        <span data-i18n="contact_social">Әлеуметтік желі</span>
         <b><a data-href="instagramClub" target="_blank" rel="noopener">@toktarfight_club</a></b>
       </div>
     </div>
@@ -358,7 +368,7 @@
       <img src="img/logo.svg" alt="" width="32" height="32">
       <span>TOKTAR<small>FIGHT CLUB</small></span>
     </a>
-    <p>© <span id="year"></span> Toktar Fight Club. <span data-i18n="footer_rights"></span></p>
+    <p>© <span id="year"></span> Toktar Fight Club. <span data-i18n="footer_rights">Барлық құқықтар қорғалған.</span></p>
   </div>
 </footer>
 

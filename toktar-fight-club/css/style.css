@@ -45,10 +45,22 @@ h1, h2, h3 { font-family: var(--head); text-transform: uppercase; line-height: 1
 .lw-eye { fill: var(--fire); opacity: 0; animation: fadeIn .3s 1.3s forwards; filter: drop-shadow(0 0 6px var(--fire)); }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes fadeIn { to { opacity: 1; } }
+.loader__num { opacity: 0; transition: opacity .3s; }
+html.booted .loader__num { opacity: 1; }
 .loader__num { font-family: var(--head); font-size: 3.4rem; line-height: 1; font-weight: 600; }
 .loader__num small { font-size: 1.2rem; color: var(--fire); margin-left: 4px; }
 .loader__name { letter-spacing: .45em; font-size: .72rem; color: var(--muted); font-weight: 700; }
 .loader__name span { color: var(--fire); }
+
+/* No JS / script failed: show a complete static page instead of a stuck loader */
+html.no-js .loader, html.boot-failed .loader { display: none; }
+html.no-js body.is-loading, html.boot-failed body.is-loading { overflow: auto; }
+html.no-js .hero__fallback[hidden], html.boot-failed .hero__fallback[hidden],
+html.no-js .bag__fallback[hidden], html.boot-failed .bag__fallback[hidden] { display: block !important; }
+html.no-js .hero-canvas, html.boot-failed .hero-canvas,
+html.no-js #bagCanvas, html.boot-failed #bagCanvas,
+html.no-js .bag__hint, html.boot-failed .bag__hint,
+html.no-js .tabs, html.boot-failed .tabs { display: none; }
 
 /* ---------- Cursor / grain / progress ---------- */
 .cursor, .cursor-ring { display: none; }

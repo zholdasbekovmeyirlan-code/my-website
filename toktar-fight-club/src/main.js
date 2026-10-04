@@ -6,6 +6,10 @@ import { initBag } from "./bag3d.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
+window.__tfcBooted = true;
+document.documentElement.classList.remove("boot-failed");
+document.documentElement.classList.add("booted");
+
 const cfg = window.TFC_CONFIG || {};
 const dict = window.TFC_I18N;
 const $ = (s, r = document) => r.querySelector(s);
@@ -19,6 +23,22 @@ const store = {
 };
 
 let lang = "kk";
+let lenis = null;
+let hero = null;
+
+// Shows the page; called by the intro timeline, and by a safety timer if anything goes wrong
+let revealed = false;
+function revealPage() {
+  if (revealed) return;
+  revealed = true;
+  document.body.classList.remove("is-loading");
+  const loader = document.getElementById("loader");
+  if (loader) loader.remove();
+  if (lenis) lenis.start();
+  if (hero) hero.intro();
+  ScrollTrigger.refresh();
+}
+setTimeout(revealPage, 7000);
 const t = key => {
   const v = dict[lang] && dict[lang][key];
   return v !== undefined ? v : dict.kk[key] !== undefined ? dict.kk[key] : "";
@@ -157,7 +177,6 @@ function applyLang(l) {
 $$(".lang button").forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
 
 /* ---------- smooth scroll ---------- */
-let lenis = null;
 if (!reduceMotion) {
   lenis = new Lenis({ duration: 1.15, smoothWheel: true });
   lenis.on("scroll", ScrollTrigger.update);
@@ -197,7 +216,6 @@ onScroll();
 
 /* ---------- hero 3D ---------- */
 const heroCanvas = $("#heroCanvas");
-let hero = null;
 try { hero = initHero(heroCanvas); } catch (e) { hero = null; }
 if (!hero) { heroCanvas.remove(); $("#heroFallback").hidden = false; }
 
@@ -229,7 +247,8 @@ gsap.to("#heroIn", {
 
 /* ---------- bag 3D ---------- */
 const ring = $("#cursorRing");
-const bag = initBag($("#bagCanvas"), {
+let bag = null;
+try { bag = initBag($("#bagCanvas"), {
   onHover(on) { ring.classList.toggle("is-punch", on); $("#cursor").classList.toggle("is-off", on); },
   onHit(p) {
     const pct = Math.round(p * 100);
@@ -249,7 +268,7 @@ const bag = initBag($("#bagCanvas"), {
       ko.classList.add("is-show");
     }
   }
-});
+}); } catch (e) { bag = null; }
 if (!bag) { $("#bagCanvas").remove(); $("#bagFallback").hidden = false; $("#bagHint").hidden = true; }
 
 /* ---------- marquee skew by scroll velocity ---------- */
@@ -366,13 +385,7 @@ Promise.all([fontsReady, wait(reduceMotion ? 300 : 2000)]).then(() => {
   const chars = $$(".hero__title .split").flatMap(splitChars);
   const tl = gsap.timeline();
   tl.to("#loader", { clipPath: "inset(0 0 100% 0)", duration: 1, ease: "power4.inOut" })
-    .add(() => {
-      document.body.classList.remove("is-loading");
-      $("#loader").remove();
-      if (lenis) lenis.start();
-      if (hero) hero.intro();
-      ScrollTrigger.refresh();
-    }, "-=0.55")
+    .add(revealPage, "-=0.55")
     .from(chars, { yPercent: 115, rotate: 6, duration: 1, stagger: 0.035, ease: "power4.out" }, "-=0.45")
     .from(".hero__fade", { y: 30, opacity: 0, duration: 0.9, stagger: 0.1, ease: "power3.out", clearProps: "transform,opacity" }, "-=0.75")
     .from("#nav", { yPercent: -100, duration: 0.8, ease: "power3.out", clearProps: "transform" }, "<");
