@@ -985,14 +985,13 @@
       '<input class="input mono" id="chartSym" list="chartSyms" value="' + esc(last) + '" placeholder="BTCUSDT, EURUSD, XAUUSD, NVDA…" autocomplete="off" spellcheck="false"/>' +
       '<datalist id="chartSyms">' + syms.map(s => '<option value="' + esc(s) + '">').join('') + '</datalist>' +
       '<button class="btn btn-primary" type="submit">' + t('chart_open') + '</button>' +
-      '<div class="chart-quick">' + ['BTCUSDT', 'ETHUSDT', 'XAUUSD', 'EURUSD', 'NAS100', 'NVDA'].map(s => '<button type="button" class="chip" data-sym="' + s + '">' + s + '</button>').join('') + '</div>' +
+      '<div class="chart-quick">' + ['BTCUSDT', 'ETHUSDT', 'XAUUSD', 'NAS100', 'US500', 'US30', 'EURUSD', 'NVDA'].map(s => '<button type="button" class="chip" data-sym="' + s + '">' + s + '</button>').join('') + '</div>' +
       '</form><div class="chart-box" id="chartBox"></div></div>';
     const show = s => {
       s = String(s || '').trim().toUpperCase(); if (!s) return;
       $('#chartSym').value = s;
       try { localStorage.setItem('entryx:chart-symbol', s); } catch (e) { /* storage blocked */ }
-      const sym = s === 'NAS100' ? 'CAPITALCOM:US100' : s;
-      TradeChart.widget($('#chartBox'), sym, { lang: S().lang });
+      TradeChart.widget($('#chartBox'), s, { lang: S().lang });
     };
     $('#chartForm').addEventListener('submit', e => { e.preventDefault(); show($('#chartSym').value); });
     $$('[data-sym]', v).forEach(b => b.addEventListener('click', () => show(b.dataset.sym)));
