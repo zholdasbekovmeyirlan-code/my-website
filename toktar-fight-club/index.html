@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toktar Fight Club</title>
+  <meta name="description" content="Toktar Fight Club — Еркебұлан Тоқтардың жекпе-жек клубы. Бокс, ММА, функционалдық дайындық. Жақында ашылады.">
+  <meta name="theme-color" content="#0b0b0d">
+  <meta property="og:title" content="Toktar Fight Club">
+  <meta property="og:description" content="Еркебұлан Тоқтардың жекпе-жек клубы. Жақында ашылады.">
+  <meta property="og:image" content="img/logo.svg">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <div class="wrap nav__in">
+    <a href="#top" class="brand">
+      <img src="img/logo.svg" alt="" width="40" height="40">
+      <span>TOKTAR<small>FIGHT CLUB</small></span>
+    </a>
+    <nav class="nav__links" id="navLinks">
+      <a href="#about" data-i18n="nav_about"></a>
+      <a href="#programs" data-i18n="nav_programs"></a>
+      <a href="#founder" data-i18n="nav_founder"></a>
+      <a href="#prices" data-i18n="nav_prices"></a>
+      <a href="#burger" data-i18n="nav_burger"></a>
+      <a href="#contact" data-i18n="nav_contact"></a>
+    </nav>
+    <div class="nav__right">
+      <div class="lang" role="group" aria-label="Language">
+        <button data-lang="kk">ҚАЗ</button>
+        <button data-lang="ru">РУС</button>
+      </div>
+      <a href="#join" class="btn btn--fire btn--sm nav__cta" data-i18n="nav_cta"></a>
+      <button class="burger-menu" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero__bg" aria-hidden="true">
+    <img src="img/logo.svg" alt="" class="hero__wolf">
+    <div class="hero__glow"></div>
+  </div>
+  <div class="wrap hero__in">
+    <span class="badge reveal"><i class="dot"></i><span data-i18n="hero_badge"></span></span>
+    <h1 class="hero__title reveal">
+      <span data-i18n="hero_title_1"></span>
+      <em data-i18n="hero_title_2"></em>
+    </h1>
+    <p class="hero__lead reveal" data-i18n="hero_lead"></p>
+
+    <div class="countdown reveal" id="countdown" hidden>
+      <div><b id="cdD">00</b><span data-i18n="count_days"></span></div>
+      <div><b id="cdH">00</b><span data-i18n="count_hours"></span></div>
+      <div><b id="cdM">00</b><span data-i18n="count_min"></span></div>
+      <div><b id="cdS">00</b><span data-i18n="count_sec"></span></div>
+    </div>
+
+    <div class="hero__btns reveal">
+      <a href="#join" class="btn btn--fire" data-i18n="hero_cta"></a>
+      <a href="#about" class="btn btn--ghost" data-i18n="hero_more"></a>
+    </div>
+    <a class="hero__ig reveal" data-href="instagramClub" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2A3.2 3.2 0 1 1 12 8.8a3.2 3.2 0 0 1 0 6.4zM17.3 5.5a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zM12 2c-2.7 0-3 0-4.1.1C4.3 2.3 2.3 4.3 2.1 7.9 2 9 2 9.3 2 12s0 3 .1 4.1c.2 3.6 2.2 5.6 5.8 5.8 1.1.1 1.4.1 4.1.1s3 0 4.1-.1c3.6-.2 5.6-2.2 5.8-5.8.1-1.1.1-1.4.1-4.1s0-3-.1-4.1c-.2-3.6-2.2-5.6-5.8-5.8C15 2 14.7 2 12 2zm0 1.8c2.7 0 3 0 4 .1 2.6.1 3.9 1.4 4 4 .1 1 .1 1.3.1 4s0 3-.1 4c-.1 2.6-1.4 3.9-4 4-1 .1-1.3.1-4 .1s-3 0-4-.1c-2.6-.1-3.9-1.4-4-4-.1-1-.1-1.3-.1-4s0-3 .1-4c.1-2.6 1.4-3.9 4-4 1-.1 1.3-.1 4-.1z"/></svg>
+      @toktarfight_club · <span data-i18n="hero_follow"></span>
+    </a>
+  </div>
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track">
+      <span>BOXING</span><span>MMA</span><span>DISCIPLINE</span><span>RESPECT</span><span>WOLF SPIRIT</span><span>TOKTAR FIGHT CLUB</span>
+      <span>BOXING</span><span>MMA</span><span>DISCIPLINE</span><span>RESPECT</span><span>WOLF SPIRIT</span><span>TOKTAR FIGHT CLUB</span>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="section" id="about">
+  <div class="wrap">
+    <p class="kicker reveal" data-i18n="about_kicker"></p>
+    <h2 class="title reveal" data-i18n="about_title"></h2>
+    <p class="lead reveal" data-i18n="about_text"></p>
+    <div class="features">
+      <article class="feature reveal">
+        <div class="feature__ic">
+          <svg viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12h-6v-7H9v7z"/></svg>
+        </div>
+        <h3 data-i18n="about_f1_t"></h3>
+        <p data-i18n="about_f1_d"></p>
+      </article>
+      <article class="feature reveal">
+        <div class="feature__ic">
+          <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9L22 9.6l-5.4 4.8L18.2 22 12 18.3 5.8 22l1.6-7.6L2 9.6l7.1-.7z"/></svg>
+        </div>
+        <h3 data-i18n="about_f2_t"></h3>
+        <p data-i18n="about_f2_d"></p>
+      </article>
+      <article class="feature reveal">
+        <div class="feature__ic">
+          <svg viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm8 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM1 21v-2c0-3 3-5 7-5s7 2 7 5v2zm15 0v-2c0-1.5-.6-2.8-1.6-3.8 3.4.1 6.6 1.6 6.6 3.8v2z"/></svg>
+        </div>
+        <h3 data-i18n="about_f3_t"></h3>
+        <p data-i18n="about_f3_d"></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMS -->
+<section class="section section--dark" id="programs">
+  <div class="wrap">
+    <p class="kicker reveal" data-i18n="prog_kicker"></p>
+    <h2 class="title reveal" data-i18n="prog_title"></h2>
+    <div class="programs">
+      <article class="program program--big reveal">
+        <span class="program__num">01</span>
+        <h3 data-i18n="prog_1_t"></h3>
+        <p data-i18n="prog_1_d"></p>
+        <span class="chip" data-i18n="prog_level"></span>
+      </article>
+      <article class="program reveal">
+        <span class="program__num">02</span>
+        <h3 data-i18n="prog_2_t"></h3>
+        <p data-i18n="prog_2_d"></p>
+      </article>
+      <article class="program reveal">
+        <span class="program__num">03</span>
+        <h3 data-i18n="prog_3_t"></h3>
+        <p data-i18n="prog_3_d"></p>
+      </article>
+      <article class="program reveal">
+        <span class="program__num">04</span>
+        <h3 data-i18n="prog_4_t"></h3>
+        <p data-i18n="prog_4_d"></p>
+      </article>
+      <article class="program reveal">
+        <span class="program__num">05</span>
+        <h3 data-i18n="prog_5_t"></h3>
+        <p data-i18n="prog_5_d"></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- FOUNDER -->
+<section class="section" id="founder">
+  <div class="wrap founder">
+    <div class="founder__photo reveal">
+      <!-- Рұқсаты бар фотоны img/founder.jpg атымен салыңыз: ол автоматты түрде шығады -->
+      <img src="img/founder.jpg" alt="Еркебұлан Тоқтар" onerror="this.remove()">
+      <span class="founder__initials">ЕТ</span>
+    </div>
+    <div class="founder__body">
+      <p class="kicker reveal" data-i18n="founder_kicker"></p>
+      <h2 class="title reveal" data-i18n="founder_title"></h2>
+      <p class="lead reveal" data-i18n="founder_text"></p>
+      <div class="founder__stats reveal">
+        <div><b>2,5M+</b><span data-i18n="founder_stat_1"></span></div>
+        <div><b>10+</b><span data-i18n="founder_stat_2"></span></div>
+        <div><b data-i18n="founder_ring"></b><span data-i18n="founder_stat_3"></span></div>
+      </div>
+      <a class="btn btn--ghost reveal" data-href="instagramFounder" target="_blank" rel="noopener" data-i18n="founder_follow"></a>
+    </div>
+  </div>
+</section>
+
+<!-- PRICES -->
+<section class="section section--dark" id="prices">
+  <div class="wrap">
+    <p class="kicker reveal" data-i18n="price_kicker"></p>
+    <h2 class="title reveal" data-i18n="price_title"></h2>
+    <p class="lead reveal" data-i18n="price_text"></p>
+    <div class="prices">
+      <article class="price reveal">
+        <h3 data-i18n="price_1_t"></h3>
+        <p data-i18n="price_1_d"></p>
+        <div class="price__val" data-i18n="price_soon"></div>
+        <a href="#join" class="btn btn--ghost" data-i18n="price_btn"></a>
+      </article>
+      <article class="price price--hot reveal">
+        <span class="price__tag" data-i18n="price_popular"></span>
+        <h3 data-i18n="price_2_t"></h3>
+        <p data-i18n="price_2_d"></p>
+        <div class="price__val" data-i18n="price_soon"></div>
+        <a href="#join" class="btn btn--fire" data-i18n="price_btn"></a>
+      </article>
+      <article class="price reveal">
+        <h3 data-i18n="price_3_t"></h3>
+        <p data-i18n="price_3_d"></p>
+        <div class="price__val" data-i18n="price_soon"></div>
+        <a href="#join" class="btn btn--ghost" data-i18n="price_btn"></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- BURGER -->
+<section class="section burger" id="burger">
+  <div class="wrap burger__in">
+    <div class="burger__body">
+      <p class="kicker reveal" data-i18n="burger_kicker"></p>
+      <h2 class="title reveal" data-i18n="burger_title"></h2>
+      <p class="burger__name reveal" data-text="burgerName"></p>
+      <p class="lead reveal" data-i18n="burger_text"></p>
+      <div class="hero__btns reveal">
+        <a class="btn btn--fire" data-href="burgerDelivery" target="_blank" rel="noopener" data-i18n="burger_btn"></a>
+        <a class="btn btn--ghost" data-href="instagramBurger" target="_blank" rel="noopener" data-i18n="burger_ig"></a>
+      </div>
+    </div>
+    <div class="burger__art reveal" aria-hidden="true">
+      <svg viewBox="0 0 200 170">
+        <path d="M20 70c0-36 36-56 80-56s80 20 80 56z" fill="#e89a3c"/>
+        <g fill="#fff3d6"><ellipse cx="70" cy="40" rx="4" ry="2.4"/><ellipse cx="100" cy="30" rx="4" ry="2.4"/><ellipse cx="130" cy="42" rx="4" ry="2.4"/><ellipse cx="90" cy="52" rx="4" ry="2.4"/><ellipse cx="118" cy="56" rx="4" ry="2.4"/></g>
+        <path d="M14 78h172l-10 12H24z" fill="#5fb84a"/>
+        <rect x="16" y="88" width="168" height="12" rx="3" fill="#e8483a"/>
+        <rect x="12" y="100" width="176" height="22" rx="10" fill="#5a2d1a"/>
+        <path d="M18 120h164l-12 12H30z" fill="#ffc531"/>
+        <path d="M20 132h160c0 16-30 26-80 26s-80-10-80-26z" fill="#d9862f"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- JOIN FORM -->
+<section class="section section--dark" id="join">
+  <div class="wrap join">
+    <div>
+      <p class="kicker reveal" data-i18n="form_kicker"></p>
+      <h2 class="title reveal" data-i18n="form_title"></h2>
+      <p class="lead reveal" data-i18n="form_text"></p>
+    </div>
+    <form class="form reveal" name="early-signup" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="joinForm">
+      <input type="hidden" name="form-name" value="early-signup">
+      <p hidden><label>Bot <input name="bot-field"></label></p>
+      <label><span data-i18n="form_name"></span>
+        <input type="text" name="name" required autocomplete="name">
+      </label>
+      <label><span data-i18n="form_phone"></span>
+        <input type="tel" name="phone" required autocomplete="tel" placeholder="+7 7__ ___ __ __">
+      </label>
+      <label><span data-i18n="form_program"></span>
+        <select name="program">
+          <option value="any" data-i18n="form_program_any"></option>
+          <option value="boxing" data-i18n="prog_1_t"></option>
+          <option value="mma" data-i18n="prog_2_t"></option>
+          <option value="functional" data-i18n="prog_3_t"></option>
+          <option value="kids" data-i18n="prog_4_t"></option>
+          <option value="personal" data-i18n="prog_5_t"></option>
+        </select>
+      </label>
+      <button class="btn btn--fire" type="submit" data-i18n="form_submit"></button>
+      <p class="form__msg" id="formMsg" role="status"></p>
+    </form>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="section" id="contact">
+  <div class="wrap">
+    <p class="kicker reveal" data-i18n="contact_kicker"></p>
+    <h2 class="title reveal" data-i18n="contact_title"></h2>
+    <div class="contacts">
+      <div class="contact reveal">
+        <span data-i18n="contact_address"></span>
+        <b id="cAddress"></b>
+      </div>
+      <div class="contact reveal">
+        <span data-i18n="contact_phone"></span>
+        <b id="cPhone"></b>
+      </div>
+      <div class="contact reveal">
+        <span data-i18n="contact_social"></span>
+        <b><a data-href="instagramClub" target="_blank" rel="noopener">@toktarfight_club</a></b>
+      </div>
+    </div>
+    <div class="map reveal" id="map" hidden></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer__in">
+    <a href="#top" class="brand">
+      <img src="img/logo.svg" alt="" width="32" height="32">
+      <span>TOKTAR<small>FIGHT CLUB</small></span>
+    </a>
+    <p>© <span id="year"></span> Toktar Fight Club. <span data-i18n="footer_rights"></span></p>
+  </div>
+</footer>
+
+<a class="wa-float" id="waFloat" target="_blank" rel="noopener" hidden aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.6-.1 1.1z"/></svg>
+</a>
+
+<script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
