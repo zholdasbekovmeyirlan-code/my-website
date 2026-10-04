@@ -18,6 +18,7 @@
     document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t(el.dataset.i18n); });
     document.querySelectorAll(".lang button").forEach(b => b.classList.toggle("is-active", b.dataset.lang === lang));
     renderContacts();
+    renderSchedule();
     saveLang(lang);
   }
 
@@ -44,6 +45,37 @@
     } else {
       phoneEl.textContent = t("contact_tba");
     }
+  }
+
+  // Weekly schedule
+  let schDay = 0; // Monday
+  function renderSchedule() {
+    const tabs = document.getElementById("schTabs");
+    const slots = document.getElementById("schSlots");
+    const days = dict[lang].sch_days;
+    tabs.innerHTML = "";
+    days.forEach((d, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.role = "tab";
+      b.textContent = d;
+      b.className = i === schDay ? "is-active" : "";
+      b.setAttribute("aria-selected", i === schDay);
+      b.addEventListener("click", () => { schDay = i; renderSchedule(); });
+      tabs.appendChild(b);
+    });
+    const list = (cfg.schedule || []).filter(s => s.days.includes(schDay)).sort((a, b) => a.time.localeCompare(b.time));
+    slots.innerHTML = "";
+    list.forEach(s => {
+      const row = document.createElement("div");
+      row.className = "slot";
+      row.innerHTML = '<b class="slot__time"></b><div class="slot__name"><h3></h3><span></span></div><a href="#join" class="btn btn--ghost btn--sm"></a>';
+      row.querySelector(".slot__time").textContent = s.time;
+      row.querySelector("h3").textContent = t(s.p);
+      row.querySelector("span").textContent = t("sch_min");
+      row.querySelector("a").textContent = t("sch_book");
+      slots.appendChild(row);
+    });
   }
 
   if (cfg.mapEmbed) {
@@ -82,7 +114,12 @@
 
   // Nav
   const nav = document.getElementById("nav");
-  const onScroll = () => nav.classList.toggle("is-scrolled", window.scrollY > 20);
+  const bar = document.getElementById("progress");
+  const onScroll = () => {
+    nav.classList.toggle("is-scrolled", window.scrollY > 20);
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = "scaleX(" + (max > 0 ? scrollY / max : 0) + ")";
+  };
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
   document.getElementById("menuBtn").addEventListener("click", () => nav.classList.toggle("is-open"));

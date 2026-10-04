@@ -17,6 +17,8 @@
 </head>
 <body>
 
+<div class="progress" id="progress"></div>
+
 <!-- NAV -->
 <header class="nav" id="nav">
   <div class="wrap nav__in">
@@ -28,8 +30,8 @@
       <a href="#about" data-i18n="nav_about"></a>
       <a href="#programs" data-i18n="nav_programs"></a>
       <a href="#founder" data-i18n="nav_founder"></a>
+      <a href="#schedule" data-i18n="nav_schedule"></a>
       <a href="#prices" data-i18n="nav_prices"></a>
-      <a href="#burger" data-i18n="nav_burger"></a>
       <a href="#contact" data-i18n="nav_contact"></a>
     </nav>
     <div class="nav__right">
@@ -171,8 +173,19 @@
   </div>
 </section>
 
+<!-- SCHEDULE -->
+<section class="section section--dark" id="schedule">
+  <div class="wrap">
+    <p class="kicker reveal" data-i18n="sch_kicker"></p>
+    <h2 class="title reveal" data-i18n="sch_title"></h2>
+    <p class="lead reveal" data-i18n="sch_text"></p>
+    <div class="tabs reveal" id="schTabs" role="tablist"></div>
+    <div class="slots reveal" id="schSlots"></div>
+  </div>
+</section>
+
 <!-- PRICES -->
-<section class="section section--dark" id="prices">
+<section class="section" id="prices">
   <div class="wrap">
     <p class="kicker reveal" data-i18n="price_kicker"></p>
     <h2 class="title reveal" data-i18n="price_title"></h2>
@@ -201,35 +214,9 @@
   </div>
 </section>
 
-<!-- BURGER -->
-<section class="section burger" id="burger">
-  <div class="wrap burger__in">
-    <div class="burger__body">
-      <p class="kicker reveal" data-i18n="burger_kicker"></p>
-      <h2 class="title reveal" data-i18n="burger_title"></h2>
-      <p class="burger__name reveal" data-text="burgerName"></p>
-      <p class="lead reveal" data-i18n="burger_text"></p>
-      <div class="hero__btns reveal">
-        <a class="btn btn--fire" data-href="burgerDelivery" target="_blank" rel="noopener" data-i18n="burger_btn"></a>
-        <a class="btn btn--ghost" data-href="instagramBurger" target="_blank" rel="noopener" data-i18n="burger_ig"></a>
-      </div>
-    </div>
-    <div class="burger__art reveal" aria-hidden="true">
-      <svg viewBox="0 0 200 170">
-        <path d="M20 70c0-36 36-56 80-56s80 20 80 56z" fill="#e89a3c"/>
-        <g fill="#fff3d6"><ellipse cx="70" cy="40" rx="4" ry="2.4"/><ellipse cx="100" cy="30" rx="4" ry="2.4"/><ellipse cx="130" cy="42" rx="4" ry="2.4"/><ellipse cx="90" cy="52" rx="4" ry="2.4"/><ellipse cx="118" cy="56" rx="4" ry="2.4"/></g>
-        <path d="M14 78h172l-10 12H24z" fill="#5fb84a"/>
-        <rect x="16" y="88" width="168" height="12" rx="3" fill="#e8483a"/>
-        <rect x="12" y="100" width="176" height="22" rx="10" fill="#5a2d1a"/>
-        <path d="M18 120h164l-12 12H30z" fill="#ffc531"/>
-        <path d="M20 132h160c0 16-30 26-80 26s-80-10-80-26z" fill="#d9862f"/>
-      </svg>
-    </div>
-  </div>
-</section>
 
 <!-- JOIN FORM -->
-<section class="section section--dark" id="join">
+<section class="section join-sec" id="join">
   <div class="wrap join">
     <div>
       <p class="kicker reveal" data-i18n="form_kicker"></p>
@@ -258,6 +245,23 @@
       <button class="btn btn--fire" type="submit" data-i18n="form_submit"></button>
       <p class="form__msg" id="formMsg" role="status"></p>
     </form>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section section--dark" id="faq">
+  <div class="wrap faq">
+    <div>
+      <p class="kicker reveal" data-i18n="faq_kicker"></p>
+      <h2 class="title reveal" data-i18n="faq_title"></h2>
+    </div>
+    <div class="faq__list">
+      <details class="reveal"><summary data-i18n="faq_1_q"></summary><p data-i18n="faq_1_a"></p></details>
+      <details class="reveal"><summary data-i18n="faq_2_q"></summary><p data-i18n="faq_2_a"></p></details>
+      <details class="reveal"><summary data-i18n="faq_3_q"></summary><p data-i18n="faq_3_a"></p></details>
+      <details class="reveal"><summary data-i18n="faq_4_q"></summary><p data-i18n="faq_4_a"></p></details>
+      <details class="reveal"><summary data-i18n="faq_5_q"></summary><p data-i18n="faq_5_a"></p></details>
+    </div>
   </div>
 </section>
 
