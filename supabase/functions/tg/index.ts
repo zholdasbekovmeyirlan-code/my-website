@@ -60,9 +60,23 @@ async function send(chat: number, text: string, keyboard?: any[][]) {
   }
 }
 
+// Button taps update the same message (a clean, app-like menu); typed commands get a new message.
+async function show(chat: number, msgId: number | undefined, text: string, keyboard?: any[][]) {
+  if (msgId && text.length <= 3900) {
+    const r = await tg("editMessageText", {
+      chat_id: chat, message_id: msgId, text, parse_mode: "HTML", disable_web_page_preview: true,
+      ...(keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {}),
+    });
+    if (r.ok || /not modified/i.test(String(r.description ?? ""))) return;
+  }
+  return send(chat, text, keyboard);
+}
+
 /* ---------------- i18n ---------------- */
 const L: Record<string, Record<string, string>> = {
   kk: {
+    back: "⬅️ Мәзір", b_lang: "🌐 Тіл", lang_pick: "🌐 <b>Тілді таңдаңыз</b>\n<i>Выберите язык · Choose language</i>", lang_set: "✅ Бот енді <b>қазақша</b> сөйлейді.",
+    menu_title: "Трейдинг журналыңыз", menu_pick: "Бөлімді таңдаңыз 👇", menu_empty: "Бүгін әзірге мәміле жоқ.", ai_t: "✨ <b>AI коуч</b>", wins_l: "ұтыс", losses_l: "шығын", per90: "соңғы 90 күн", open_l: "ашық",
     welcome: "👋 <b>EntryX ботына қош келдіңіз!</b>\n\nМен сіздің трейдинг журналыңызды білемін: P&L, сетаптар, эмоциялар, тәуекел және AI коуч — бәрі Telegram-да.\n\n<b>Қосу үшін:</b> сайтта <b>Баптаулар → Telegram → Қосу</b> батырмасын басыңыз.",
     linked: "✅ <b>Аккаунт қосылды!</b>\n\nЕнді журналыңыз осында. Төмендегі мәзірді қолданыңыз немесе маған кез келген сұрақ жазыңыз — AI коуч жауап береді.",
     bad_code: "⚠️ Сілтеменің мерзімі өтіп кеткен. Сайтта <b>Баптаулар → Telegram → Қосу</b> батырмасын қайта басыңыз.",
@@ -88,11 +102,13 @@ const L: Record<string, Record<string, string>> = {
     remind_on: "⏰ Күн сайын <b>{h}:00</b>-де күндік есеп жіберемін.", remind_off: "🔕 Күндік есеп өшірілді.", remind_help: "⏰ Күндік есеп уақыты: <b>{h}</b>.\nӨзгерту: <code>/remind 20</code> · Өшіру: <code>/remind off</code>",
     unlinked: "👋 Аккаунт ажыратылды.",
     eve_t: "🌙 <b>Күн қорытындысы</b>", eve_none: "Бүгін мәміле болған жоқ. Демалыс та — стратегия 🙂", eve_journal: "📝 Бүгінгі күнделікті жабуды ұмытпаңыз: не жақсы болды, не сабақ алдыңыз?",
-    help: "<b>Командалар</b>\n/today — бүгін\n/week — 7 күн\n/month — осы ай\n/all — барлық уақыт\n/setups — сетаптар\n/insights — инсайттар\n/last — соңғы мәмілелер\n/risk — тәуекел\n/prop — prop челлендж\n/remind — күндік есеп\n/ask — AI коуч\n/unlink — ажырату\n\nНемесе жай сұрақ жазыңыз — AI жауап береді.",
+    help: "<b>Командалар</b>\n/today — бүгін\n/week — 7 күн\n/month — осы ай\n/all — барлық уақыт\n/setups — сетаптар\n/insights — инсайттар\n/last — соңғы мәмілелер\n/risk — тәуекел\n/prop — prop челлендж\n/remind — күндік есеп\n/ask — AI коуч\n/lang — тіл · язык · language\n/unlink — ажырату\n\nНемесе жай сұрақ жазыңыз — AI жауап береді.",
     unknown: "Түсінбедім 🤔 /menu басыңыз немесе сұрағыңызды толығырақ жазыңыз.",
     wd: "Жс,Дс,Сс,Ср,Бс,Жм,Сб",
   },
   ru: {
+    back: "⬅️ Меню", b_lang: "🌐 Язык", lang_pick: "🌐 <b>Выберите язык</b>\n<i>Тілді таңдаңыз · Choose language</i>", lang_set: "✅ Теперь бот говорит <b>по-русски</b>.",
+    menu_title: "Ваш торговый дневник", menu_pick: "Выберите раздел 👇", menu_empty: "Сегодня сделок пока нет.", ai_t: "✨ <b>AI-коуч</b>", wins_l: "прибыльных", losses_l: "убыточных", per90: "последние 90 дней", open_l: "открыто",
     welcome: "👋 <b>Добро пожаловать в бот EntryX!</b>\n\nЯ знаю ваш торговый дневник: P&L, сетапы, эмоции, риск и AI-коуч — всё в Telegram.\n\n<b>Чтобы подключить:</b> на сайте нажмите <b>Настройки → Telegram → Подключить</b>.",
     linked: "✅ <b>Аккаунт подключён!</b>\n\nТеперь ваш дневник здесь. Пользуйтесь меню ниже или просто задайте вопрос — ответит AI-коуч.",
     bad_code: "⚠️ Срок действия ссылки истёк. Нажмите <b>Настройки → Telegram → Подключить</b> на сайте ещё раз.",
@@ -118,11 +134,13 @@ const L: Record<string, Record<string, string>> = {
     remind_on: "⏰ Буду присылать дневной отчёт каждый день в <b>{h}:00</b>.", remind_off: "🔕 Дневной отчёт выключен.", remind_help: "⏰ Время дневного отчёта: <b>{h}</b>.\nИзменить: <code>/remind 20</code> · Выключить: <code>/remind off</code>",
     unlinked: "👋 Аккаунт отключён.",
     eve_t: "🌙 <b>Итоги дня</b>", eve_none: "Сегодня сделок не было. Отдых — тоже стратегия 🙂", eve_journal: "📝 Не забудьте закрыть дневник за сегодня: что получилось, какой урок?",
-    help: "<b>Команды</b>\n/today — сегодня\n/week — 7 дней\n/month — этот месяц\n/all — всё время\n/setups — сетапы\n/insights — инсайты\n/last — последние сделки\n/risk — риск\n/prop — проп-челлендж\n/remind — дневной отчёт\n/ask — AI-коуч\n/unlink — отключить\n\nИли просто напишите вопрос — ответит AI.",
+    help: "<b>Команды</b>\n/today — сегодня\n/week — 7 дней\n/month — этот месяц\n/all — всё время\n/setups — сетапы\n/insights — инсайты\n/last — последние сделки\n/risk — риск\n/prop — проп-челлендж\n/remind — дневной отчёт\n/ask — AI-коуч\n/lang — язык · тіл · language\n/unlink — отключить\n\nИли просто напишите вопрос — ответит AI.",
     unknown: "Не понял 🤔 Нажмите /menu или напишите вопрос подробнее.",
     wd: "Вс,Пн,Вт,Ср,Чт,Пт,Сб",
   },
   en: {
+    back: "⬅️ Menu", b_lang: "🌐 Language", lang_pick: "🌐 <b>Choose a language</b>\n<i>Тілді таңдаңыз · Выберите язык</i>", lang_set: "✅ The bot now speaks <b>English</b>.",
+    menu_title: "Your trading journal", menu_pick: "Pick a section 👇", menu_empty: "No trades yet today.", ai_t: "✨ <b>AI coach</b>", wins_l: "wins", losses_l: "losses", per90: "last 90 days", open_l: "open",
     welcome: "👋 <b>Welcome to the EntryX bot!</b>\n\nI know your trading journal: P&L, setups, emotions, risk and an AI coach — all in Telegram.\n\n<b>To connect:</b> on the website open <b>Settings → Telegram → Connect</b>.",
     linked: "✅ <b>Account connected!</b>\n\nYour journal is here now. Use the menu below or just ask me anything — the AI coach will answer.",
     bad_code: "⚠️ That link has expired. Press <b>Settings → Telegram → Connect</b> on the website again.",
@@ -148,7 +166,7 @@ const L: Record<string, Record<string, string>> = {
     remind_on: "⏰ I'll send your daily report every day at <b>{h}:00</b>.", remind_off: "🔕 Daily report turned off.", remind_help: "⏰ Daily report time: <b>{h}</b>.\nChange: <code>/remind 20</code> · Turn off: <code>/remind off</code>",
     unlinked: "👋 Account disconnected.",
     eve_t: "🌙 <b>Day wrap-up</b>", eve_none: "No trades today. Rest is a strategy too 🙂", eve_journal: "📝 Don't forget to close today's journal: what went well, what did you learn?",
-    help: "<b>Commands</b>\n/today — today\n/week — 7 days\n/month — this month\n/all — all time\n/setups — setups\n/insights — insights\n/last — last trades\n/risk — risk\n/prop — prop challenge\n/remind — daily report\n/ask — AI coach\n/unlink — disconnect\n\nOr just type a question — the AI will answer.",
+    help: "<b>Commands</b>\n/today — today\n/week — 7 days\n/month — this month\n/all — all time\n/setups — setups\n/insights — insights\n/last — last trades\n/risk — risk\n/prop — prop challenge\n/remind — daily report\n/ask — AI coach\n/lang — language · тіл · язык\n/unlink — disconnect\n\nOr just type a question — the AI will answer.",
     unknown: "I didn't get that 🤔 Tap /menu or ask your question in more detail.",
     wd: "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
   },
@@ -225,6 +243,22 @@ function isProProfile(p: any) {
   return paid || (p.trial_until && new Date(p.trial_until).getTime() > now);
 }
 
+const asLang = (v: unknown): "kk" | "ru" | "en" | null => (v === "kk" || v === "ru" || v === "en" ? v : null);
+const LANGS: [string, string][] = [["kk", "🇰🇿 Қазақша"], ["ru", "🇷🇺 Русский"], ["en", "🇬🇧 English"]];
+const langKb = () => [LANGS.map(([code, text]) => ({ text, callback_data: "lang_" + code }))];
+const LOCALE: Record<string, string> = { kk: "kk-KZ", ru: "ru-RU", en: "en-GB" };
+function niceDate(lang: string, tz: string, offsetDays = 0) {
+  const d = new Date(Date.now() - offsetDays * 864e5);
+  try { return new Intl.DateTimeFormat(LOCALE[lang], { timeZone: tz, day: "numeric", month: "long" }).format(d); } catch { return todayKey(tz, offsetDays); }
+}
+function shortDay(lang: string, key: string) {
+  if (!/^\d{4}-\d\d-\d\d$/.test(key)) return key;
+  try { return new Intl.DateTimeFormat(LOCALE[lang], { timeZone: "UTC", day: "numeric", month: "short" }).format(new Date(key + "T12:00:00Z")).replace(/\.$/, ""); } catch { return key; }
+}
+const bar = (v: number | null, n = 10) => { const k = v == null || !isFinite(v) ? 0 : Math.max(0, Math.min(n, Math.round(v * n))); return "▰".repeat(k) + "▱".repeat(n - k); };
+const quote = (lines: string[]) => { const l = lines.filter(Boolean); return l.length ? `<blockquote>${l.join("\n")}</blockquote>` : ""; };
+const pfStr = (v: number | null) => (v === Infinity ? "∞" : v == null ? "—" : v.toFixed(2));
+
 async function loadCtx(chat: number, langHint?: string): Promise<{ ctx?: Ctx; error?: string; lang: "kk" | "ru" | "en" }> {
   const links = await db(`telegram_links?chat_id=eq.${chat}&select=*`);
   const lang0: "kk" | "ru" | "en" = langHint === "en" ? "en" : langHint === "ru" ? "ru" : "kk";
@@ -235,8 +269,7 @@ async function loadCtx(chat: number, langHint?: string): Promise<{ ctx?: Ctx; er
     db(`journals?user_id=eq.${link.user_id}&select=data`),
   ]);
   const data = journals?.[0]?.data;
-  const sl = data?.settings?.lang;
-  const lang: "kk" | "ru" | "en" = sl === "en" || sl === "ru" || sl === "kk" ? sl : lang0;
+  const lang = asLang(link.lang) ?? asLang(data?.settings?.lang) ?? lang0;
   if (!isProProfile(profiles?.[0])) return { error: "not_pro", lang };
   if (!data) return { error: "no_cloud", lang };
   const T = (k: string, v?: Record<string, unknown>) => (L[lang][k] ?? k).replace(/\{(\w+)\}/g, (_, n) => String(v?.[n] ?? ""));
@@ -245,42 +278,62 @@ async function loadCtx(chat: number, langHint?: string): Promise<{ ctx?: Ctx; er
 }
 
 /* ---------------- views ---------------- */
+const cur = (c: Ctx) => c.data.settings?.currency || "USD";
+const tzOf = (c: Ctx) => c.link.tz || "Asia/Almaty";
 function menuKb(T: Ctx["T"]) {
   return [
     [{ text: T("b_today"), callback_data: "today" }, { text: T("b_week"), callback_data: "week" }, { text: T("b_month"), callback_data: "month" }],
     [{ text: T("b_setups"), callback_data: "setups" }, { text: T("b_insights"), callback_data: "insights" }],
     [{ text: T("b_last"), callback_data: "last" }, { text: T("b_risk"), callback_data: "risk" }, { text: T("b_prop"), callback_data: "prop" }],
-    [{ text: T("b_ask"), callback_data: "ask" }, { text: T("b_remind"), callback_data: "remind" }],
+    [{ text: T("b_ask"), callback_data: "ask" }, { text: T("b_remind"), callback_data: "remind" }, { text: T("b_lang"), callback_data: "lang" }],
     [{ text: T("b_open"), url: `${APP_URL}/app.html#/dashboard` }],
   ];
 }
+const backRow = (c: Ctx) => [{ text: c.T("back"), callback_data: "menu" }, { text: c.T("b_open"), url: `${APP_URL}/app.html#/dashboard` }];
+const withBack = (c: Ctx, rows: any[][] = []) => [...rows, backRow(c)];
+function periodKb(c: Ctx, active: string) {
+  const tab = (k: string, label: string) => ({ text: (k === active ? "• " : "") + label + (k === active ? " •" : ""), callback_data: k });
+  return withBack(c, [[tab("today", c.T("today")), tab("week", c.T("week")), tab("month", c.T("month")), tab("all", c.T("all"))]]);
+}
+function menuView(c: Ctx) {
+  const s = stats(inRange(c, "today")), m = stats(inRange(c, "month"));
+  const head = `📒 <b>EntryX</b> · ${c.T("menu_title")}\n<i>${niceDate(c.lang, tzOf(c))}</i>`;
+  const body = quote([
+    s.closed ? `${dot(s.net)} ${c.T("today")}: <b>${money(s.net, cur(c), true)}</b> · ${s.closed} ${c.T("trades").toLowerCase()}` : `⚪️ ${c.T("menu_empty")}`,
+    m.closed ? `${dot(m.net)} ${c.T("month")}: <b>${money(m.net, cur(c), true)}</b> · ${c.T("wr")} ${pct(m.winRate)}` : "",
+  ]);
+  return `${head}\n\n${body}\n${c.T("menu_pick")}`;
+}
 function inRange(c: Ctx, period: string) {
-  const tz = c.link.tz || "Asia/Almaty";
+  const tz = tzOf(c);
   const today = todayKey(tz);
   const from = period === "today" ? today : period === "week" ? todayKey(tz, 6) : period === "month" ? today.slice(0, 8) + "01" : period === "90" ? todayKey(tz, 89) : "";
   return c.trades.filter((x) => !from || (x.day && x.day >= from));
 }
 function summary(c: Ctx, period: string) {
-  const cur = c.data.settings?.currency || "USD";
   const list = inRange(c, period);
   const s = stats(list);
   const label = c.T(period === "all" ? "all" : period);
+  const sub = period === "today" ? niceDate(c.lang, tzOf(c)) : period === "week" ? `${niceDate(c.lang, tzOf(c), 6)} — ${niceDate(c.lang, tzOf(c))}` : "";
   const open = c.trades.filter((x) => !x.closed).length;
-  if (!s.closed) return `📊 <b>${label}</b>\n\n${c.T("empty")}` + (open ? `\n${c.T("open_pos")}: ${open}` : "");
-  const lines = [
-    `📊 <b>${label}</b>`,
-    "",
-    `${dot(s.net)} ${c.T("pnl")}: <b>${money(s.net, cur, true)}</b>`,
-    `${c.T("trades")}: <b>${s.closed}</b> (${s.wins}W · ${s.losses}L) · ${c.T("wr")} <b>${pct(s.winRate)}</b>`,
-    `${c.T("pf")} <b>${s.pf === Infinity ? "∞" : s.pf == null ? "—" : s.pf.toFixed(2)}</b> · ${c.T("avgr")} <b>${rf(s.avgR)}</b>`,
-    s.fees ? `${c.T("fees")}: ${money(-s.fees, cur)}` : "",
-    "",
-    s.best ? `🏅 ${c.T("best")}: ${esc(s.best.symbol)} <b>${money(s.best.net, cur, true)}</b>` : "",
-    s.worst && s.worst !== s.best ? `🩸 ${c.T("worst")}: ${esc(s.worst.symbol)} <b>${money(s.worst.net, cur, true)}</b>` : "",
-    s.streak ? `${c.T(s.streak.w ? "streak_w" : "streak_l")}: <b>${s.streak.n}</b>` : "",
-    open ? `${c.T("open_pos")}: ${open}` : "",
-  ];
-  return lines.filter((x, i, a) => x || (a[i - 1] && a[i + 1])).join("\n");
+  const head = `📊 <b>${label}</b>${sub ? `\n<i>${sub}</i>` : ""}`;
+  if (!s.closed) return `${head}\n\n${c.T("empty")}` + (open ? `\n${c.T("open_pos")}: ${open}` : "");
+  return [
+    head, "",
+    `${dot(s.net)} <b>${money(s.net, cur(c), true)}</b>  ·  ${c.T("pnl")}`,
+    quote([
+      `📈 ${c.T("trades")}: <b>${s.closed}</b> · ${s.wins} ${c.T("wins_l")} / ${s.losses} ${c.T("losses_l")}`,
+      `🎯 ${c.T("wr")}: <b>${pct(s.winRate)}</b>  ${bar(s.winRate)}`,
+      `⚖️ ${c.T("pf")}: <b>${pfStr(s.pf)}</b> · ${c.T("avgr")}: <b>${rf(s.avgR)}</b>`,
+      s.fees ? `💸 ${c.T("fees")}: ${money(-s.fees, cur(c))}` : "",
+    ]),
+    [
+      s.best ? `🏅 ${c.T("best")}: <b>${esc(s.best.symbol)}</b> ${money(s.best.net, cur(c), true)}` : "",
+      s.worst && s.worst !== s.best ? `🩸 ${c.T("worst")}: <b>${esc(s.worst.symbol)}</b> ${money(s.worst.net, cur(c), true)}` : "",
+      s.streak ? `${c.T(s.streak.w ? "streak_w" : "streak_l")}: <b>${s.streak.n}</b>` : "",
+      open ? `⏳ ${c.T("open_pos")}: <b>${open}</b>` : "",
+    ].filter(Boolean).join("\n"),
+  ].filter((x, i) => x !== "" || i === 1).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 function groupBy(list: any[], key: (x: any) => string | string[] | null) {
   const m = new Map<string, any[]>();
@@ -288,64 +341,65 @@ function groupBy(list: any[], key: (x: any) => string | string[] | null) {
   return [...m].map(([k, a]) => ({ k, s: stats(a) })).filter((g) => g.s.closed);
 }
 function setupsView(c: Ctx) {
-  const cur = c.data.settings?.currency || "USD";
   const g = groupBy(inRange(c, "90"), (x) => x.setup || c.T("no_setup")).sort((a, b) => b.s.net - a.s.net);
   if (!g.length) return `${c.T("setups_t")}\n\n${c.T("empty")}`;
-  const row = (x: any) => `${dot(x.s.net)} <b>${esc(x.k)}</b> — ${money(x.s.net, cur, true)} · ${x.s.closed} · ${pct(x.s.winRate)}`;
-  const top = g.slice(0, 3), bottom = g.slice(-3).reverse().filter((x) => !top.includes(x) && x.s.net < 0);
-  return [c.T("setups_t"), "", `<b>${c.T("top")}</b>`, ...top.map(row), ...(bottom.length ? ["", `<b>${c.T("bottom")}</b>`, ...bottom.map(row)] : [])].join("\n");
+  const medal = ["🥇", "🥈", "🥉"];
+  const row = (x: any, i: number, top: boolean) => `${top ? medal[i] : "🔻"} <b>${esc(x.k)}</b>  ${money(x.s.net, cur(c), true)}\n      <i>${x.s.closed} · ${c.T("wr")} ${pct(x.s.winRate)} · ${rf(x.s.avgR)}</i>`;
+  const top = g.filter((x) => x.s.net >= 0).slice(0, 3), bottom = g.filter((x) => x.s.net < 0).slice(-3).reverse();
+  return [c.T("setups_t"), "", ...(top.length ? [`<b>${c.T("top")}</b>`, quote(top.map((x, i) => row(x, i, true)))] : []),
+    ...(bottom.length ? [`<b>${c.T("bottom")}</b>`, quote(bottom.map((x, i) => row(x, i, false)))] : [])].join("\n");
 }
 function insightsView(c: Ctx) {
-  const cur = c.data.settings?.currency || "USD";
   const list = inRange(c, "90");
   if (!stats(list).closed) return `${c.T("ins_t")}\n\n${c.T("empty")}`;
   const wdn = c.T("wd").split(",");
-  const out = [c.T("ins_t"), ""];
+  const good: string[] = [], bad: string[] = [];
   const byWd = groupBy(list, (x) => (x.wd == null ? null : String(x.wd))).sort((a, b) => b.s.net - a.s.net);
   if (byWd.length) {
-    out.push(`📅 ${c.T("ins_day")}: <b>${wdn[+byWd[0].k]}</b> ${money(byWd[0].s.net, cur, true)}`);
-    const w = byWd[byWd.length - 1]; if (w.s.net < 0) out.push(`📉 ${c.T("ins_badday")}: <b>${wdn[+w.k]}</b> ${money(w.s.net, cur, true)}`);
+    good.push(`📅 ${c.T("ins_day")}: <b>${wdn[+byWd[0].k]}</b> ${money(byWd[0].s.net, cur(c), true)}`);
+    const w = byWd[byWd.length - 1]; if (w.s.net < 0) bad.push(`📉 ${c.T("ins_badday")}: <b>${wdn[+w.k]}</b> ${money(w.s.net, cur(c), true)}`);
   }
   const byH = groupBy(list, (x) => (x.hour == null ? null : String(x.hour).padStart(2, "0") + ":00")).filter((g) => g.s.closed >= 2).sort((a, b) => b.s.net - a.s.net);
   if (byH.length) {
-    out.push(`⏰ ${c.T("ins_hour")}: <b>${byH[0].k}</b> ${money(byH[0].s.net, cur, true)}`);
-    const w = byH[byH.length - 1]; if (w.s.net < 0) out.push(`🕳 ${c.T("ins_badhour")}: <b>${w.k}</b> ${money(w.s.net, cur, true)}`);
+    good.push(`⏰ ${c.T("ins_hour")}: <b>${byH[0].k}</b> ${money(byH[0].s.net, cur(c), true)}`);
+    const w = byH[byH.length - 1]; if (w.s.net < 0) bad.push(`🕳 ${c.T("ins_badhour")}: <b>${w.k}</b> ${money(w.s.net, cur(c), true)}`);
   }
   const li = c.lang === "en" ? 1 : c.lang === "ru" ? 2 : 0;
   const emo = groupBy(list, (x) => x.emotion || null).sort((a, b) => a.s.net - b.s.net)[0];
-  if (emo && emo.s.net < 0) out.push(`😤 ${c.T("ins_emo")}: <b>${esc(EMO[emo.k]?.[li] ?? emo.k)}</b> ${money(emo.s.net, cur, true)} (${emo.s.closed})`);
+  if (emo && emo.s.net < 0) bad.push(`😤 ${c.T("ins_emo")}: <b>${esc(EMO[emo.k]?.[li] ?? emo.k)}</b> ${money(emo.s.net, cur(c), true)} (${emo.s.closed})`);
   const mk = groupBy(list, (x) => (Array.isArray(x.mistakes) ? x.mistakes : [])).sort((a, b) => a.s.net - b.s.net)[0];
-  if (mk && mk.s.net < 0) out.push(`🧨 ${c.T("ins_mk")}: <b>${esc(MK[mk.k]?.[li] ?? mk.k)}</b> ${money(mk.s.net, cur, true)} (${mk.s.closed})`);
+  if (mk && mk.s.net < 0) bad.push(`🧨 ${c.T("ins_mk")}: <b>${esc(MK[mk.k]?.[li] ?? mk.k)}</b> ${money(mk.s.net, cur(c), true)} (${mk.s.closed})`);
   const L2 = stats(list.filter((x) => x.side !== "short")), S2 = stats(list.filter((x) => x.side === "short"));
-  if (L2.closed && S2.closed) out.push(`↕️ ${c.T("ins_side")}: ${money(L2.net, cur, true)} / ${money(S2.net, cur, true)}`);
-  return out.join("\n");
+  if (L2.closed && S2.closed) good.push(`↕️ ${c.T("ins_side")}: ${money(L2.net, cur(c), true)} / ${money(S2.net, cur(c), true)}`);
+  return `${c.T("ins_t")}\n\n${[quote(good), quote(bad)].filter(Boolean).join("\n")}`;
 }
 function lastView(c: Ctx) {
-  const cur = c.data.settings?.currency || "USD";
   const list = stats(c.trades).list.slice(-7).reverse();
   if (!list.length) return `${c.T("last_t")}\n\n${c.T("empty")}`;
-  return [c.T("last_t"), "", ...list.map((x) => `${dot(x.net)} ${esc(x.day)} · <b>${esc(x.symbol)}</b> ${x.side === "short" ? "S" : "L"} · ${money(x.net, cur, true)}${x.r != null ? " · " + rf(x.r) : ""}${x.setup ? " · " + esc(x.setup) : ""}`)].join("\n");
+  return [c.T("last_t"), "", quote(list.map((x: any) =>
+    `${dot(x.net)} <b>${esc(x.symbol)}</b> ${x.side === "short" ? "Short" : "Long"} · <b>${money(x.net, cur(c), true)}</b>${x.r != null ? " · " + rf(x.r) : ""}\n      <i>${esc(shortDay(c.lang, x.day))}${x.setup ? " · " + esc(x.setup) : ""}</i>`)).replace(/\n(?=[🟢🔴⚪])/gu, "\n\n")].join("\n");
 }
 function riskView(c: Ctx) {
   const r = c.data.settings?.risk || {};
   if (!r.on) return `${c.T("risk_t")}\n\n${c.T("risk_off")}`;
-  const cur = c.data.settings?.currency || "USD";
-  const today = todayKey(c.link.tz || "Asia/Almaty");
-  const s = stats(c.trades.filter((x) => x.day === today));
+  const s = stats(c.trades.filter((x) => x.day === todayKey(tzOf(c))));
   const loss = Math.max(0, -s.net), lim = num(r.dailyLoss), maxT = num(r.maxTrades);
   const hitLoss = lim != null && lim > 0 && loss >= lim, hitT = maxT != null && maxT > 0 && s.closed >= maxT;
   const near = (lim && loss >= lim * 0.7) || (maxT && s.closed >= maxT - 1);
   return [
-    c.T("risk_t"), "",
-    `${c.T("loss_today")}: <b>${money(loss ? -loss : 0, cur)}</b>${lim ? ` / ${c.T("limit")} ${money(lim, cur)}` : ""}`,
-    `${c.T("trades_today")}: <b>${s.closed}</b>${maxT ? ` / ${maxT}` : ""}`, "",
+    c.T("risk_t"), `<i>${niceDate(c.lang, tzOf(c))}</i>`, "",
+    quote([
+      `🩸 ${c.T("loss_today")}: <b>${money(loss ? -loss : 0, cur(c))}</b>${lim ? ` / ${money(lim, cur(c))}` : ""}`,
+      lim ? `${bar(loss / lim)} ${pct(loss / lim)}` : "",
+      `🔢 ${c.T("trades_today")}: <b>${s.closed}</b>${maxT ? ` / ${maxT}` : ""}`,
+      maxT ? bar(s.closed / maxT, maxT > 10 ? 10 : maxT) : "",
+    ]),
     hitLoss || hitT ? c.T("stop") : near ? c.T("near") : c.T("ok"),
   ].join("\n");
 }
 function propView(c: Ctx) {
   const p = c.data.settings?.prop || {};
   if (!p.on) return `${c.T("prop_t")}\n\n${c.T("prop_off")}`;
-  const cur = c.data.settings?.currency || "USD";
   const size = num(p.size) || 0;
   const list = c.trades.filter((x) => x.closed && (!p.start || x.day >= String(p.start).slice(0, 10)));
   const s = stats(list);
@@ -353,13 +407,16 @@ function propView(c: Ctx) {
   s.list.forEach((x: any) => { eq += x.net; peak = Math.max(peak, eq); dd = Math.max(dd, peak - eq); });
   const target = size * (num(p.target) || 0) / 100, maxLoss = size * (num(p.max) || 0) / 100;
   const days = new Set(s.list.map((x: any) => x.day)).size;
-  const bar = (v: number) => { const n = Math.max(0, Math.min(10, Math.floor(v * 10))); return "▰".repeat(n) + "▱".repeat(10 - n); };
+  const fill = (v: number) => { const n = Math.max(0, Math.min(10, Math.floor(v * 10))); return "▰".repeat(n) + "▱".repeat(10 - n); };
   return [
-    `${c.T("prop_t")} · ${esc(p.name || "")}`, "",
-    `${c.T("profit")}: <b>${money(s.net, cur, true)}</b> / ${c.T("target")} ${money(target, cur)}`,
-    target ? `${bar(s.net / target)} ${pct(target ? s.net / target : null)}` : "",
-    `${c.T("maxdd")}: <b>${money(-dd, cur)}</b> / ${money(-maxLoss, cur)}`,
-    `${c.T("days")}: <b>${days}</b>${p.minDays ? ` / ${p.minDays}` : ""}`, "",
+    `${c.T("prop_t")}${p.name ? " · " + esc(p.name) : ""}\n`,
+    quote([
+      `💰 ${c.T("profit")}: <b>${money(s.net, cur(c), true)}</b> / ${money(target, cur(c))}`,
+      target ? `${fill(s.net / target)} ${pct(s.net / target)}` : "",
+      `📉 ${c.T("maxdd")}: <b>${money(-dd, cur(c))}</b> / ${money(-maxLoss, cur(c))}`,
+      maxLoss ? `${fill(dd / maxLoss)} ${pct(dd / maxLoss)}` : "",
+      `🗓 ${c.T("days")}: <b>${days}</b>${p.minDays ? ` / ${p.minDays}` : ""}`,
+    ]),
     maxLoss && dd >= maxLoss ? c.T("failed") : target && s.net >= target && (!p.minDays || days >= +p.minDays) ? c.T("passed") : "",
   ].filter(Boolean).join("\n");
 }
@@ -427,7 +484,7 @@ async function askAI(c: Ctx, question: string) {
     await rpc("ai_refund_for", { p_user: c.link.user_id }).catch(() => {});
     return send(c.chat, c.T("ai_busy"));
   }
-  return send(c.chat, "✨ " + mdToHtml(text), [[{ text: c.T("b_today"), callback_data: "today" }, { text: c.T("b_insights"), callback_data: "insights" }]]);
+  return send(c.chat, `${c.T("ai_t")}\n\n${mdToHtml(text)}`, [[{ text: c.T("b_today"), callback_data: "today" }, { text: c.T("b_insights"), callback_data: "insights" }], [{ text: c.T("back"), callback_data: "menu" }]]);
 }
 
 /* ---------------- daily wrap-up ---------------- */
@@ -436,7 +493,7 @@ async function eveningReport(c: Ctx) {
   const s = stats(c.trades.filter((x) => x.day === today));
   const j = c.data.journal?.[today];
   const parts = [c.T("eve_t"), ""];
-  parts.push(s.closed ? summary(c, "today").split("\n").slice(2).join("\n") : c.T("eve_none"));
+  parts.push(s.closed ? summary(c, "today").split("\n\n").slice(1).join("\n\n") : c.T("eve_none"));
   if (!j || !(j.review || j.lessons)) parts.push("", c.T("eve_journal"));
   const r = c.data.settings?.risk;
   if (r?.on && s.closed) { const rv = riskView(c).split("\n").pop()!; if (!rv.startsWith("✅")) parts.push("", rv); }
@@ -467,8 +524,9 @@ async function handle(update: any) {
   if (!chat || (msg && msg.chat.type !== "private")) return;
   const from = msg?.from ?? cb?.from;
   const lc = String(from?.language_code || "");
-  const hint = lc.startsWith("en") ? "en" : lc.startsWith("ru") ? "ru" : "kk";
+  const hint = lc.startsWith("en") ? "en" : lc.startsWith("ru") || lc.startsWith("uk") || lc.startsWith("be") ? "ru" : "kk";
   if (cb) await tg("answerCallbackQuery", { callback_query_id: cb.id });
+  const mid: number | undefined = cb?.message?.message_id;
   let cmd = cb ? String(cb.data || "") : "";
   let arg = "";
   const text = String(msg?.text ?? "").trim();
@@ -477,62 +535,76 @@ async function handle(update: any) {
     if (m) { cmd = m[1].toLowerCase(); arg = (m[2] || "").trim(); } else { cmd = "ask"; arg = text; }
   }
   const T0 = (k: string) => L[hint][k];
+  const openKb = (lang: string) => [[{ text: L[lang].b_open, url: `${APP_URL}/app.html#/settings` }], ...langKb()];
+
+  // Language: /lang, the 🌐 button, or one of the flag buttons.
+  if (cmd === "lang" || cmd === "language" || cmd === "til") return show(chat, mid, L[hint].lang_pick, langKb());
+  if (/^lang_(kk|ru|en)$/.test(cmd)) {
+    const lang = cmd.slice(5) as "kk" | "ru" | "en";
+    const links = await db(`telegram_links?chat_id=eq.${chat}&select=user_id`).catch(() => []);
+    if (!links?.length) return show(chat, mid, L[lang].welcome, openKb(lang));
+    try {
+      await db(`telegram_links?chat_id=eq.${chat}`, { method: "PATCH", body: JSON.stringify({ lang }) });
+    } catch (e) { console.error("lang column missing? run supabase/007_telegram_lang.sql", e); }
+    const { ctx, error } = await loadCtx(chat, lang);
+    if (!ctx) return show(chat, mid, L[lang][error!], openKb(lang));
+    const c = { ...ctx, lang, T: (k: string, v?: Record<string, unknown>) => (L[lang][k] ?? k).replace(/\{(\w+)\}/g, (_, n) => String(v?.[n] ?? "")) };
+    return show(chat, mid, `${c.T("lang_set")}\n\n${menuView(c)}`, menuKb(c.T));
+  }
 
   if (cmd === "start") {
     if (arg && /^[0-9a-f]{32}$/.test(arg)) {
       const u = await rpc("tg_claim", { p_code: arg, p_chat: chat, p_username: from?.username ?? null });
-      if (!u) return send(chat, T0("bad_code"), [[{ text: L[hint].b_open, url: `${APP_URL}/app.html#/settings` }]]);
+      if (!u) return send(chat, T0("bad_code"), openKb(hint));
       const { ctx, lang } = await loadCtx(chat, hint);
-      const T = (k: string) => L[lang][k];
-      return send(chat, T("linked"), ctx ? menuKb(ctx.T) : [[{ text: T("b_open"), url: `${APP_URL}/app.html#/dashboard` }]]);
+      return send(chat, ctx ? `${L[lang].linked}\n\n${menuView(ctx)}` : L[lang].linked, ctx ? menuKb(ctx.T) : [[{ text: L[lang].b_open, url: `${APP_URL}/app.html#/dashboard` }]]);
     }
     const { ctx, error, lang } = await loadCtx(chat, hint);
-    if (ctx) return send(chat, ctx.T("menu"), menuKb(ctx.T));
-    return send(chat, L[lang][error === "not_linked" ? "welcome" : error!], [[{ text: L[lang].b_open, url: `${APP_URL}/app.html#/settings` }]]);
+    if (ctx) return send(chat, menuView(ctx), menuKb(ctx.T));
+    return send(chat, L[lang][error === "not_linked" ? "welcome" : error!], openKb(lang));
   }
-  if (cmd === "help") return send(chat, T0("help"));
   if (cmd === "unlink") {
     await db(`telegram_links?chat_id=eq.${chat}`, { method: "DELETE" });
-    return send(chat, T0("unlinked"));
+    return send(chat, T0("unlinked"), langKb());
   }
 
   const { ctx, error, lang } = await loadCtx(chat, hint);
-  if (!ctx) return send(chat, L[lang][error!], [[{ text: L[lang].b_open, url: `${APP_URL}/app.html#/settings` }]]);
+  if (!ctx) return send(chat, cmd === "help" ? L[lang].help : L[lang][error!], openKb(lang));
   const c = ctx;
   switch (cmd) {
-    case "menu": return send(chat, c.T("menu"), menuKb(c.T));
-    case "today": case "week": case "month": case "all":
-      return send(chat, summary(c, cmd), [[{ text: c.T("b_today"), callback_data: "today" }, { text: c.T("b_week"), callback_data: "week" }, { text: c.T("b_month"), callback_data: "month" }, { text: c.T("all"), callback_data: "all" }]]);
-    case "setups": return send(chat, setupsView(c));
-    case "insights": return send(chat, insightsView(c));
-    case "last": return send(chat, lastView(c));
-    case "risk": return send(chat, riskView(c));
-    case "prop": return send(chat, propView(c));
+    case "help": return show(chat, mid, c.T("help"), withBack(c));
+    case "menu": return show(chat, mid, menuView(c), menuKb(c.T));
+    case "today": case "week": case "month": case "all": return show(chat, mid, summary(c, cmd), periodKb(c, cmd));
+    case "setups": return show(chat, mid, setupsView(c), withBack(c, [[{ text: c.T("b_insights"), callback_data: "insights" }]]));
+    case "insights": return show(chat, mid, insightsView(c), withBack(c, [[{ text: c.T("b_setups"), callback_data: "setups" }, { text: c.T("b_ask"), callback_data: "ask" }]]));
+    case "last": return show(chat, mid, lastView(c), withBack(c));
+    case "risk": return show(chat, mid, riskView(c), withBack(c, [[{ text: c.T("b_prop"), callback_data: "prop" }]]));
+    case "prop": return show(chat, mid, propView(c), withBack(c, [[{ text: c.T("b_risk"), callback_data: "risk" }]]));
     case "remind": {
-      if (!arg) return send(chat, c.T("remind_help", { h: c.link.remind_hour == null ? "off" : String(c.link.remind_hour).padStart(2, "0") + ":00" }),
-        [[{ text: "19:00", callback_data: "remind19" }, { text: "21:00", callback_data: "remind21" }, { text: "23:00", callback_data: "remind23" }, { text: "🔕", callback_data: "remindoff" }]]);
-      const off = /^(off|0ff|жоқ|өшір)/i.test(arg), h = Number(arg.replace(/\D/g, ""));
-      if (!off && !(h >= 0 && h <= 23)) return send(chat, c.T("unknown"));
+      if (!arg) return show(chat, mid, c.T("remind_help", { h: c.link.remind_hour == null ? "off" : String(c.link.remind_hour).padStart(2, "0") + ":00" }),
+        withBack(c, [[{ text: "19:00", callback_data: "remind19" }, { text: "21:00", callback_data: "remind21" }, { text: "23:00", callback_data: "remind23" }, { text: "🔕", callback_data: "remindoff" }]]));
+      const off = /^(off|0ff|жоқ|өшір|выкл|нет)/i.test(arg), h = Number(arg.replace(/\D/g, ""));
+      if (!off && !(arg.replace(/\D/g, "") !== "" && h >= 0 && h <= 23)) return send(chat, c.T("unknown"));
       await db(`telegram_links?user_id=eq.${c.link.user_id}`, { method: "PATCH", body: JSON.stringify({ remind_hour: off ? null : h }) });
-      return send(chat, off ? c.T("remind_off") : c.T("remind_on", { h: String(h).padStart(2, "0") }));
+      return send(chat, off ? c.T("remind_off") : c.T("remind_on", { h: String(h).padStart(2, "0") }), withBack(c));
     }
     case "remind19": case "remind21": case "remind23": case "remindoff": {
       const off = cmd === "remindoff", h = off ? null : Number(cmd.slice(6));
       await db(`telegram_links?user_id=eq.${c.link.user_id}`, { method: "PATCH", body: JSON.stringify({ remind_hour: h }) });
-      return send(chat, off ? c.T("remind_off") : c.T("remind_on", { h: String(h).padStart(2, "0") }));
+      return show(chat, mid, off ? c.T("remind_off") : c.T("remind_on", { h: String(h).padStart(2, "0") }), withBack(c));
     }
     case "report": return eveningReport(c);
     case "ask":
-      if (!arg) return send(chat, c.T("ask_hint"));
+      if (!arg) return show(chat, mid, c.T("ask_hint"), withBack(c));
       return askAI(c, arg);
-    default: return send(chat, c.T("unknown"));
+    default: return send(chat, c.T("unknown"), menuKb(c.T));
   }
 }
 
 const COMMANDS = {
-  kk: [["menu", "Мәзір"], ["today", "Бүгінгі нәтиже"], ["week", "Соңғы 7 күн"], ["month", "Осы ай"], ["setups", "Сетаптар"], ["insights", "Инсайттар"], ["last", "Соңғы мәмілелер"], ["risk", "Бүгінгі тәуекел"], ["prop", "Prop челлендж"], ["ask", "AI коучқа сұрақ"], ["remind", "Күндік есеп уақыты"], ["help", "Көмек"]],
-  ru: [["menu", "Меню"], ["today", "Итоги дня"], ["week", "Последние 7 дней"], ["month", "Этот месяц"], ["setups", "Сетапы"], ["insights", "Инсайты"], ["last", "Последние сделки"], ["risk", "Риск за сегодня"], ["prop", "Проп-челлендж"], ["ask", "Вопрос AI-коучу"], ["remind", "Время дневного отчёта"], ["help", "Помощь"]],
-  en: [["menu", "Menu"], ["today", "Today's results"], ["week", "Last 7 days"], ["month", "This month"], ["setups", "Setups"], ["insights", "Insights"], ["last", "Last trades"], ["risk", "Today's risk"], ["prop", "Prop challenge"], ["ask", "Ask the AI coach"], ["remind", "Daily report time"], ["help", "Help"]],
+  kk: [["menu", "Мәзір"], ["today", "Бүгінгі нәтиже"], ["week", "Соңғы 7 күн"], ["month", "Осы ай"], ["setups", "Сетаптар"], ["insights", "Инсайттар"], ["last", "Соңғы мәмілелер"], ["risk", "Бүгінгі тәуекел"], ["prop", "Prop челлендж"], ["ask", "AI коучқа сұрақ"], ["remind", "Күндік есеп уақыты"], ["lang", "Тіл · Язык · Language"], ["help", "Көмек"]],
+  ru: [["menu", "Меню"], ["today", "Итоги дня"], ["week", "Последние 7 дней"], ["month", "Этот месяц"], ["setups", "Сетапы"], ["insights", "Инсайты"], ["last", "Последние сделки"], ["risk", "Риск за сегодня"], ["prop", "Проп-челлендж"], ["ask", "Вопрос AI-коучу"], ["remind", "Время дневного отчёта"], ["lang", "Язык · Тіл · Language"], ["help", "Помощь"]],
+  en: [["menu", "Menu"], ["today", "Today's results"], ["week", "Last 7 days"], ["month", "This month"], ["setups", "Setups"], ["insights", "Insights"], ["last", "Last trades"], ["risk", "Today's risk"], ["prop", "Prop challenge"], ["ask", "Ask the AI coach"], ["remind", "Daily report time"], ["lang", "Language · Тіл · Язык"], ["help", "Help"]],
 };
 
 Deno.serve(async (req) => {
@@ -548,8 +620,14 @@ Deno.serve(async (req) => {
     await tg("setMyCommands", { commands: toCmds(COMMANDS.kk) });
     await tg("setMyCommands", { commands: toCmds(COMMANDS.en), language_code: "en" });
     await tg("setMyCommands", { commands: toCmds(COMMANDS.ru), language_code: "ru" });
-    await tg("setMyDescription", { description: "EntryX — трейдинг журналыңыз Telegram-да: P&L, сетаптар, тәуекел, күндік есеп және AI коуч." });
-    await tg("setMyShortDescription", { short_description: "EntryX трейдинг журналы · AI коуч" });
+    for (const [language_code, description, short_description] of [
+      ["", "📒 EntryX — трейдинг журналыңыз Telegram-да.\n\n📊 P&L, ұтыс %, сетаптар\n🛡 Тәуекел және prop челлендж\n🌙 Күндік есеп\n✨ AI коуч — журналыңызды біледі\n\n🌐 Қазақша · Русский · English", "EntryX трейдинг журналы · AI коуч · KK/RU/EN"],
+      ["ru", "📒 EntryX — ваш торговый дневник в Telegram.\n\n📊 P&L, винрейт, сетапы\n🛡 Риск и проп-челлендж\n🌙 Дневной отчёт\n✨ AI-коуч, который знает ваш дневник\n\n🌐 Русский · Қазақша · English", "Торговый дневник EntryX · AI-коуч · RU/KK/EN"],
+      ["en", "📒 EntryX — your trading journal in Telegram.\n\n📊 P&L, win rate, setups\n🛡 Risk guard and prop challenge\n🌙 Daily wrap-up\n✨ An AI coach that knows your journal\n\n🌐 English · Қазақша · Русский", "EntryX trading journal · AI coach · EN/KK/RU"],
+    ]) {
+      await tg("setMyDescription", { description, ...(language_code ? { language_code } : {}) });
+      await tg("setMyShortDescription", { short_description, ...(language_code ? { language_code } : {}) });
+    }
     const me = await tg("getMe", {});
     return json({ webhook: hook.ok === true, url: self, bot: me.result?.username ?? null, error: hook.ok ? undefined : hook.description, token_ok: me.ok === true });
   }
