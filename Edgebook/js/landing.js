@@ -365,6 +365,19 @@
   // Until crypto checkout is configured, don't promise a payment method that isn't live yet.
   if (!(window.EDGEBOOK_CONFIG || {}).payFunction) { const fp = $('#faqPay'); if (fp) fp.remove(); }
 
+  // Hero film: start the video only when it can play smoothly (skip on reduced motion / data saver)
+  (function () {
+    const v = $('#heroVideo');
+    if (!v) return;
+    const saver = navigator.connection && (navigator.connection.saveData || /2g/.test(navigator.connection.effectiveType || ''));
+    if ((window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || saver) return;
+    v.src = v.dataset.src;
+    v.addEventListener('playing', () => v.classList.add('on'), { once: true });
+    const go = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+    v.addEventListener('canplay', go, { once: true });
+    v.load();
+  })();
+
   applyLang();
   onScroll();
 })();
