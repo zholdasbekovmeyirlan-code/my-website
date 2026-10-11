@@ -35,13 +35,21 @@ function createAuth(db, config) {
     if (!ipLimit(ip)) fail(429, 'too_many');
     const user = db.one('SELECT blocked FROM users WHERE phone = ?', phone);
     if (user && user.blocked) fail(403, 'blocked');
+    if (config.inviteOnly && !user && !config.adminPhones.includes(phone)) fail(403, 'not_invited');
     const code = String(crypto.randomInt(1000, 10000));
     db.run(
       `INSERT INTO otps (phone, code_hash, expires_at, attempts, sent_at) VALUES (?, ?, ?, 0, ?)
        ON CONFLICT(phone) DO UPDATE SET code_hash = excluded.code_hash, expires_at = excluded.expires_at, attempts = 0, sent_at = excluded.sent_at`,
       phone, hash(phone + ':' + code), now + CODE_TTL, now
     );
-    const out = await sms.sendCode(phone, code, config.smsMode);
+    let out;
+    try {
+      out = await sms.sendCode(phone, code, config.smsMode);
+    } catch (e) {
+      console.error('SMS not sent:', e.message);
+      db.run('DELETE FROM otps WHERE phone = ?', phone);
+      fail(502, 'sms_failed');
+    }
     return { ok: true, ...(out.demoCode ? { demoCode: out.demoCode } : {}) };
   }
 

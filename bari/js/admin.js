@@ -34,6 +34,16 @@
     'adm.commission': ['Комиссия, %', 'Комиссия, %'],
     'adm.set': ['Сақтау', 'Сохранить'],
     'adm.done': ['Дайын', 'Готово'],
+    'adm.invite': ['Адам шақыру', 'Пригласить человека'],
+    'adm.invite.sub': ['Тестер, жүргізуші немесе мейрамхана иесі. Шақырылған нөмір «тек шақырылғандар» режимінде де кіре алады.', 'Тестировщик, водитель или владелец ресторана. Приглашённый номер сможет войти даже в режиме «только по приглашению».'],
+    'adm.invite.go': ['Шақыру', 'Пригласить'],
+    'adm.invite.ok': ['Шақырылды. Енді ол осы нөмірмен кіре алады.', 'Приглашение создано. Теперь можно войти с этим номером.'],
+    'adm.people.recent': ['Соңғы қолданушылар', 'Последние пользователи'],
+    'adm.mode.invite': ['Кіру: тек шақырылғандар', 'Вход: только по приглашению'],
+    'adm.mode.open': ['Кіру: барлығына ашық', 'Вход: открыт для всех'],
+    'adm.mode.sms.demo': ['SMS: тест режимі (код экранда)', 'SMS: тестовый режим (код на экране)'],
+    'adm.mode.sms.real': ['SMS: {p}', 'SMS: {p}'],
+    'adm.mode.warn': ['Назар аударыңыз: SMS тест режимінде және кіру барлығына ашық. Кез келген адам кез келген нөмірмен кіре алады. INVITE_ONLY=1 қойыңыз немесе SMS провайдерін қосыңыз.', 'Внимание: SMS в тестовом режиме и вход открыт. Любой может войти под любым номером. Включите INVITE_ONLY=1 или подключите SMS-провайдера.'],
     'adm.owner.phone': ['Иесінің телефоны', 'Телефон владельца'],
     'adm.owner.set': ['Иесіне беру', 'Передать владельцу'],
     'adm.venue.add': ['Мейрамхана қосу', 'Добавить ресторан'],
@@ -136,10 +146,17 @@
       ['revenue', B.money(s.revenueToday)], ['donated', B.money(s.donated)],
     ];
     const pw = data.workers.filter((w) => w.status === 'pending');
+    const demoSms = data.smsMode === 'demo';
+    const modes = `<div class="tags">
+        <span class="tag${data.inviteOnly ? ' tag-local' : ''}">${t(data.inviteOnly ? 'adm.mode.invite' : 'adm.mode.open')}</span>
+        <span class="tag${demoSms ? '' : ' tag-local'}">${demoSms ? t('adm.mode.sms.demo') : t('adm.mode.sms.real', { p: B.esc(data.smsMode) })}</span>
+      </div>
+      ${demoSms && !data.inviteOnly ? `<p class="banner-warn">${t('adm.mode.warn')}</p>` : ''}`;
     const pv = data.venues.filter((v) => v.status === 'pending');
     return {
       html: `<div class="screen">
           <h1 class="page-title">${t('adm.title')}</h1>
+          ${modes}
           <div class="adm-tiles">${tiles.map(([k, v]) => `<div class="adm-tile"><small>${t('adm.' + k)}</small><b>${v}</b></div>`).join('')}</div>
           <section class="block">
             <h2 class="h2">${t('adm.pending')}</h2>
@@ -163,7 +180,37 @@
   B.screens.people = function () {
     const g = gate();
     if (g) return { html: g };
-    return { html: `<div class="screen"><h1 class="page-title">${t('adm.nav.people')}</h1>${data.workers.length ? `<div class="card adm-list">${data.workers.map(workerRow).join('')}</div>` : `<p class="muted">${t('adm.empty')}</p>`}</div>` };
+    return {
+      html: `<div class="screen"><h1 class="page-title">${t('adm.nav.people')}</h1>
+        <form class="card pro-card stack-16" id="invite-form" novalidate>
+          <div><h2 class="h3">${t('adm.invite')}</h2><p class="muted small">${t('adm.invite.sub')}</p></div>
+          <div class="field-row">
+            <label class="field"><span>${t('pf.phone')}</span><span class="phone-field"><span class="phone-cc" aria-hidden="true">+7</span><input name="phone" type="tel" inputmode="tel" placeholder="707 123 45 67" required></span></label>
+            <label class="field"><span>${t('pf.name')}</span><input name="name" maxlength="40"></label>
+          </div>
+          <button class="btn btn-primary" type="submit">${t('adm.invite.go')}</button>
+        </form>
+        ${data.workers.length ? `<div class="card adm-list">${data.workers.map(workerRow).join('')}</div>` : `<p class="muted">${t('adm.empty')}</p>`}
+        <section class="block"><h2 class="label">${t('adm.people.recent')}</h2>
+          <div class="list card">${data.people.map((u) => `<div class="list-row static">${B.avatar(u.name || '?')}<span class="lr-text"><b>${B.esc(u.name || '—')}${u.is_admin ? ' 🛡️' : ''}</b><em>${B.esc(B.phone(u.phone))} · ${B.time(u.created_at)}</em></span></div>`).join('')}</div>
+        </section>
+      </div>`,
+      mount() {
+        const form = document.getElementById('invite-form');
+        if (!form) return;
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const digits = form.phone.value.replace(/\D/g, '').slice(-10);
+          if (digits.length !== 10) return B.toast(t('err.invalid', { field: t('field.phone') }));
+          try {
+            await B.api.post('/api/admin/invite', { phone: '+7' + digits, name: form.name.value.trim() });
+            B.toast(t('adm.invite.ok'));
+            await load();
+            B.refresh();
+          } catch (err) { B.fail(err); }
+        });
+      },
+    };
   };
 
   B.screens.places = function () {

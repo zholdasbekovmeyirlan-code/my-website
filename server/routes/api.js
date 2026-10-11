@@ -365,6 +365,9 @@ module.exports = function register(r, { db, auth, orders, config }) {
         const owner = v.owner_id ? db.one('SELECT name, phone FROM users WHERE id = ?', v.owner_id) : null;
         return { ...venueCard(v), demo: !!v.demo, owner: owner ? { name: owner.name, phone: '+' + owner.phone } : null };
       }),
+      inviteOnly: !!config.inviteOnly,
+      smsMode: config.smsMode,
+      people: db.all('SELECT id, name, phone, is_admin, created_at FROM users ORDER BY id DESC LIMIT 50').map((u) => ({ ...u, phone: '+' + u.phone })),
       social: db.all("SELECT id, name, phone, social_status FROM users WHERE social_status != 'none' AND social_verified = 0 ORDER BY id DESC LIMIT 100")
         .map((u) => ({ ...u, phone: '+' + u.phone })),
       orders: db.all('SELECT * FROM orders ORDER BY created_at DESC LIMIT 40').map((o) => orders.view(o, -1)),
@@ -402,6 +405,16 @@ module.exports = function register(r, { db, auth, orders, config }) {
     if (!db.one('SELECT id FROM venues WHERE id = ?', id)) fail(404, 'not_found');
     updateRow('venues', id, f);
     return { ok: true };
+  }, { auth: 'admin' });
+
+  // Invite a tester, driver or restaurant owner: their phone can then sign in (also in INVITE_ONLY mode).
+  r.add('POST', '/api/admin/invite', ({ body }) => {
+    const phone = V.phone(body.phone);
+    const name = V.str(body.name, 'name', { max: 40, optional: true });
+    const existing = db.one('SELECT id FROM users WHERE phone = ?', phone);
+    if (!existing) db.run('INSERT INTO users (phone, name, created_at) VALUES (?, ?, ?)', phone, name, Date.now());
+    else if (name) db.run("UPDATE users SET name = ? WHERE id = ? AND name = ''", name, existing.id);
+    return { ok: true, existed: !!existing };
   }, { auth: 'admin' });
 
   r.add('POST', '/api/admin/users/:id/social', ({ params, body }) => {

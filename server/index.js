@@ -90,8 +90,12 @@ if (require.main === module) {
     console.log(`  drivers  http://localhost:${port}/pro`);
     console.log(`  partners http://localhost:${port}/partner`);
     console.log(`  admin    http://localhost:${port}/admin`);
-    if (config.smsMode === 'demo') console.log('  SMS_MODE=demo: login codes are shown on screen. Do not use this in production.');
+    if (config.smsMode === 'demo') {
+      console.log('  SMS_MODE=demo: login codes are shown on screen.');
+      if (!config.inviteOnly) console.log('  WARNING: anyone can sign in with any phone number. Use INVITE_ONLY=1 or an SMS provider for real users.');
+    }
     if (!process.env.OTP_SECRET) console.log('  OTP_SECRET is not set: using a development secret. Set your own before going live.');
+    if (!config.adminPhones.length) console.log('  ADMIN_PHONES is empty: nobody can open the admin panel.');
   });
 }
 

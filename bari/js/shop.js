@@ -107,6 +107,10 @@
       const head = document.getElementById('food-count');
       if (!el) return;
       if (!list) { el.innerHTML = B.loading(); return; }
+      if (!list.length) {
+        el.innerHTML = `<div class="empty"><span class="empty-e" aria-hidden="true">🍽️</span><h2 class="h2">${t('food.soon')}</h2><p class="muted">${t('food.soon.sub')}</p><a class="btn btn-soft" href="/partner">${t('apply.partner')}</a></div>`;
+        return;
+      }
       const arr = list.filter(pass);
       if (head) head.textContent = arr.length ? String(arr.length) : '';
       el.innerHTML = arr.length ? arr.map(B.restCard).join('') : `<div class="empty"><span class="empty-e" aria-hidden="true">🔎</span><p class="muted">${t('food.none')}</p></div>`;

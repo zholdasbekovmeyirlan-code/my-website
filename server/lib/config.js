@@ -23,4 +23,7 @@ module.exports = {
   seedDemo: flag(env.SEED_DEMO, true),
   simulate: flag(env.SIMULATE, true),
   otpSecret: env.OTP_SECRET || 'bari-dev-secret',
+  // Pilot mode: only admins and phones the admin invited (or already known) can sign in.
+  inviteOnly: flag(env.INVITE_ONLY, false),
+  production: env.NODE_ENV === 'production',
 };
