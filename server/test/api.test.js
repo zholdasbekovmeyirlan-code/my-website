@@ -80,7 +80,8 @@ test('full platform flow', async () => {
 
   // Catalog
   const food = await ok('GET', '/api/venues?type=food');
-  assert.equal(food.length, 8);
+  assert.equal(food.length, 9);
+  assert.ok(food.some((v) => v.cats.includes('doner')));
   const dast = food.find((v) => v.name === 'Дастарқан');
   const menu = await ok('GET', `/api/venues/${dast.id}`);
   assert.ok(menu.items.length > 5 && menu.sections.length === 3);
@@ -213,6 +214,20 @@ test('full platform flow', async () => {
   const sride = await ok('POST', '/api/orders/ride', client.token, { from: ALMATY, to: MEGA, tariff: 'social' });
   assert.ok(sride.price < ride.price);
   await ok('POST', `/api/orders/${sride.id}/cancel`, client.token);
+
+  // Admin signs up a restaurant: creates it (approved at once), fills the menu, hands it to the owner's phone.
+  const av = await ok('POST', '/api/partner/venues', admin.token, { type: 'food', name: 'Келісілген мейрамхана', address: 'Абай д-лы, 1', lat: 43.24, lng: 76.95 });
+  assert.equal(av.status, 'approved');
+  await ok('POST', `/api/partner/venues/${av.id}/items`, admin.token, { name: 'Донер', price: 1800 });
+  const all = await ok('GET', '/api/partner/venues?all=1', admin.token);
+  assert.ok(all.length >= 11, 'admin sees every venue');
+  assert.equal((await ok('GET', '/api/partner/venues?all=1', partner.token)).length, 1, 'partners see only their own');
+  await ok('POST', `/api/admin/venues/${av.id}`, admin.token, { owner_phone: '+7 705 444 55 66' });
+  const owner = await login('+7 705 444 55 66', 'Иесі');
+  const mine = await ok('GET', '/api/partner/venues', owner.token);
+  assert.equal(mine.length, 1);
+  assert.equal(mine[0].name, 'Келісілген мейрамхана');
+  assert.equal((await call('POST', `/api/admin/venues/${av.id}`, partner.token, { owner_phone: '+7 708 999 88 77' })).status, 403);
 
   const pub = await ok('GET', '/api/stats/public');
   assert.equal(pub.donated, del.donation);

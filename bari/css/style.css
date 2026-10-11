@@ -891,3 +891,26 @@ details.block > summary { cursor: pointer; padding: 6px 0; }
 .field .phone-field input { border: 0; box-shadow: none; min-height: 46px; padding-left: 6px; }
 .field .phone-field input:focus { box-shadow: none; }
 a.act { color: inherit; text-decoration: none; }
+
+/* ---------- food: delivery-app layout ---------- */
+.dest-row { display: flex; align-items: center; gap: 10px; padding: 4px 2px; text-align: left; }
+.dest-row > .ic:first-child { color: var(--ink); }
+.dest-row .lr-text small { font-size: var(--fs-xs); color: var(--muted); }
+.dest-text { display: flex; gap: 6px; align-items: baseline; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.dest-text b { font-weight: 700; }
+.dest-text em { font-style: normal; color: var(--muted); font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; }
+.dest-row .chev { width: 18px; height: 18px; color: var(--muted); margin-left: auto; }
+.cat-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: 76px; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding: 2px var(--gutter) 4px; }
+.cat-tiles::-webkit-scrollbar { display: none; }
+.cat-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 8px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-sm); font-size: var(--fs-xs); font-weight: 600; text-align: center; line-height: 1.15; }
+.cat-e { font-size: 30px; line-height: 1; }
+.cat-tile.on { background: var(--fg); color: var(--bg); box-shadow: none; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); box-shadow: none; }
+.food .rest-cover { height: 148px; }
+.food .cover-e { font-size: 68px; }
+.rest-cover { position: relative; }
+.rest-time { position: absolute; left: 10px; bottom: 10px; padding: 4px 9px; border-radius: 999px; background: var(--surface); color: var(--fg); font-size: var(--fs-xs); font-weight: 700; box-shadow: var(--shadow-sm); }
+.rest-deal { position: absolute; right: 10px; top: 10px; padding: 3px 8px; border-radius: 8px; background: var(--ok); color: #FFFFFF; font-size: 11px; font-weight: 700; }
+.rest .meta b { font-weight: 700; }
+.rest.closed .rest-time { background: var(--fg); color: var(--bg); }
+.adm-phone { width: 150px !important; }

@@ -3,6 +3,7 @@
 const data = require('./seed-data.json');
 
 const ADDRESSES = {
+  donerhana: 'Абай д-лы, 52',
   dastarkhan: 'Абылай хан д-лы, 85',
   'samsa-uyi': 'Жібек жолы к-сі, 64',
   'burger-dala': 'Достық д-лы, 105',

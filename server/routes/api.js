@@ -9,7 +9,7 @@ const SOCIAL = ['none', 'pension', 'disability', 'large'];
 const VEHICLES = ['walk', 'bike', 'scooter', 'car', 'truck'];
 const CAR_CLASSES = ['econom', 'comfort', 'business'];
 const VENUE_TYPES = ['food', 'shop', 'pharm'];
-const CATS = ['national', 'fast', 'pizza', 'sushi', 'coffee', 'healthy', 'grill', 'bakery'];
+const CATS = ['doner', 'fast', 'pizza', 'sushi', 'national', 'coffee', 'dessert', 'healthy', 'grill', 'bakery'];
 
 module.exports = function register(r, { db, auth, orders, config }) {
   /* ---------- shared views ---------- */
@@ -203,18 +203,23 @@ module.exports = function register(r, { db, auth, orders, config }) {
     if (keys.length) db.run(`UPDATE ${table} SET ${keys.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`, ...keys.map((k) => f[k]), id);
   };
 
-  r.add('GET', '/api/partner/venues', ({ user }) =>
-    db.all('SELECT * FROM venues WHERE owner_id = ? ORDER BY id', user.id).map(venueCard), { auth: 'user' });
+  // Admins see every venue here, so they can enter menus for restaurants they sign up.
+  r.add('GET', '/api/partner/venues', ({ user, query }) =>
+    (user.is_admin && query.all === '1'
+      ? db.all('SELECT * FROM venues ORDER BY (owner_id = ?) DESC, id DESC', user.id)
+      : db.all('SELECT * FROM venues WHERE owner_id = ? ORDER BY id', user.id)
+    ).map(venueCard), { auth: 'user' });
 
   r.add('POST', '/api/partner/venues', ({ user, body }) => {
     const n = db.one('SELECT COUNT(*) AS n FROM venues WHERE owner_id = ?', user.id).n;
-    if (n >= 5) fail(409, 'too_many_venues');
+    if (n >= 5 && !user.is_admin) fail(409, 'too_many_venues');
     const f = venueFields(body, false);
     const res = db.run(
       `INSERT INTO venues (owner_id, type, name, name_ru, note, address, lat, lng, emoji, hue, cats, local, grid, status, created_at, commission)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'pending', ?, 0)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 0)`,
       user.id, f.type, f.name, f.name_ru || null, f.note || null, f.address, f.lat, f.lng,
-      f.emoji || (f.type === 'food' ? '🍽️' : f.type === 'shop' ? '🛒' : '💊'), f.hue ?? 30, f.cats || '', f.type === 'food' ? 0 : 1, Date.now()
+      f.emoji || (f.type === 'food' ? '🍽️' : f.type === 'shop' ? '🛒' : '💊'), f.hue ?? 30, f.cats || '', f.type === 'food' ? 0 : 1,
+      user.is_admin ? 'approved' : 'pending', Date.now()
     );
     const id = Number(res.lastInsertRowid);
     const rest = { ...f };
@@ -377,6 +382,17 @@ module.exports = function register(r, { db, auth, orders, config }) {
   r.add('POST', '/api/admin/venues/:id', ({ params, body }) => {
     const id = V.int(params.id, 'id');
     const f = {};
+    // Hand a venue over to its real owner: they sign in with this phone and see it in Бәрі Бизнес.
+    if (body.owner_phone !== undefined) {
+      const phone = V.phone(body.owner_phone);
+      let owner = db.one('SELECT id FROM users WHERE phone = ?', phone);
+      if (!owner) {
+        db.run('INSERT INTO users (phone, name, created_at) VALUES (?, ?, ?)', phone, '', Date.now());
+        owner = db.one('SELECT id FROM users WHERE phone = ?', phone);
+      }
+      f.owner_id = owner.id;
+      f.demo = 0;
+    }
     if (body.status !== undefined) f.status = V.oneOf(body.status, 'status', ['approved', 'blocked', 'pending']);
     if (body.commission !== undefined) {
       const c = Number(body.commission);

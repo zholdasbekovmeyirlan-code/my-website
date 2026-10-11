@@ -79,6 +79,8 @@
     'biz.status.approved': ['Расталды', 'Подтверждено'],
     'biz.status.blocked': ['Бұғатталған', 'Заблокировано'],
     'biz.add.venue': ['Тағы бір мекеме қосу', 'Добавить ещё заведение'],
+    'biz.add.short': ['Жаңа мекеме', 'Новое заведение'],
+    'biz.admin.mode': ['Әкімші режимі: барлық мекеме көрінеді. Келісім жасалған мейрамхананы осында қосып, мәзірін енгізіңіз, кейін әкімші панелінде иесінің телефонына беріңіз.', 'Режим администратора: видны все заведения. Добавьте ресторан, с которым есть договор, заполните меню, затем передайте его владельцу в панели администратора.'],
     'biz.order.n': ['Тапсырыс №{n}', 'Заказ №{n}'],
   });
 
@@ -92,7 +94,8 @@
 
   async function loadVenues() {
     if (!B.session) { P.venues = null; return; }
-    try { P.venues = await B.api.get('/api/partner/venues'); } catch (e) { P.venues = []; }
+    const all = B.session.user.is_admin ? '?all=1' : '';
+    try { P.venues = await B.api.get('/api/partner/venues' + all); } catch (e) { P.venues = []; }
     if (P.venues.length && !venue()) selectVenue(P.venues[0].id);
   }
   async function loadOrders() {
@@ -119,8 +122,11 @@
     return '';
   };
   const statusBanner = (v) => (v.status === 'pending' ? `<p class="banner-info">${t('biz.pending')}</p>` : v.status === 'blocked' ? `<p class="banner-warn">${t('biz.blocked')}</p>` : '');
-  const switcher = () => (P.venues.length > 1
-    ? `<div class="chips hscroll-chips">${P.venues.map((v) => `<button class="chip${v.id === P.vid ? ' on' : ''}" data-act="biz-pick" data-id="${v.id}">${v.emoji} ${B.esc(B.N(v))}</button>`).join('')}</div>`
+  const isAdmin = () => !!(B.session && B.session.user.is_admin);
+  const switcher = () => (P.venues.length > 1 || isAdmin()
+    ? `${isAdmin() ? `<p class="banner-info">${t('biz.admin.mode')}</p>` : ''}
+      <div class="chips hscroll-chips">${P.venues.map((v) => `<button class="chip${v.id === P.vid ? ' on' : ''}" data-act="biz-pick" data-id="${v.id}">${v.emoji} ${B.esc(B.N(v))}</button>`).join('')}
+      ${isAdmin() ? `<button class="chip" data-act="go" data-to="register">${B.ic('plus')}${t('biz.add.short')}</button>` : ''}</div>`
     : '');
 
   /* ---------- venue form (register and settings) ---------- */

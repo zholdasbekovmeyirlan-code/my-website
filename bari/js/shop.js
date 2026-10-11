@@ -22,29 +22,24 @@
   };
 
   /* ---------- shared fragments ---------- */
+  const catName = (c) => { const x = D.cats.find((y) => y.id === c); return x ? L_(x.n) : ''; };
+
+  // A restaurant card like in food delivery apps: cover, delivery time, name, rating, price of delivery.
   B.restCard = function (v) {
-    const cats = (v.cats || []).map((c) => { const x = D.cats.find((y) => y.id === c); return x ? L_(x.n) : ''; }).filter(Boolean).join(' · ');
+    const cats = (v.cats || []).map(catName).filter(Boolean).join(' · ');
+    const deal = v.box && v.box.old_price ? Math.round((1 - v.box.price / v.box.old_price) * 100) : 0;
     return `<button class="rest${v.is_open ? '' : ' closed'}" data-act="go" data-to="store" data-id="${v.id}">
-        <span class="cover rest-cover" style="--h:${v.hue}" aria-hidden="true"><span class="cover-e">${v.emoji}</span>${v.is_open ? '' : `<span class="closed-tag">${t('venue.closed')}</span>`}</span>
+        <span class="cover rest-cover" style="--h:${v.hue}" aria-hidden="true">
+          <span class="cover-e">${v.emoji}</span>
+          <span class="rest-time">${v.is_open ? `${v.eta[0]}–${v.eta[1]} ${t('min')}` : t('venue.closed')}</span>
+          ${deal ? `<span class="rest-deal">−${deal}% ${t('deal.evening')}</span>` : ''}
+        </span>
         <span class="rest-body">
           <span class="rest-name">${B.esc(B.N(v))}${v.local ? `<span class="tag tag-local">${t('local')}</span>` : ''}</span>
-          <span class="meta">${B.ic('star', 'ic-star')}${B.dec(v.rating, 1)} · ${v.eta[0]}–${v.eta[1]} ${t('min')} · ${v.delivery_fee ? B.money(v.delivery_fee) : t('free')}</span>
-          ${cats ? `<span class="meta muted">${cats}</span>` : ''}
+          <span class="meta">${B.ic('star', 'ic-star')}<b>${B.dec(v.rating, 1)}</b>${cats ? ` · ${cats}` : ''}</span>
+          <span class="meta muted">${t('delivery')} ${v.delivery_fee ? B.money(v.delivery_fee) : t('free')} · ${t('rest.min', { price: B.money(v.min_order) })}</span>
         </span>
       </button>`;
-  };
-
-  B.surplusStrip = function (list) {
-    const boxes = (list || []).filter((v) => v.box && v.is_open);
-    if (!boxes.length) return `<p class="muted small">${t('surplus.none')}</p>`;
-    return `<div class="hscroll">${boxes.map((v) => `
-        <button class="box-card" data-act="go" data-to="store" data-id="${v.id}">
-          <span class="cover box-cover" style="--h:${v.hue}" aria-hidden="true"><span class="cover-e">${v.emoji}</span><span class="box-off">−${Math.round((1 - v.box.price / v.box.old_price) * 100)}%</span></span>
-          <span class="box-store">${B.esc(B.N(v))}</span>
-          <span class="box-name">${B.esc(B.N(v.box))}</span>
-          <span class="box-price"><b>${B.money(v.box.price)}</b><s>${B.money(v.box.old_price)}</s></span>
-          ${v.box.stock != null ? `<span class="meta muted">${t('box.left', { n: v.box.stock })}</span>` : ''}
-        </button>`).join('')}</div>`;
   };
 
   function itemCtl(it, disabled) {
@@ -89,49 +84,86 @@
     else B.refresh();
   };
 
-  /* ---------- food list ---------- */
+  /* ---------- food: restaurants by category ---------- */
+  const FILTERS = ['free', 'top', 'local', 'deal'];
   B.screens.food = function (p) {
+    const S = B.state;
     let cat = p.cat || 'all';
     let q = '';
+    const on = new Set();
     let list = B.venues.cached('food') || null;
 
-    const filtered = () => {
+    const pass = (v) => {
+      if (cat !== 'all' && !v.cats.includes(cat)) return false;
+      if (on.has('free') && v.delivery_fee) return false;
+      if (on.has('top') && v.rating < 4.8) return false;
+      if (on.has('local') && !v.local) return false;
+      if (on.has('deal') && !v.box) return false;
       const ql = q.trim().toLowerCase();
-      return (list || []).filter((v) => (cat === 'all' || v.cats.includes(cat)) && (!ql || (v.name + ' ' + (v.name_ru || '')).toLowerCase().includes(ql)));
+      return !ql || [v.name, v.name_ru, ...(v.cats || []).map(catName)].some((x) => x && x.toLowerCase().includes(ql));
     };
     const renderList = () => {
       const el = document.getElementById('food-list');
+      const head = document.getElementById('food-count');
       if (!el) return;
       if (!list) { el.innerHTML = B.loading(); return; }
-      const arr = filtered();
-      el.innerHTML = arr.length ? arr.map(B.restCard).join('') : `<p class="empty-line">${t('food.none')}</p>`;
-      const s = document.getElementById('food-surplus');
-      if (s) s.innerHTML = B.surplusStrip(list);
+      const arr = list.filter(pass);
+      if (head) head.textContent = arr.length ? String(arr.length) : '';
+      el.innerHTML = arr.length ? arr.map(B.restCard).join('') : `<div class="empty"><span class="empty-e" aria-hidden="true">🔎</span><p class="muted">${t('food.none')}</p></div>`;
     };
+    const destLine = () => {
+      const d = S.dest || B.addressOf('home');
+      return d ? `<b>${B.esc(L_(d.n))}</b>${d.a ? `<em>${B.esc(L_(d.a))}</em>` : ''}` : `<b>${t('cart.address.pick')}</b>`;
+    };
+
     B.actions['food-cat'] = (el) => {
-      cat = el.dataset.cat;
+      cat = el.dataset.cat === cat ? 'all' : el.dataset.cat;
       document.querySelectorAll('[data-act="food-cat"]').forEach((b) => {
-        const on = b.dataset.cat === cat;
-        b.classList.toggle('on', on);
-        b.setAttribute('aria-pressed', on);
+        const sel = b.dataset.cat === cat;
+        b.classList.toggle('on', sel);
+        b.setAttribute('aria-pressed', sel);
       });
+      const h = document.getElementById('food-title');
+      if (h) h.textContent = cat === 'all' ? t('food.all') : catName(cat);
       renderList();
     };
+    B.actions['food-filter'] = (el) => {
+      const f = el.dataset.f;
+      if (on.has(f)) on.delete(f); else on.add(f);
+      el.classList.toggle('on', on.has(f));
+      el.setAttribute('aria-pressed', on.has(f));
+      renderList();
+    };
+    B.actions['food-dest'] = () => B.addressSheet({
+      title: t('cart.address'), gps: true,
+      onPick: (pl) => {
+        S.dest = { n: L_(pl.n), a: L_(pl.a) || '', lat: pl.lat, lng: pl.lng };
+        B.save();
+        const el = document.getElementById('food-dest');
+        if (el) el.innerHTML = destLine();
+      },
+    });
     B.inputs['food-q'] = (el) => { q = el.value; renderList(); };
 
     return {
-      html: `<div class="screen">
+      html: `<div class="screen food">
           ${B.topbar(t('svc.food'), B.cartBtn())}
+          <button class="dest-row" data-act="food-dest">
+            ${B.ic('pin')}<span class="lr-text"><small>${t('food.deliver.to')}</small><span id="food-dest" class="dest-text">${destLine()}</span></span>${B.ic('down', 'chev')}
+          </button>
           <label class="search">${B.ic('search')}<span class="sr-only">${t('food.search')}</span>
             <input id="food-q" data-in="food-q" type="search" placeholder="${t('food.search')}" autocomplete="off">
           </label>
-          <div class="chips hscroll-chips">${D.cats.map((c) => `<button class="chip${c.id === cat ? ' on' : ''}" aria-pressed="${c.id === cat}" data-act="food-cat" data-cat="${c.id}">${c.e ? `<span aria-hidden="true">${c.e}</span>` : ''}${L_(c.n)}</button>`).join('')}</div>
+          <div class="cat-tiles" role="group" aria-label="${t('food.cats')}">
+            ${D.cats.filter((c) => c.id !== 'all').map((c) => `<button class="cat-tile${c.id === cat ? ' on' : ''}" aria-pressed="${c.id === cat}" data-act="food-cat" data-cat="${c.id}">
+                <span class="cat-e" aria-hidden="true">${c.e}</span><span>${L_(c.n)}</span>
+              </button>`).join('')}
+          </div>
+          <div class="chips hscroll-chips">
+            ${FILTERS.map((f) => `<button class="chip" aria-pressed="false" data-act="food-filter" data-f="${f}">${t('filter.' + f)}</button>`).join('')}
+          </div>
           <section class="block">
-            <div class="block-head"><h2 class="h2">${t('surplus.title')}</h2><p class="muted small">${t('surplus.sub')}</p></div>
-            <div id="food-surplus"></div>
-          </section>
-          <section class="block">
-            <h2 class="h2">${t('food.all')}</h2>
+            <div class="block-head row"><h2 class="h2" id="food-title">${cat === 'all' ? t('food.all') : catName(cat)}</h2><span class="muted small" id="food-count"></span></div>
             <div class="rest-list" id="food-list"></div>
           </section>
         </div>`,

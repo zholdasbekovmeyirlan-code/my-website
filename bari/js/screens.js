@@ -38,11 +38,25 @@
           <span><b>${publicStats ? B.compactMoney(publicStats.donated) : '—'}</b><small>${t('fair.donated')}</small></span>
         </span>`;
 
-    const fillVenues = (list) => {
-      const near = document.getElementById('home-near');
-      if (near) near.innerHTML = list.length ? list.slice(0, 4).map(B.restCard).join('') : `<p class="empty-line">${t('food.none')}</p>`;
-      const s = document.getElementById('home-surplus');
-      if (s) s.innerHTML = B.surplusStrip(list);
+    // Places this client went to before: one tap to go again (like the taxi apps do).
+    const recent = () => {
+      const seen = new Set();
+      return B.orders.list().filter((o) => o.kind === 'ride' && o.status === 'done').map((o) => o.to)
+        .filter((p) => { const k = p.lat.toFixed(4) + p.lng.toFixed(4); if (seen.has(k)) return false; seen.add(k); return true; })
+        .slice(0, 3);
+    };
+    const recentHTML = () => {
+      const r = recent();
+      return r.length ? `<div class="list card">${r.map((p, i) => `<button class="list-row" data-act="home-again" data-i="${i}">
+          <span class="icon-box">${B.ic('clock')}</span>
+          <span class="lr-text"><b>${B.esc(p.n)}</b>${p.a ? `<em>${B.esc(p.a)}</em>` : ''}</span>${B.ic('chev', 'chev')}
+        </button>`).join('')}</div>` : '';
+    };
+    B.actions['home-again'] = (el) => {
+      const p = recent()[+el.dataset.i];
+      if (!p) return;
+      B.taxiPreset = p;
+      B.go('taxi');
     };
 
     return {
@@ -72,26 +86,16 @@
             <button class="svc svc-soon" data-act="soon"><span class="svc-art" aria-hidden="true">🚌</span><span class="svc-name">${t('svc.intercity')}</span><span class="tag tag-soon">${t('soon')}</span></button>
           </section>
 
+          <section class="block" id="home-recent-wrap" ${recent().length ? '' : 'hidden'}>
+            <h2 class="label">${t('home.recent')}</h2>
+            <div id="home-recent">${recentHTML()}</div>
+          </section>
+
           <button class="fair" data-act="tab" data-tab="together" id="home-fair">${fair()}</button>
-
-          <section class="block">
-            <div class="block-head"><h2 class="h2">${t('surplus.title')}</h2><p class="muted small">${t('surplus.sub')}</p></div>
-            <div id="home-surplus">${B.loading()}</div>
-          </section>
-
-          <section class="block">
-            <div class="block-head row"><h2 class="h2">${t('home.near')}</h2><button class="link" data-act="go" data-to="food">${t('all')}</button></div>
-            <div class="rest-list" id="home-near">${B.loading()}</div>
-          </section>
 
           <a class="join-banner" href="/pro">${B.ic('briefcase')}<span><b>${t('home.join')}</b><small>${t('home.join.sub')}</small></span>${B.ic('chev', 'chev')}</a>
         </div>`,
       mount() {
-        const cached = B.venues.cached('food');
-        if (cached) fillVenues(cached);
-        B.venues.list('food').then(fillVenues).catch((e) => {
-          ['home-near', 'home-surplus'].forEach((id) => { const el = document.getElementById(id); if (el) el.innerHTML = `<p class="empty-line">${B.errText(e)}</p>`; });
-        });
         loadStats().then(() => { const f = document.getElementById('home-fair'); if (f) f.innerHTML = fair(); });
       },
       onOrder() {

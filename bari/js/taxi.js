@@ -11,6 +11,7 @@
     const kind = mode === 'courier' ? 'parcel' : 'ride';
     const tariffs = (B.cfg && B.cfg.tariffs[kind]) || [];
     const dr = drafts[mode] || (drafts[mode] = { from: Object.assign({}, D.here), to: null, tariff: tariffs[0] && tariffs[0].id, comment: '', pkg: '' });
+    if (B.taxiPreset && mode === 'taxi') { dr.to = B.taxiPreset; B.taxiPreset = null; }
     const rate = { n: 5, tip: 0 };
     let map = null, lay = {}, pickField = null, panelKey = '', busy = false;
 

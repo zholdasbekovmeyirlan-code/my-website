@@ -34,6 +34,10 @@
     'adm.commission': ['Комиссия, %', 'Комиссия, %'],
     'adm.set': ['Сақтау', 'Сохранить'],
     'adm.done': ['Дайын', 'Готово'],
+    'adm.owner.phone': ['Иесінің телефоны', 'Телефон владельца'],
+    'adm.owner.set': ['Иесіне беру', 'Передать владельцу'],
+    'adm.venue.add': ['Мейрамхана қосу', 'Добавить ресторан'],
+    'adm.venue.add.sub': ['Келісім жасалған мекемені Бәрі Бизнес арқылы қосыңыз: ол бірден расталады.', 'Добавьте заведение с договором через Бәрі Бизнес: оно сразу подтверждается.'],
     'adm.empty': ['Әзірге жоқ.', 'Пока нет.'],
     'adm.status.pending': ['Тексерілуде', 'На проверке'],
     'adm.status.approved': ['Расталған', 'Подтверждён'],
@@ -91,7 +95,9 @@
         <div class="adm-side">
           ${statusTag(v.status)}
           <label class="adm-commission"><span>${t('adm.commission')}</span><input type="number" min="0" max="30" value="${Math.round(v.commission * 100)}" id="com-${v.id}"></label>
+          <label class="adm-commission"><span>${t('adm.owner.phone')}</span><input type="tel" inputmode="tel" placeholder="7XX XXX XX XX" id="own-${v.id}" class="adm-phone"></label>
           <div class="btn-row">
+            <button class="btn btn-soft btn-sm" data-act="adm-owner" data-id="${v.id}">${t('adm.owner.set')}</button>
             <button class="btn btn-soft btn-sm" data-act="adm-com" data-id="${v.id}">${t('adm.set')}</button>
             ${v.status !== 'approved' ? `<button class="btn btn-primary btn-sm" data-act="adm-venue" data-id="${v.id}" data-s="approved">${t(v.status === 'blocked' ? 'adm.unblock' : 'adm.approve')}</button>` : ''}
             ${v.status !== 'blocked' ? `<button class="btn btn-soft-bad btn-sm" data-act="adm-venue" data-id="${v.id}" data-s="blocked">${t('adm.block')}</button>` : ''}
@@ -109,6 +115,11 @@
     'adm-com': (el) => {
       const v = Number(document.getElementById('com-' + el.dataset.id).value);
       act(() => B.api.post(`/api/admin/venues/${el.dataset.id}`, { commission: Math.max(0, Math.min(30, v)) / 100 }));
+    },
+    'adm-owner': (el) => {
+      const phone = document.getElementById('own-' + el.dataset.id).value.replace(/\D/g, '');
+      if (phone.length < 10) return B.toast(t('err.invalid', { field: t('field.phone') }));
+      act(() => B.api.post(`/api/admin/venues/${el.dataset.id}`, { owner_phone: '+7' + phone.slice(-10) }));
     },
     'adm-social': (el) => act(() => B.api.post(`/api/admin/users/${el.dataset.id}/social`, { verified: el.dataset.ok === '1' })),
     'adm-logout': async () => { await B.logout(); B.refresh(); },
@@ -158,7 +169,9 @@
   B.screens.places = function () {
     const g = gate();
     if (g) return { html: g };
-    return { html: `<div class="screen"><h1 class="page-title">${t('adm.nav.places')}</h1>${data.venues.length ? `<div class="card adm-list">${data.venues.map(venueRow).join('')}</div>` : `<p class="muted">${t('adm.empty')}</p>`}</div>` };
+    return { html: `<div class="screen"><h1 class="page-title">${t('adm.nav.places')}</h1>
+      <a class="join-banner" href="/partner">${B.ic('plus')}<span><b>${t('adm.venue.add')}</b><small>${t('adm.venue.add.sub')}</small></span>${B.ic('chev', 'chev')}</a>
+      ${data.venues.length ? `<div class="card adm-list">${data.venues.map(venueRow).join('')}</div>` : `<p class="muted">${t('adm.empty')}</p>`}</div>` };
   };
 
   B.screens.aorders = function () {

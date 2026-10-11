@@ -3,7 +3,9 @@
    Requests to /api/… and the live event stream are answered here instead of over the network. */
 (function () {
   'use strict';
-  const DB_KEY = 'bari:demo-db';
+  // Bump the version when demo data changes, so returning visitors start from the new data.
+  const DB_KEY = 'bari:demo-db:v3';
+  try { ['bari:demo-db'].forEach((k) => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
   const sources = window.__BARI_MODULES__ || {};
 
   /* ---------- small helpers ---------- */
