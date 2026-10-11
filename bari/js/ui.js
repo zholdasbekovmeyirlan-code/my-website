@@ -39,6 +39,7 @@
     edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
     eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
     logout: '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h11"/>',
   };
   B.ic = (name, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${P[name] || ''}</svg>`;
@@ -68,11 +69,12 @@
   // Skin tones and variation selectors are dropped so 🚶🏽 finds the same picture as 🚶.
   B.artKey = (e) => [...String(e || '')].map((c) => c.codePointAt(0))
     .filter((n) => n !== 0xfe0f && n !== 0xfe0e && (n < 0x1f3fb || n > 0x1f3ff)).map((n) => n.toString(16)).join('-');
-  B.art = (e, cls) => {
+  // Size comes from the parent's --art; lazy is for long lists (cards, menus, cart lines).
+  B.art = (e, cls, lazy) => {
     const k = B.artKey(e);
     const c = cls ? ' ' + cls : '';
     return ART.has(k)
-      ? `<img class="art${c}" src="img/art/${k}.webp" alt="" draggable="false" decoding="async">`
+      ? `<img class="art${c}" src="img/art/${k}.webp" width="256" height="256" alt="" draggable="false" decoding="async"${lazy ? ' loading="lazy"' : ''}>`
       : `<span class="art art-emo${c}">${B.esc(e)}</span>`;
   };
 

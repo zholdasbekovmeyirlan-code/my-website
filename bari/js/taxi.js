@@ -50,7 +50,7 @@
       const sub = x.social ? '−30%' : x.w ? L_(x.w) : t('taxi.eta', { n: x.eta });
       return `<button class="tariff${on ? ' on' : ''}${locked ? ' locked' : ''}" role="radio" aria-checked="${on}" data-act="tx-tariff" data-id="${x.id}">
           <span class="tariff-e" aria-hidden="true">${B.art(x.e)}</span>
-          <span class="tariff-n">${L_(x.n)}</span>
+          <span class="tariff-n">${L_(x.n)}${locked ? B.ic('lock') : ''}</span>
           <span class="tariff-p">${price}</span>
           <span class="tariff-s">${sub}</span>
         </button>`;

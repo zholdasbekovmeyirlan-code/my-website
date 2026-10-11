@@ -35,7 +35,9 @@
         <span class="fair-stats">
           <span><b>90%</b><small>${t('fair.driver')}</small></span>
           <span><b>−30%</b><small>${t('fair.social')}</small></span>
-          <span><b>${publicStats ? B.compactMoney(publicStats.donated) : '—'}</b><small>${t('fair.donated')}</small></span>
+          ${publicStats && publicStats.donated >= 1000
+            ? `<span><b>${B.compactMoney(publicStats.donated)}</b><small>${t('fair.donated')}</small></span>`
+            : `<span><b>${B.money(500)}</b><small>${t('fair.round')}</small></span>`}
         </span>`;
 
     // Places this client went to before: one tap to go again (like the taxi apps do).
@@ -80,10 +82,10 @@
               <span class="svc-sub">${t('svc.food.sub')}</span>
               <span class="svc-art" aria-hidden="true">${B.art('🍜')}</span>
             </button>
-            <button class="svc" data-act="go" data-to="shops" data-type="shop"><span class="svc-art" aria-hidden="true">${B.art('🛒')}</span><span class="svc-name">${t('svc.shop')}</span></button>
-            <button class="svc" data-act="go" data-to="shops" data-type="pharm"><span class="svc-art" aria-hidden="true">${B.art('💊')}</span><span class="svc-name">${t('svc.pharm')}</span></button>
-            <button class="svc" data-act="go" data-to="taxi" data-mode="courier"><span class="svc-art" aria-hidden="true">${B.art('📦')}</span><span class="svc-name">${t('svc.courier')}</span></button>
-            <button class="svc svc-soon" data-act="soon"><span class="svc-art" aria-hidden="true">${B.art('🚌')}</span><span class="svc-name">${t('svc.intercity')}</span><span class="tag tag-soon">${t('soon')}</span></button>
+            <button class="svc svc-shop" data-act="go" data-to="shops" data-type="shop"><span class="svc-art" aria-hidden="true">${B.art('🛒')}</span><span class="svc-name">${t('svc.shop')}</span></button>
+            <button class="svc svc-pharm" data-act="go" data-to="shops" data-type="pharm"><span class="svc-art" aria-hidden="true">${B.art('💊')}</span><span class="svc-name">${t('svc.pharm')}</span></button>
+            <button class="svc svc-courier" data-act="go" data-to="taxi" data-mode="courier"><span class="svc-art" aria-hidden="true">${B.art('📦')}</span><span class="svc-name">${t('svc.courier')}</span></button>
+            <button class="svc svc-soon svc-intercity" data-act="soon"><span class="svc-art" aria-hidden="true">${B.art('🚌')}</span><span class="svc-name">${t('svc.intercity')}</span><span class="tag tag-soon">${t('soon')}</span></button>
           </section>
 
           <section class="block" id="home-recent-wrap" ${recent().length ? '' : 'hidden'}>

@@ -29,15 +29,15 @@
     const cats = (v.cats || []).map(catName).filter(Boolean).join(' · ');
     const deal = v.box && v.box.old_price ? Math.round((1 - v.box.price / v.box.old_price) * 100) : 0;
     return `<button class="rest${v.is_open ? '' : ' closed'}" data-act="go" data-to="store" data-id="${v.id}">
-        <span class="cover rest-cover" style="--h:${v.hue}" aria-hidden="true">
-          ${v.cover_url ? `<img class="cover-img" src="${B.esc(v.cover_url)}" alt="" loading="lazy">` : `<span class="cover-e">${B.art(v.emoji)}</span>`}
+        <span class="cover rest-cover${v.cover_url ? '' : ' is-art'}" style="--h:${v.hue}" aria-hidden="true">
+          ${v.cover_url ? `<img class="cover-img" src="${B.esc(v.cover_url)}" alt="" loading="lazy">` : `<span class="cover-e">${B.art(v.emoji, '', true)}</span>`}
           <span class="rest-time">${v.is_open ? `${v.eta[0]}–${v.eta[1]} ${t('min')}` : t('venue.closed')}</span>
           ${deal ? `<span class="rest-deal">−${deal}% ${t('deal.evening')}</span>` : ''}
         </span>
         <span class="rest-body">
-          <span class="rest-name">${B.esc(B.N(v))}${v.local ? `<span class="tag tag-local">${t('local')}</span>` : ''}</span>
+          <span class="rest-name"><span class="rest-title">${B.esc(B.N(v))}</span>${v.local ? `<span class="tag tag-local">${t('local')}</span>` : ''}</span>
           <span class="meta">${B.rating(v)}${cats ? ` · ${cats}` : ''}</span>
-          <span class="meta muted">${t('delivery')} ${v.delivery_fee ? B.money(v.delivery_fee) : t('free')} · ${t('rest.min', { price: B.money(v.min_order) })}</span>
+          <span class="meta muted">${t('delivery')} ${v.delivery_fee ? B.money(v.delivery_fee) : `<b class="free">${t('free')}</b>`} · ${t('rest.min', { price: B.money(v.min_order) })}</span>
         </span>
       </button>`;
   };
@@ -164,7 +164,7 @@
               </button>`).join('')}
           </div>
           <div class="chips hscroll-chips">
-            ${FILTERS.map((f) => `<button class="chip" aria-pressed="false" data-act="food-filter" data-f="${f}">${t('filter.' + f)}</button>`).join('')}
+            ${FILTERS.map((f) => `<button class="chip" aria-pressed="false" data-act="food-filter" data-f="${f}">${f === 'deal' ? B.art('🥡') : ''}${t('filter.' + f)}</button>`).join('')}
           </div>
           <section class="block">
             <div class="block-head row"><h2 class="h2" id="food-title">${cat === 'all' ? t('food.all') : catName(cat)}</h2><span class="muted small" id="food-count"></span></div>
@@ -190,9 +190,10 @@
     const id = Number(p.id);
     let v = B.venues.cachedOne(id) || null;
 
-    const pic = (it) => (it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : B.art(it.emoji));
+    const pic = (it) => (it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : B.art(it.emoji, '', true));
+    const isArt = (it) => (it.photo_url ? '' : ' is-art');
     const itemRow = (it, closed) => `<div class="item">
-        <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
+        <span class="cover item-pic${isArt(it)}" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
         <span class="item-body">
           <b class="item-name">${B.esc(B.N(it))}</b>
           ${it.descr ? `<span class="item-desc">${B.esc(B.N(it, 'descr'))}</span>` : ''}
@@ -201,7 +202,7 @@
         <span class="item-ctl" data-ctl="${it.id}">${itemCtl(it, closed)}</span>
       </div>`;
     const prodCard = (it, closed) => `<div class="prod">
-        <span class="cover prod-pic" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
+        <span class="cover prod-pic${isArt(it)}" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
         <b class="prod-price">${B.money(it.price)}</b>
         <span class="prod-name">${B.esc(B.N(it))}</span>
         <span class="prod-unit">${B.esc(B.N(it, 'descr'))}</span>
@@ -218,18 +219,22 @@
       const row = v.grid ? prodCard : itemRow;
       return `<div class="store-head">
             <h1 class="store-name">${B.esc(B.N(v))}</h1>
-            <p class="meta">${B.ic('star', 'ic-star')}${B.dec(v.rating, 1)} · ${v.eta[0]}–${v.eta[1]} ${t('min')} · ${t('delivery')} ${v.delivery_fee ? B.money(v.delivery_fee) : t('free')}</p>
+            <div class="store-stats">
+              <span><b>${B.rating(v)}</b><small>${t('rating')}</small></span>
+              <span><b>${v.eta[0]}–${v.eta[1]}</b><small>${t('min')}</small></span>
+              <span><b>${v.delivery_fee ? B.money(v.delivery_fee) : `<span class="free">${t('free')}</span>`}</b><small>${t('delivery')}</small></span>
+            </div>
             ${v.address ? `<p class="meta muted">${B.ic('pin', 'ic-star')}${B.esc(v.address)}</p>` : ''}
             <div class="tags">
               ${v.local ? `<span class="tag tag-local">${t('local')}</span>` : ''}
               <span class="tag">${t('rest.min', { price: B.money(v.min_order) })}</span>
             </div>
             ${B.N(v, 'note') ? `<p class="note">${B.esc(B.N(v, 'note'))}</p>` : ''}
-            ${closed ? `<p class="banner-warn">${t('venue.closed.long')}</p>` : ''}
+            ${closed ? `<p class="banner-info">${t('venue.closed.long')}</p>` : ''}
           </div>
           ${groups.length > 1 ? `<nav class="chips hscroll-chips sec-nav" aria-label="${t('menu')}">${groups.map((g, i) => `<button class="chip" data-act="sec" data-i="${i}">${B.esc(B.N(g.sec))}</button>`).join('')}</nav>` : ''}
           ${boxes.length ? `<section class="menu-sec box-sec">
-              <div class="block-head"><h2 class="h2">${t('surplus.title')}</h2><p class="muted small">${t('surplus.why')}</p></div>
+              <div class="block-head"><h2 class="h2">${B.art('🥡')}${t('surplus.title')}</h2><p class="muted small">${t('surplus.why')}</p></div>
               <div class="menu-list">${boxes.map((it) => itemRow(it, closed)).join('')}</div>
             </section>` : ''}
           ${groups.map((g, i) => `<section class="menu-sec" id="sec-${i}">
@@ -248,7 +253,7 @@
     B.actions.inc = (el) => { const it = findItem(el.dataset.id); if (it) B.cartChange(v, it, 1); };
     B.actions.dec = (el) => { const it = findItem(el.dataset.id); if (it) B.cartChange(v, it, -1); };
 
-    const hero = (vv) => `<div class="cover store-hero" style="--h:${vv ? vv.hue : 190}">
+    const hero = (vv) => `<div class="cover store-hero${vv && vv.cover_url ? '' : ' is-art'}" style="--h:${vv ? vv.hue : 190}">
         ${vv && vv.cover_url ? `<img class="cover-img" src="${B.esc(vv.cover_url)}" alt="">` : ''}
         <button class="icon-btn on-hero" data-act="back" aria-label="${t('back')}">${B.ic('back')}</button>
         <span class="store-hero-right">${B.cartBtn()}</span>
