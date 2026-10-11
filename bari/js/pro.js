@@ -239,7 +239,7 @@
 
     function offerCard(o) {
       const tar = B.tariffOf(o.kind, o.tariff);
-      const label = o.kind === 'delivery' ? `${o.venue ? o.venue.emoji + ' ' + B.esc(B.N(o.venue)) : ''}` : `${tar ? tar.e + ' ' + B.L(tar.n) : ''}`;
+      const label = o.kind === 'delivery' ? `${o.venue ? B.art(o.venue.emoji, 'art-inline') + ' ' + B.esc(B.N(o.venue)) : ''}` : `${tar ? B.art(tar.e, 'art-inline') + ' ' + B.L(tar.n) : ''}`;
       return `<article class="offer">
           <div class="offer-head">
             <span class="tag">${t('kind.' + o.kind)}</span>
@@ -277,7 +277,7 @@
           </ol>
           ${o.comment ? `<p class="note">💬 ${B.esc(o.comment)}</p>` : ''}
           ${o.pkg ? `<p class="note">📦 ${B.esc(o.pkg)}</p>` : ''}
-          ${o.items ? `<details class="items-box"><summary>${t('pro.items')} · ${o.items.reduce((a, l) => a + l.q, 0)}</summary><ul>${o.items.map((l) => `<li>${l.emoji} ${B.esc(B.N(l))} × ${l.q}</li>`).join('')}</ul></details>` : ''}
+          ${o.items ? `<details class="items-box"><summary>${t('pro.items')} · ${o.items.reduce((a, l) => a + l.q, 0)}</summary><ul>${o.items.map((l) => `<li>${B.art(l.emoji, 'art-inline')} ${B.esc(B.N(l))} × ${l.q}</li>`).join('')}</ul></details>` : ''}
           <div class="ride-sum"><span>${B.esc(o.client.name || '')} · ${t('pay.' + o.pay)}${o.kind === 'delivery' ? ' · ' + B.money(o.total) : ''}</span><b>${B.money(o.earning)}</b></div>
           <div class="ride-actions">
             ${nav ? `<a class="act" href="${nav}" target="_blank" rel="noopener">${B.ic('nav')}<span>${t('pro.navigate')}</span></a>` : ''}
@@ -328,7 +328,7 @@
       const pts = [];
       if (cur) {
         lay.route = B.map.route(map, B.routePts(cur.from, cur.to));
-        lay.a = L.marker(B.ll(cur.from), { icon: B.map.pin(cur.kind === 'delivery' ? 'store' : 'from', cur.kind === 'delivery' && cur.venue ? cur.venue.emoji : ''), interactive: false }).addTo(map);
+        lay.a = L.marker(B.ll(cur.from), { icon: B.map.pin(cur.kind === 'delivery' ? 'store' : 'from', cur.kind === 'delivery' && cur.venue ? B.art(cur.venue.emoji) : ''), interactive: false }).addTo(map);
         lay.b = L.marker(B.ll(cur.to), { icon: B.map.pin('to'), interactive: false }).addTo(map);
         pts.push(B.ll(cur.from), B.ll(cur.to));
       } else {
@@ -532,7 +532,7 @@
       const s = W.info && W.info.stats;
       return `${s ? `<div class="pro-stats card"><span><small>${t('pro.today')}</small><b>${B.money(s.today)}</b><em>${t('pro.trips', { n: s.trips })}</em></span></div>` : ''}
         ${list.length ? `<div class="list card">${list.map((o) => `<div class="list-row static">
-            <span class="icon-box emoji" aria-hidden="true">${B.orderEmoji(o)}</span>
+            <span class="icon-box emoji" aria-hidden="true">${B.art(B.orderEmoji(o))}</span>
             <span class="lr-text"><b>${B.esc(o.from.n)} → ${B.esc(o.to.n)}</b><em>${B.time(o.created_at)} · ${B.statusText(o)}</em></span>
             <span class="amount${o.status === 'cancelled' ? ' struck' : ''}">${B.money(o.earning || 0)}</span>
           </div>`).join('')}</div>` : `<p class="muted">${t('pro.history.empty')}</p>`}`;

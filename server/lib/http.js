@@ -85,6 +85,7 @@ const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.webp': 'image/webp',
   '.webmanifest': 'application/manifest+json',
   '.json': 'application/json',
   '.txt': 'text/plain; charset=utf-8',
@@ -120,7 +121,8 @@ function serveStatic(root, req, res) {
     ...SECURITY_HEADERS,
     'Content-Type': TYPES[ext] || 'application/octet-stream',
     'Content-Length': stat.size,
-    'Cache-Control': 'no-cache',
+    // Bundled pictures never change under the same name; everything else is revalidated.
+    'Cache-Control': rel.startsWith('/img/') ? 'public, max-age=604800' : 'no-cache',
     ...(ext === '.html' ? { 'Content-Security-Policy': CSP } : {}),
   });
   if (req.method === 'HEAD') { res.end(); return true; }

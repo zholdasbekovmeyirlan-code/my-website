@@ -37,6 +37,7 @@ const relink = (s) => s
 for (const f of fs.readdirSync(path.join(root, 'bari', 'js'))) copy('bari/js/' + f, relink);
 copy('bari/css/style.css');
 copy('bari/icons/icon.svg');
+for (const f of fs.readdirSync(path.join(root, 'bari', 'img', 'art'))) copy('bari/img/art/' + f);
 copy('bari/vendor/leaflet/leaflet.js');
 copy('bari/vendor/leaflet/leaflet.css');
 fs.copyFileSync(path.join(__dirname, 'backend.js'), path.join(out, 'demo', 'backend.js'));

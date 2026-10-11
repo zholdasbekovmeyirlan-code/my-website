@@ -65,7 +65,7 @@
         <button class="btn btn-primary btn-block btn-lg-c" data-act="login">${t('login.title')}</button></div>`;
     }
     if (!B.session.user.is_admin) {
-      return `<div class="screen"><div class="empty"><span class="empty-e" aria-hidden="true">🔒</span><h1 class="h2">${t('adm.denied')}</h1><p class="muted">${t('adm.denied.sub')}</p>
+      return `<div class="screen"><div class="empty"><span class="empty-e" aria-hidden="true">${B.art('🔒')}</span><h1 class="h2">${t('adm.denied')}</h1><p class="muted">${t('adm.denied.sub')}</p>
         <button class="btn btn-soft" data-act="adm-logout">${t('pf.logout')}</button></div></div>`;
     }
     if (!data) return `<div class="screen">${B.loading()}</div>`;
@@ -98,7 +98,7 @@
   function venueRow(v) {
     return `<div class="adm-row">
         <div class="adm-main">
-          <b>${v.emoji} ${B.esc(v.name)}${v.demo ? ` <span class="tag">${t('adm.demo')}</span>` : ''}</b>
+          <b>${B.art(v.emoji, 'art-inline')} ${B.esc(v.name)}${v.demo ? ` <span class="tag">${t('adm.demo')}</span>` : ''}</b>
           <span class="muted small">${B.esc(v.address)} · ${t('biz.type.' + v.type)}</span>
           ${v.owner ? `<span class="muted small">${t('adm.owner')}: ${B.esc(v.owner.name)} · ${B.esc(B.phone(v.owner.phone))}</span>` : ''}
         </div>
@@ -227,7 +227,7 @@
     return {
       html: `<div class="screen"><h1 class="page-title">${t('adm.nav.orders')}</h1>
         ${data.orders.length ? `<div class="list card">${data.orders.map((o) => `<div class="list-row static">
-            <span class="icon-box emoji" aria-hidden="true">${B.orderEmoji(o)}</span>
+            <span class="icon-box emoji" aria-hidden="true">${B.art(B.orderEmoji(o))}</span>
             <span class="lr-text"><b>№${o.id} · ${B.esc(o.from.n)} → ${B.esc(o.to.n)}</b>
               <em>${B.time(o.created_at)} · ${B.statusText(o)} · ${B.esc(o.client.name || '')}${o.worker ? ' → ' + B.esc(o.worker.name) : ''}</em></span>
             <span class="amount${o.status === 'cancelled' ? ' struck' : ''}">${B.money(o.total)}</span>

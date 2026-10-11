@@ -49,6 +49,33 @@
     <path class="logo-orn" d="M16 25v-9m0 0c0-4.6-3.3-7.4-7-7.4-2.6 0-4.3 1.9-4.3 4 0 1.9 1.4 3.3 3.2 3.3 1.5 0 2.6-1.1 2.6-2.4M16 16c0-4.6 3.3-7.4 7-7.4 2.6 0 4.3 1.9 4.3 4 0 1.9-1.4 3.3-3.2 3.3-1.5 0-2.6-1.1-2.6-2.4"/>
   </svg>`;
 
+  // 3D pictures for the emoji the app uses (Microsoft Fluent Emoji, MIT, img/art/LICENSE).
+  // Files are named by code point; an emoji without a picture stays text.
+  const ART = new Set((
+    '1f31f 1f321 1f32d 1f32e 1f32f 1f331 1f336 1f337 1f338 1f339 1f33b 1f33d 1f33e 1f344 1f345 1f346 1f347 1f349 ' +
+    '1f34a 1f34b 1f34c 1f34d 1f34e 1f34f 1f350 1f351 1f352 1f353 1f354 1f355 1f356 1f357 1f358 1f359 1f35a 1f35b ' +
+    '1f35c 1f35d 1f35e 1f35f 1f361 1f362 1f363 1f364 1f366 1f368 1f369 1f36a 1f36b 1f36c 1f36e 1f36f 1f370 1f371 ' +
+    '1f372 1f373 1f375 1f376 1f37c 1f37d 1f37f 1f381 1f382 1f383 1f388 1f389 1f393 1f3ab 1f3d9 1f3e0 1f3e2 1f3e5 ' +
+    '1f3ea 1f3ec 1f41f 1f43e 1f464 1f475 1f476 1f489 1f48a 1f490 1f49d 1f4a1 1f4a7 1f4ac 1f4b0 1f4b3 1f4b8 1f4bc ' +
+    '1f4c8 1f4cb 1f4cd 1f4da 1f4e6 1f4f1 1f4f7 1f50b 1f50e 1f512 1f525 1f552 1f58a 1f5fa 1f637 1f68c 1f690 1f695 ' +
+    '1f696 1f697 1f698 1f699 1f69a 1f6b2 1f6b6 1f6cd 1f6d2 1f6e1 1f6f4 1f6f5 1f91d 1f950 1f951 1f952 1f954 1f955 ' +
+    '1f956 1f957 1f958 1f959 1f95a 1f95b 1f95c 1f95d 1f95e 1f95f 1f960 1f961 1f963 1f964 1f965 1f966 1f967 1f968 ' +
+    '1f969 1f96a 1f96b 1f96c 1f96d 1f96e 1f96f 1f9bd 1f9c0 1f9c1 1f9c2 1f9c3 1f9c4 1f9c5 1f9c6 1f9c7 1f9c8 1f9ca ' +
+    '1f9cb 1f9d1-200d-1f373 1f9d1-200d-1f9bd 1f9d3 1f9e6 1f9ea 1f9f4 1f9f7 1f9f8 1f9f9 1f9fa 1f9fb 1f9fc 1f9fd ' +
+    '1f9fe 1fa79 1fa7a 1fa7c 1fa99 1faa5 1fab4 1fad0 1fad1 1fad3 1fad5 1fad6 1fad7 1fadb 23f3 2615 267f 26a1 26d4 ' +
+    '270f 2728 2764 2b50 '
+  ).trim().split(' '));
+  // Skin tones and variation selectors are dropped so 🚶🏽 finds the same picture as 🚶.
+  B.artKey = (e) => [...String(e || '')].map((c) => c.codePointAt(0))
+    .filter((n) => n !== 0xfe0f && n !== 0xfe0e && (n < 0x1f3fb || n > 0x1f3ff)).map((n) => n.toString(16)).join('-');
+  B.art = (e, cls) => {
+    const k = B.artKey(e);
+    const c = cls ? ' ' + cls : '';
+    return ART.has(k)
+      ? `<img class="art${c}" src="img/art/${k}.webp" alt="" draggable="false" decoding="async">`
+      : `<span class="art art-emo${c}">${B.esc(e)}</span>`;
+  };
+
   /* ---------- shared fragments ---------- */
   B.topbar = (title, right, noBack) => `<header class="topbar">
       ${noBack ? '<span></span>' : `<button class="icon-btn" data-act="back" aria-label="${B.t('back')}">${B.ic('back')}</button>`}

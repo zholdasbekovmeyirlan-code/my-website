@@ -133,12 +133,12 @@
   const isAdmin = () => !!(B.session && B.session.user.is_admin);
   const switcher = () => (P.venues.length > 1 || isAdmin()
     ? `${isAdmin() ? `<p class="banner-info">${t('biz.admin.mode')}</p>` : ''}
-      <div class="chips hscroll-chips">${P.venues.map((v) => `<button class="chip${v.id === P.vid ? ' on' : ''}" data-act="biz-pick" data-id="${v.id}">${v.emoji} ${B.esc(B.N(v))}</button>`).join('')}
+      <div class="chips hscroll-chips">${P.venues.map((v) => `<button class="chip${v.id === P.vid ? ' on' : ''}" data-act="biz-pick" data-id="${v.id}">${B.art(v.emoji, 'art-inline')} ${B.esc(B.N(v))}</button>`).join('')}
       ${isAdmin() ? `<button class="chip" data-act="go" data-to="register">${B.ic('plus')}${t('biz.add.short')}</button>` : ''}</div>`
     : '');
 
   /* ---------- venue form (register and settings) ---------- */
-  const EMOJIS = ['🍽️', '🍲', '🥟', '🍔', '🍕', '🍣', '☕', '🥗', '🍢', '🍰', '🥖', '🛒', '💊', '🌸', '🧃'];
+  const EMOJIS = ['🍽️', '🥙', '🍔', '🍕', '🍣', '🍜', '🍲', '🥟', '🍢', '🍗', '🥩', '🥗', '☕', '🧋', '🍰', '🧁', '🍩', '🥐', '🥖', '🛒', '🧺', '💊', '🌸', '🧃'];
   function venueForm(v, isNew) {
     const f = Object.assign({ type: 'food', name: '', name_ru: '', note: '', address: '', lat: D.center.lat, lng: D.center.lng, cats: [], delivery_fee: 390, min_order: 2000, eta: [30, 45], emoji: '🍽️', hue: 30 }, v || {});
     const seg = (name, val, label) => `<button type="button" class="seg-btn${f[name] === val ? ' on' : ''}" data-act="vf-set" data-name="${name}" data-v="${val}"><span>${label}</span></button>`;
@@ -152,7 +152,7 @@
         <button type="button" class="btn btn-soft" data-act="vf-find">${B.ic('search')}<span>${t('biz.address.find')}</span></button>
         <div class="block"><p class="muted small">${t('biz.location')}</p><div class="mini-map" id="vf-map"></div></div>
         <input type="hidden" name="lat" value="${f.lat}"><input type="hidden" name="lng" value="${f.lng}">
-        ${f.type === 'food' ? `<div class="block"><h2 class="label">${t('biz.cats')}</h2><div class="chips">${D.cats.filter((c) => c.id !== 'all').map((c) => `<button type="button" class="chip${f.cats.includes(c.id) ? ' on' : ''}" data-act="vf-cat" data-v="${c.id}">${c.e} ${L_(c.n)}</button>`).join('')}</div></div>` : ''}
+        ${f.type === 'food' ? `<div class="block"><h2 class="label">${t('biz.cats')}</h2><div class="chips">${D.cats.filter((c) => c.id !== 'all').map((c) => `<button type="button" class="chip${f.cats.includes(c.id) ? ' on' : ''}" data-act="vf-cat" data-v="${c.id}">${B.art(c.e, 'art-inline')} ${L_(c.n)}</button>`).join('')}</div></div>` : ''}
         <div class="field-row">
           <label class="field"><span>${t('biz.fee')}</span><input name="delivery_fee" type="number" inputmode="numeric" min="0" max="5000" value="${f.delivery_fee}"></label>
           <label class="field"><span>${t('biz.min')}</span><input name="min_order" type="number" inputmode="numeric" min="0" value="${f.min_order}"></label>
@@ -161,7 +161,7 @@
           <label class="field"><span>${t('biz.eta')}</span><input name="eta_min" type="number" inputmode="numeric" min="5" max="180" value="${f.eta[0]}"></label>
           <label class="field"><span>&nbsp;</span><input name="eta_max" type="number" inputmode="numeric" min="5" max="240" value="${f.eta[1]}" aria-label="${t('biz.eta')}"></label>
         </div>
-        <div class="block"><h2 class="label">${t('biz.emoji')}</h2><div class="chips emoji-chips">${EMOJIS.map((e) => `<button type="button" class="chip${f.emoji === e ? ' on' : ''}" data-act="vf-emoji" data-v="${e}">${e}</button>`).join('')}</div><input type="hidden" name="emoji" value="${f.emoji}"></div>
+        <div class="block"><h2 class="label">${t('biz.emoji')}</h2><div class="chips emoji-chips">${EMOJIS.map((e) => `<button type="button" class="chip${f.emoji === e ? ' on' : ''}" data-act="vf-emoji" data-v="${e}" aria-label="${e}">${B.art(e)}</button>`).join('')}</div><input type="hidden" name="emoji" value="${f.emoji}"></div>
         <p class="form-err" id="vf-err" hidden></p>
         <button class="btn btn-primary btn-block btn-lg-c" type="submit">${t(isNew ? 'biz.create' : 'biz.save')}</button>
       </form>`;
@@ -171,7 +171,7 @@
     return `<div class="block photo-field" data-photo="${name}">
         <h2 class="label">${label}</h2>
         <div class="photo-row">
-          <span class="photo-prev ${shape || ''}" aria-hidden="true">${url ? `<img src="${B.esc(url)}" alt="">` : `<span>${emoji || '📷'}</span>`}</span>
+          <span class="photo-prev ${shape || ''}" aria-hidden="true">${url ? `<img src="${B.esc(url)}" alt="">` : B.art(emoji || '📷')}</span>
           <span class="photo-btns">
             <button type="button" class="btn btn-soft btn-sm" data-act="photo-pick" data-name="${name}" data-max="${shape === 'wide' ? 1600 : 1000}">${B.ic('plus')}<span>${t(url ? 'biz.photo.change' : 'biz.photo.add')}</span></button>
             ${url ? `<button type="button" class="btn btn-soft-bad btn-sm" data-act="photo-clear" data-name="${name}">${t('biz.photo.remove')}</button>` : ''}
@@ -186,7 +186,7 @@
     const box = photoBox(name);
     if (!box) return;
     box.querySelector('input[type=hidden]').value = url || '';
-    box.querySelector('.photo-prev').innerHTML = url ? `<img src="${B.esc(url)}" alt="">` : '<span>📷</span>';
+    box.querySelector('.photo-prev').innerHTML = url ? `<img src="${B.esc(url)}" alt="">` : B.art('📷');
     const btns = box.querySelector('.photo-btns');
     const pick = btns.querySelector('[data-act="photo-pick"]');
     btns.innerHTML = `<button type="button" class="btn btn-soft btn-sm" data-act="photo-pick" data-name="${name}" data-max="${pick.dataset.max}">${B.ic('plus')}<span>${t(url ? 'biz.photo.change' : 'biz.photo.add')}</span></button>`
@@ -215,7 +215,7 @@
     const cats = new Set((v && v.cats) || []);
     const mapEl = document.getElementById('vf-map');
     const map = B.map.create(mapEl, { zoom: 14, center: { lat: +form.lat.value, lng: +form.lng.value }, scrollWheelZoom: false });
-    let pin = L.marker([+form.lat.value, +form.lng.value], { icon: B.map.pin('store', form.emoji.value), interactive: false }).addTo(map);
+    let pin = L.marker([+form.lat.value, +form.lng.value], { icon: B.map.pin('store', B.art(form.emoji.value)), interactive: false }).addTo(map);
     const setPos = (lat, lng) => {
       form.lat.value = lat;
       form.lng.value = lng;
@@ -238,7 +238,7 @@
       'vf-emoji': (el) => {
         form.emoji.value = el.dataset.v;
         form.querySelectorAll('[data-act="vf-emoji"]').forEach((b) => b.classList.toggle('on', b === el));
-        pin.setIcon(B.map.pin('store', el.dataset.v));
+        pin.setIcon(B.map.pin('store', B.art(el.dataset.v)));
       },
       'vf-find': () => B.addressSheet({
         title: t('biz.address'), gps: true,
@@ -292,7 +292,7 @@
 
   /* ---------- orders ---------- */
   function orderCard(o) {
-    const items = (o.items || []).map((l) => `<li><span>${l.emoji} ${B.esc(B.N(l))}</span><b>× ${l.q}</b></li>`).join('');
+    const items = (o.items || []).map((l) => `<li><span>${B.art(l.emoji, 'art-inline')} ${B.esc(B.N(l))}</span><b>× ${l.q}</b></li>`).join('');
     const actions = {
       new: `<button class="btn btn-soft-bad" data-act="biz-reject" data-id="${o.id}">${t('biz.reject')}</button><button class="btn btn-primary" data-act="biz-status" data-id="${o.id}" data-s="cooking">${t('biz.accept')}</button>`,
       cooking: `<button class="btn btn-primary btn-block" data-act="biz-status" data-id="${o.id}" data-s="ready">${t('biz.ready')}</button>`,
@@ -383,7 +383,7 @@
     });
 
     return {
-      html: `<div class="screen"><h1 class="page-title">${v.emoji} ${B.esc(B.N(v))}</h1>${switcher()}<div id="biz-body" class="stack-16">${body()}</div></div>`,
+      html: `<div class="screen"><h1 class="page-title">${B.art(v.emoji, 'art-inline')} ${B.esc(B.N(v))}</h1>${switcher()}<div id="biz-body" class="stack-16">${body()}</div></div>`,
       async mount() { await loadVenues(); await loadOrders(); redraw(); },
       async onOrder(o) {
         if (!o.venue || o.venue.id !== P.vid) return;
@@ -437,7 +437,7 @@
       const loose = items.filter((i) => !i.section_id || !sections.some((s) => s.id === i.section_id));
       if (loose.length) groups.push({ s: { id: 0, name: t('biz.no.section') }, items: loose });
       const row = (it) => `<div class="item">
-          <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : it.emoji}</span>
+          <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : B.art(it.emoji)}</span>
           <button class="item-body as-btn" data-act="item-edit" data-id="${it.id}">
             <b class="item-name">${B.esc(it.name)}</b>
             ${it.descr ? `<span class="item-desc">${B.esc(it.descr)}</span>` : ''}

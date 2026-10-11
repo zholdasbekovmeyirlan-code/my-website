@@ -10,7 +10,7 @@
 
   function activeCard(o) {
     return `<button class="active-card" data-act="open-order" data-id="${o.id}">
-        <span class="active-e" aria-hidden="true">${B.orderEmoji(o)}</span>
+        <span class="active-e" aria-hidden="true">${B.art(B.orderEmoji(o))}</span>
         <span class="lr-text"><small>${B.esc(B.orderTitle(o))}</small><b>${B.statusText(o)}</b></span>
         ${B.ic('chev', 'chev')}
         <span class="bar" aria-hidden="true"><i style="width:${Math.round(B.progress(o) * 100)}%"></i></span>
@@ -73,17 +73,17 @@
             <button class="svc svc-big svc-taxi" data-act="go" data-to="taxi">
               <span class="svc-name">${t('svc.taxi')}</span>
               <span class="svc-sub">${t('from', { price: B.money(700) })}</span>
-              <span class="svc-art" aria-hidden="true">🚕</span>
+              <span class="svc-art" aria-hidden="true">${B.art('🚕')}</span>
             </button>
             <button class="svc svc-big svc-food" data-act="go" data-to="food">
               <span class="svc-name">${t('svc.food')}</span>
               <span class="svc-sub">${t('svc.food.sub')}</span>
-              <span class="svc-art" aria-hidden="true">🍜</span>
+              <span class="svc-art" aria-hidden="true">${B.art('🍜')}</span>
             </button>
-            <button class="svc" data-act="go" data-to="shops" data-type="shop"><span class="svc-art" aria-hidden="true">🛒</span><span class="svc-name">${t('svc.shop')}</span></button>
-            <button class="svc" data-act="go" data-to="shops" data-type="pharm"><span class="svc-art" aria-hidden="true">💊</span><span class="svc-name">${t('svc.pharm')}</span></button>
-            <button class="svc" data-act="go" data-to="taxi" data-mode="courier"><span class="svc-art" aria-hidden="true">📦</span><span class="svc-name">${t('svc.courier')}</span></button>
-            <button class="svc svc-soon" data-act="soon"><span class="svc-art" aria-hidden="true">🚌</span><span class="svc-name">${t('svc.intercity')}</span><span class="tag tag-soon">${t('soon')}</span></button>
+            <button class="svc" data-act="go" data-to="shops" data-type="shop"><span class="svc-art" aria-hidden="true">${B.art('🛒')}</span><span class="svc-name">${t('svc.shop')}</span></button>
+            <button class="svc" data-act="go" data-to="shops" data-type="pharm"><span class="svc-art" aria-hidden="true">${B.art('💊')}</span><span class="svc-name">${t('svc.pharm')}</span></button>
+            <button class="svc" data-act="go" data-to="taxi" data-mode="courier"><span class="svc-art" aria-hidden="true">${B.art('📦')}</span><span class="svc-name">${t('svc.courier')}</span></button>
+            <button class="svc svc-soon" data-act="soon"><span class="svc-art" aria-hidden="true">${B.art('🚌')}</span><span class="svc-name">${t('svc.intercity')}</span><span class="tag tag-soon">${t('soon')}</span></button>
           </section>
 
           <section class="block" id="home-recent-wrap" ${recent().length ? '' : 'hidden'}>
@@ -131,13 +131,13 @@
   /* ---------- orders ---------- */
   B.screens.orders = function () {
     const loginCta = () => `<div class="empty">
-        <span class="empty-e" aria-hidden="true">🧾</span>
+        <span class="empty-e" aria-hidden="true">${B.art('🧾')}</span>
         <h2 class="h2">${t('orders.login')}</h2>
         <p class="muted">${t('orders.login.sub')}</p>
         <button class="btn btn-primary" data-act="login">${t('login.title')}</button>
       </div>`;
     const historyRow = (o) => `<button class="list-row" data-act="open-order" data-id="${o.id}">
-        <span class="icon-box emoji" aria-hidden="true">${B.orderEmoji(o)}</span>
+        <span class="icon-box emoji" aria-hidden="true">${B.art(B.orderEmoji(o))}</span>
         <span class="lr-text"><b>${B.esc(B.orderTitle(o))}</b><em>${B.time(o.created_at)} · ${B.statusText(o)}</em></span>
         <span class="amount${o.status === 'cancelled' ? ' struck' : ''}">${B.money(o.total)}</span>
       </button>`;
@@ -148,7 +148,7 @@
       const all = B.orders.list();
       if (!all.length) {
         return `<div class="empty">
-            <span class="empty-e" aria-hidden="true">🧾</span>
+            <span class="empty-e" aria-hidden="true">${B.art('🧾')}</span>
             <h2 class="h2">${t('orders.empty')}</h2>
             <p class="muted">${t('orders.empty.sub')}</p>
             <div class="btn-row">
@@ -199,9 +199,9 @@
           <section class="block">
             <h2 class="h2">${t('tg.join')}</h2>
             <div class="list card">
-              <a class="list-row" href="/pro"><span class="icon-box emoji" aria-hidden="true">🚗</span><span class="lr-text"><b>${t('apply.driver')}</b><em>${t('apply.sub.driver')}</em></span>${B.ic('chev', 'chev')}</a>
-              <a class="list-row" href="/pro"><span class="icon-box emoji" aria-hidden="true">🛵</span><span class="lr-text"><b>${t('apply.courier')}</b><em>${t('apply.sub.courier')}</em></span>${B.ic('chev', 'chev')}</a>
-              <a class="list-row" href="/partner"><span class="icon-box emoji" aria-hidden="true">🏪</span><span class="lr-text"><b>${t('apply.partner')}</b><em>${t('apply.sub.partner')}</em></span>${B.ic('chev', 'chev')}</a>
+              <a class="list-row" href="/pro"><span class="icon-box emoji" aria-hidden="true">${B.art('🚗')}</span><span class="lr-text"><b>${t('apply.driver')}</b><em>${t('apply.sub.driver')}</em></span>${B.ic('chev', 'chev')}</a>
+              <a class="list-row" href="/pro"><span class="icon-box emoji" aria-hidden="true">${B.art('🛵')}</span><span class="lr-text"><b>${t('apply.courier')}</b><em>${t('apply.sub.courier')}</em></span>${B.ic('chev', 'chev')}</a>
+              <a class="list-row" href="/partner"><span class="icon-box emoji" aria-hidden="true">${B.art('🏪')}</span><span class="lr-text"><b>${t('apply.partner')}</b><em>${t('apply.sub.partner')}</em></span>${B.ic('chev', 'chev')}</a>
             </div>
           </section>
         </div>`,

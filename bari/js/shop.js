@@ -30,7 +30,7 @@
     const deal = v.box && v.box.old_price ? Math.round((1 - v.box.price / v.box.old_price) * 100) : 0;
     return `<button class="rest${v.is_open ? '' : ' closed'}" data-act="go" data-to="store" data-id="${v.id}">
         <span class="cover rest-cover" style="--h:${v.hue}" aria-hidden="true">
-          ${v.cover_url ? `<img class="cover-img" src="${B.esc(v.cover_url)}" alt="" loading="lazy">` : `<span class="cover-e">${v.emoji}</span>`}
+          ${v.cover_url ? `<img class="cover-img" src="${B.esc(v.cover_url)}" alt="" loading="lazy">` : `<span class="cover-e">${B.art(v.emoji)}</span>`}
           <span class="rest-time">${v.is_open ? `${v.eta[0]}–${v.eta[1]} ${t('min')}` : t('venue.closed')}</span>
           ${deal ? `<span class="rest-deal">−${deal}% ${t('deal.evening')}</span>` : ''}
         </span>
@@ -108,12 +108,12 @@
       if (!el) return;
       if (!list) { el.innerHTML = B.loading(); return; }
       if (!list.length) {
-        el.innerHTML = `<div class="empty"><span class="empty-e" aria-hidden="true">🍽️</span><h2 class="h2">${t('food.soon')}</h2><p class="muted">${t('food.soon.sub')}</p><a class="btn btn-soft" href="/partner">${t('apply.partner')}</a></div>`;
+        el.innerHTML = `<div class="empty"><span class="empty-e" aria-hidden="true">${B.art('🍽️')}</span><h2 class="h2">${t('food.soon')}</h2><p class="muted">${t('food.soon.sub')}</p><a class="btn btn-soft" href="/partner">${t('apply.partner')}</a></div>`;
         return;
       }
       const arr = list.filter(pass);
       if (head) head.textContent = arr.length ? String(arr.length) : '';
-      el.innerHTML = arr.length ? arr.map(B.restCard).join('') : `<div class="empty"><span class="empty-e" aria-hidden="true">🔎</span><p class="muted">${t('food.none')}</p></div>`;
+      el.innerHTML = arr.length ? arr.map(B.restCard).join('') : `<div class="empty"><span class="empty-e" aria-hidden="true">${B.art('🔎')}</span><p class="muted">${t('food.none')}</p></div>`;
     };
     const destLine = () => {
       const d = S.dest || B.addressOf('home');
@@ -160,7 +160,7 @@
           </label>
           <div class="cat-tiles" role="group" aria-label="${t('food.cats')}">
             ${D.cats.filter((c) => c.id !== 'all').map((c) => `<button class="cat-tile${c.id === cat ? ' on' : ''}" aria-pressed="${c.id === cat}" data-act="food-cat" data-cat="${c.id}">
-                <span class="cat-e" aria-hidden="true">${c.e}</span><span>${L_(c.n)}</span>
+                <span class="cat-e" aria-hidden="true">${B.art(c.e)}</span><span>${L_(c.n)}</span>
               </button>`).join('')}
           </div>
           <div class="chips hscroll-chips">
@@ -190,7 +190,7 @@
     const id = Number(p.id);
     let v = B.venues.cachedOne(id) || null;
 
-    const pic = (it) => (it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : it.emoji);
+    const pic = (it) => (it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : B.art(it.emoji));
     const itemRow = (it, closed) => `<div class="item">
         <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
         <span class="item-body">
@@ -252,7 +252,7 @@
         ${vv && vv.cover_url ? `<img class="cover-img" src="${B.esc(vv.cover_url)}" alt="">` : ''}
         <button class="icon-btn on-hero" data-act="back" aria-label="${t('back')}">${B.ic('back')}</button>
         <span class="store-hero-right">${B.cartBtn()}</span>
-        ${vv && vv.cover_url ? '' : `<span class="store-emoji" aria-hidden="true">${vv ? vv.emoji : ''}</span>`}
+        ${vv && vv.cover_url ? '' : `<span class="store-emoji" aria-hidden="true">${vv ? B.art(vv.emoji) : ''}</span>`}
       </div>`;
 
     return {
@@ -290,7 +290,7 @@
         html: `<div class="screen">
             ${B.topbar(t('cart'))}
             <div class="empty">
-              <span class="empty-e" aria-hidden="true">🧺</span>
+              <span class="empty-e" aria-hidden="true">${B.art('🧺')}</span>
               <h2 class="h2">${t('cart.empty')}</h2>
               <p class="muted">${t('cart.empty.sub')}</p>
               <button class="btn btn-primary" data-act="go" data-to="food">${t('cart.empty.cta')}</button>
@@ -363,13 +363,13 @@
       html: `<div class="screen cart">
           ${B.topbar(t('cart'), `<button class="icon-btn" data-act="ct-clear" aria-label="${t('cart.clear')}">${B.ic('trash')}</button>`)}
           <button class="store-line" data-act="go" data-to="store" data-id="${v.id}">
-            <span class="cover mini-cover" style="--h:${v.hue}" aria-hidden="true">${v.emoji}</span>
+            <span class="cover mini-cover" style="--h:${v.hue}" aria-hidden="true">${B.art(v.emoji)}</span>
             <span class="lr-text"><b>${B.esc(B.N(v))}</b><em>${v.eta[0]}–${v.eta[1]} ${t('min')}</em></span>
             ${B.ic('chev', 'chev')}
           </button>
           <div class="card lines">
             ${Object.entries(c.items).map(([id, l]) => `<div class="line">
-                <span class="line-e" aria-hidden="true">${l.emoji}</span>
+                <span class="line-e" aria-hidden="true">${B.art(l.emoji)}</span>
                 <span class="lr-text"><b>${B.esc(B.N(l))}</b><em>${B.money(l.price)}</em></span>
                 <span class="item-ctl"><span class="stepper"><button data-act="dec" data-id="${id}" aria-label="${t('less')}">${B.ic('minus')}</button><span class="q">${l.q}</span><button data-act="inc" data-id="${id}" aria-label="${t('more')}">${B.ic('plus')}</button></span></span>
                 <b class="line-sum">${B.money(l.price * l.q)}</b>
@@ -481,7 +481,7 @@
           ${B.topbar(B.esc(B.orderTitle(o)))}
           ${ride
             ? `<div class="receipt-head">
-                <span class="receipt-e" aria-hidden="true">${B.orderEmoji(o)}</span>
+                <span class="receipt-e" aria-hidden="true">${B.art(B.orderEmoji(o))}</span>
                 <div><h2 class="h2">${B.statusText(o)}</h2><p class="muted small">${B.time(o.created_at)}${o.status === 'cancelled' ? ' · ' + B.esc(B.cancelText(o)) : ''}</p></div>
               </div>
               ${B.isActive(o) ? `<button class="btn btn-primary btn-block" data-act="go" data-to="taxi" data-mode="${o.kind === 'parcel' ? 'courier' : 'taxi'}">${t('order.onmap')}</button>` : ''}`
@@ -492,7 +492,7 @@
           ${rateHTML(o)}
           ${o.items ? `<section class="block">
               <div class="block-head row"><h2 class="label">${t('order.items')}</h2><span class="muted small">${B.time(o.created_at)}</span></div>
-              <div class="card lines">${o.items.map((l) => `<div class="line"><span class="line-e" aria-hidden="true">${l.emoji}</span><span class="lr-text"><b>${B.esc(B.N(l))}</b><em>${l.q} × ${B.money(l.price)}</em></span><b class="line-sum">${B.money(l.price * l.q)}</b></div>`).join('')}</div>
+              <div class="card lines">${o.items.map((l) => `<div class="line"><span class="line-e" aria-hidden="true">${B.art(l.emoji)}</span><span class="lr-text"><b>${B.esc(B.N(l))}</b><em>${l.q} × ${B.money(l.price)}</em></span><b class="line-sum">${B.money(l.price * l.q)}</b></div>`).join('')}</div>
               <p class="muted small">${t('cart.address')}: ${B.esc(o.to.n)}${o.to.a ? ', ' + B.esc(o.to.a) : ''}</p>
             </section>` : ''}
           <dl class="rows totals">
@@ -527,7 +527,7 @@
       if (!o || !el) return;
       map = B.map.create(el, { zoom: 13, scrollWheelZoom: false });
       B.map.route(map, B.routePts(o.from, o.to));
-      L.marker(B.ll(o.from), { icon: B.map.pin('store', o.venue ? o.venue.emoji : '🏪'), interactive: false, keyboard: false }).addTo(map);
+      L.marker(B.ll(o.from), { icon: B.map.pin('store', B.art(o.venue ? o.venue.emoji : '🏪')), interactive: false, keyboard: false }).addTo(map);
       L.marker(B.ll(o.to), { icon: B.map.pin('to'), interactive: false, keyboard: false }).addTo(map);
       placeCourier();
       requestAnimationFrame(() => {
