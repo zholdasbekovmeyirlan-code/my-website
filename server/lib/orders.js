@@ -31,13 +31,13 @@ const CLIENT_CANCEL = {
 const OFFER_RADIUS_KM = 15;
 const SEARCH_TIMEOUT = 15 * 60e3;
 const VENUE_TIMEOUT = 15 * 60e3;
-const OFFLINE_AFTER = 3 * 60e3;
 
 const tariffOf = (kind, id) => (P.TARIFFS[kind] || []).find((t) => t.id === id);
 const avg = (sum, count) => (count ? Math.round((sum / count) * 100) / 100 : 5);
 
 function createOrders(db, rt, opts = {}) {
   const kitchen = opts.kitchenDelays || [5000, 25000];
+  const OFFLINE_AFTER = opts.offlineAfter || 3 * 60e3;
   const now = () => Date.now();
 
   /* ---------- reading ---------- */
@@ -411,7 +411,7 @@ function createOrders(db, rt, opts = {}) {
         publish(n);
         pokeWorkers('courier');
       }, ms);
-      t.unref();
+      if (t.unref) t.unref();
       kitchenTimers.add(t);
     };
     const o = load(id);
