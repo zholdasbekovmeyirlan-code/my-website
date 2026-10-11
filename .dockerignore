@@ -1,0 +1,5 @@
+.git
+FluentPath-deploy
+server/data
+server/.env
+**/node_modules

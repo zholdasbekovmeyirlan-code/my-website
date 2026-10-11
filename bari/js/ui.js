@@ -1,4 +1,4 @@
-/* Бәрі — icons, router, event delegation, sheets, toasts, live ticker. */
+/* Бәрі — icons, router, event delegation, sheets, toasts. Shared by all apps. */
 (function () {
   const B = window.Bari;
 
@@ -28,10 +28,18 @@
     cash: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/>',
     map: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
     briefcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>',
-    leaf: '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19c3-4 6-7 10-9"/>',
-    hand: '<path d="M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.7L3.5 14a1.5 1.5 0 0 1 2.4-1.8L7 13.5"/>',
     shop: '<path d="M4 9l1.5-5h13L20 9"/><path d="M4 9h16v2a3 3 0 0 1-5.3 2 3 3 0 0 1-5.4 0A3 3 0 0 1 4 11z"/><path d="M5 13v7h14v-7"/>',
     trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+    power: '<path d="M12 3v8"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>',
+    wallet: '<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h15a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3h-3"/><circle cx="16" cy="13.5" r="1"/>',
+    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    nav: '<path d="M3 11l18-8-8 18-2-8z"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    logout: '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h11"/>',
   };
   B.ic = (name, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${P[name] || ''}</svg>`;
 
@@ -42,20 +50,29 @@
   </svg>`;
 
   /* ---------- shared fragments ---------- */
-  B.topbar = (title, right) => `<header class="topbar">
-      <button class="icon-btn" data-act="back" aria-label="${B.t('back')}">${B.ic('back')}</button>
+  B.topbar = (title, right, noBack) => `<header class="topbar">
+      ${noBack ? '<span></span>' : `<button class="icon-btn" data-act="back" aria-label="${B.t('back')}">${B.ic('back')}</button>`}
       <h1 class="topbar-title">${title}</h1>
       <div class="topbar-right">${right || ''}</div>
     </header>`;
 
   B.cartBtn = function () {
-    const n = B.cartCount();
+    const n = B.cartCount ? B.cartCount() : 0;
     return `<button class="icon-btn cart-btn" data-act="go" data-to="cart" aria-label="${B.t('cart')}">${B.ic('bag')}${n ? `<span class="count">${n}</span>` : ''}</button>`;
   };
 
-  B.plate = (p) => `<span class="plate" aria-label="${B.esc(p.num + ' ' + p.reg)}"><span class="plate-kz" aria-hidden="true"><i></i>KZ</span><span class="plate-num">${B.esc(p.num)}</span><span class="plate-reg">${B.esc(p.reg)}</span></span>`;
+  // Kazakh number plate: "123 ABC 02" → number and region code.
+  B.plate = function (s) {
+    const parts = String(s || '').trim().toUpperCase().split(/\s+/);
+    const reg = parts.length > 1 && /^\d{2}$/.test(parts[parts.length - 1]) ? parts.pop() : '';
+    return `<span class="plate" aria-label="${B.esc(s)}"><span class="plate-kz" aria-hidden="true"><i></i>KZ</span><span class="plate-num">${B.esc(parts.join(' '))}</span>${reg ? `<span class="plate-reg">${B.esc(reg)}</span>` : ''}</span>`;
+  };
 
-  B.avatar = (name, h) => `<span class="avatar" style="--h:${h}" aria-hidden="true">${B.esc((name || '?').trim()[0] || '?')}</span>`;
+  B.avatar = (name, h) => {
+    let hue = h;
+    if (hue == null) hue = [...String(name || '?')].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+    return `<span class="avatar" style="--h:${hue}" aria-hidden="true">${B.esc((String(name || '?').trim()[0] || '?'))}</span>`;
+  };
 
   // How a payment is shared between the worker and the service.
   B.split = function (amount, labelKey, tip) {
@@ -71,11 +88,14 @@
     </div>`;
   };
 
+  B.loading = () => `<div class="loading" role="status"><span class="spinner" aria-hidden="true"></span><span>${B.t('loading')}</span></div>`;
+
   /* ---------- router ---------- */
   B.screens = {};
   B.actions = {};
   B.inputs = {};
-  let stack = [{ name: 'home', params: {} }];
+  B.tabs = []; // [[screen, icon, labelKey], ...] set by each app
+  let stack = [];
   let cur = null;
   const $ = (id) => document.getElementById(id);
 
@@ -87,10 +107,10 @@
     const v = $('view');
     v.innerHTML = inst.html;
     if (!keepScroll) v.scrollTop = 0;
-    const isRoot = stack.length === 1;
-    $('app').classList.toggle('no-tabbar', !isRoot || !!inst.full);
+    const isRoot = stack.length === 1 && B.tabs.some((x) => x[0] === top.name);
+    $('app').classList.toggle('no-tabbar', !isRoot || !!inst.full || !B.tabs.length);
     $('app').classList.toggle('is-full', !!inst.full);
-    renderTabbar(isRoot ? top.name : null);
+    B.renderTabbar(isRoot ? top.name : null);
     cur = { top, inst };
     if (inst.mount) inst.mount(v);
   }
@@ -99,26 +119,30 @@
   B.replace = (name, params) => { stack[stack.length - 1] = { name, params: params || {} }; render(); };
   B.back = () => {
     if (stack.length > 1) { stack.pop(); render(); }
-    else if (stack[0].name !== 'home') B.tab('home');
+    else if (B.tabs.length && stack[0].name !== B.tabs[0][0]) B.tab(B.tabs[0][0]);
   };
   B.tab = (name) => { stack = [{ name, params: {} }]; render(); };
   B.reset = (list) => { stack = list; render(); };
   B.refresh = () => {
+    if (!stack.length) return;
     const v = $('view');
     const y = v.scrollTop;
     render(true);
     v.scrollTop = y;
   };
   B.current = () => cur;
+  B.badges = {}; // tab name → bool
 
-  const TABS = [['home', 'home', 'nav.home'], ['orders', 'receipt', 'nav.orders'], ['together', 'heart', 'nav.together'], ['profile', 'user', 'nav.profile']];
-  function renderTabbar(active) {
-    const n = B.activeOrders().length;
-    $('tabbar').innerHTML = TABS.map(([id, icon, key]) => `
+  B.renderTabbar = function (active) {
+    const bar = $('tabbar');
+    if (!bar) return;
+    if (active === undefined) active = cur && stack.length === 1 ? cur.top.name : null;
+    bar.innerHTML = B.tabs.map(([id, icon, key]) => `
       <button class="tab ${active === id ? 'on' : ''}" data-act="tab" data-tab="${id}" ${active === id ? 'aria-current="page"' : ''}>
-        ${B.ic(icon)}<span>${B.t(key)}</span>${id === 'orders' && n ? `<i class="dot-badge" aria-label="${n}"></i>` : ''}
+        ${B.ic(icon)}<span>${B.t(key)}</span>${B.badges[id] ? '<i class="dot-badge" aria-hidden="true"></i>' : ''}
       </button>`).join('');
-  }
+    bar.style.gridTemplateColumns = `repeat(${B.tabs.length || 1}, 1fr)`;
+  };
 
   /* ---------- delegation ---------- */
   document.addEventListener('click', (e) => {
@@ -131,6 +155,12 @@
     const el = e.target.closest('[data-in]');
     if (!el) return;
     const fn = B.inputs[el.dataset.in];
+    if (fn) fn(el, e);
+  });
+  document.addEventListener('change', (e) => {
+    const el = e.target.closest('[data-change]');
+    if (!el) return;
+    const fn = B.inputs[el.dataset.change];
     if (fn) fn(el, e);
   });
   document.addEventListener('keydown', (e) => {
@@ -181,6 +211,20 @@
     B.actions['confirm-yes'] = () => { B.sheet.close(true); onYes(); };
   };
 
+  // Shows a phone number to call (and a tel: link that opens the phone app).
+  B.callSheet = function (name, phone) {
+    if (!phone) return B.toast(B.t('call.none'));
+    B.sheet.open(`<div class="sheet-body">
+        <h3 class="sheet-title">${B.esc(name)}</h3>
+        <p class="phone-big" id="call-num">${B.esc(B.phone(phone))}</p>
+        <div class="btn-row">
+          <button class="btn btn-soft" data-act="call-copy">${B.t('copy')}</button>
+          <a class="btn btn-primary" href="tel:${B.esc(phone.replace(/\s/g, ''))}">${B.ic('phone')}<span>${B.t('taxi.call')}</span></a>
+        </div>
+      </div>`, { label: name });
+    B.actions['call-copy'] = () => B.copy(phone);
+  };
+
   /* ---------- toast ---------- */
   let toastTimer;
   B.toast = function (msg) {
@@ -188,7 +232,7 @@
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
   };
 
   B.copy = function (text, okMsg) {
@@ -198,6 +242,25 @@
     } catch (e) {
       B.toast(text);
     }
+  };
+
+  // Short sound for new orders (restaurants and drivers keep the app open).
+  B.beep = function () {
+    try {
+      const ctx = B._audio || (B._audio = new (window.AudioContext || window.webkitAudioContext)());
+      [0, 0.18].forEach((d) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + d);
+        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + d + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + d + 0.15);
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + d);
+        o.stop(ctx.currentTime + d + 0.16);
+      });
+      if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+    } catch (e) { /* no audio */ }
   };
 
   /* ---------- theme & language ---------- */
@@ -216,29 +279,22 @@
     document.documentElement.lang = B.state.lang === 'ru' ? 'ru' : 'kk';
   };
 
-  /* ---------- live ticker ---------- */
+  /* ---------- ticker & live refresh ---------- */
   setInterval(() => {
-    let changed = false;
-    B.state.orders.forEach((o) => {
-      if (o.notified) return;
-      const st = B.status(o);
-      if (!st.done) return;
-      o.notified = true;
-      changed = true;
-      if (st.key === 'done') B.toast(B.t('notify.' + B.textType(o)));
-    });
-    if (changed) {
-      B.save();
-      renderTabbar(stack.length === 1 ? stack[0].name : null);
-    }
     if (cur && cur.inst.tick) cur.inst.tick();
   }, 1000);
+  if (B.bus) {
+    // Screens hear about changes after the data caches have taken them in (next microtask).
+    const later = (fn) => Promise.resolve().then(fn);
+    B.bus.on('order', (o) => later(() => { if (cur && cur.inst.onOrder) cur.inst.onOrder(o); }));
+    B.bus.on('loc', (l) => later(() => { if (cur && cur.inst.onLoc) cur.inst.onLoc(l); }));
+    B.bus.on('offers', () => later(() => { if (cur && cur.inst.onOffers) cur.inst.onOffers(); }));
+  }
 
-  B.boot = function () {
+  B.start = function (first) {
     B.applyTheme();
     B.applyLang();
-    // Orders that finished while the app was closed should not toast on open.
-    B.state.orders.forEach((o) => { if (B.status(o).done) o.notified = true; });
+    stack = [{ name: first, params: {} }];
     render();
   };
 })();

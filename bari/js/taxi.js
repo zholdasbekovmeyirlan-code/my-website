@@ -1,4 +1,4 @@
-/* Бәрі — taxi and courier: pick a route, choose a tariff, follow the ride live. */
+/* Бәрі — taxi and courier: pick a route, choose a tariff, follow the driver live. */
 (function () {
   const B = window.Bari;
   const D = B.data;
@@ -8,27 +8,21 @@
 
   B.screens.taxi = function (p) {
     const mode = p.mode === 'courier' ? 'courier' : 'taxi';
-    const S = B.state;
-    const tariffs = D.tariffs[mode];
-    const dr = drafts[mode] || (drafts[mode] = { from: Object.assign({}, D.here), to: null, tariff: tariffs[0].id, comment: '', pkg: '' });
+    const kind = mode === 'courier' ? 'parcel' : 'ride';
+    const tariffs = (B.cfg && B.cfg.tariffs[kind]) || [];
+    const dr = drafts[mode] || (drafts[mode] = { from: Object.assign({}, D.here), to: null, tariff: tariffs[0] && tariffs[0].id, comment: '', pkg: '' });
     const rate = { n: 5, tip: 0 };
-    let map = null, lay = {}, pickField = null, addrField = 'to', results = [], panelKey = '';
-    let qTimer = null, qSeq = 0;
+    let map = null, lay = {}, pickField = null, panelKey = '', busy = false;
 
-    const activeOrder = () => S.orders.find((o) => o.type === mode && !B.status(o).done);
-    const rateOrder = () => {
-      const mine = S.orders.filter((o) => o.type === mode);
-      const o = mine[mine.length - 1];
-      if (!o || o.rated || o.cancelled) return null;
-      return B.status(o).key === 'done' && Date.now() - o.createdAt < 3600e3 ? o : null;
-    };
     const view = () => {
-      const o = activeOrder();
+      const o = B.orders.activeOf(kind);
       if (o) return { k: 'active', o };
-      const r = rateOrder();
+      const r = B.orders.toRate(kind);
       return r ? { k: 'rate', o: r } : { k: 'plan' };
     };
     const tariffOf = (id) => tariffs.find((x) => x.id === id) || tariffs[0];
+    const socialOk = () => !!(B.session && B.session.user.social_verified && B.session.user.social_status !== 'none');
+    const workerPos = (o) => (o.worker && o.worker.lat != null ? { lat: o.worker.lat, lng: o.worker.lng } : null);
 
     const html = `<div class="taxi">
         <div class="taxi-map" id="taxi-map" role="application" aria-label="${t('map')}"></div>
@@ -50,7 +44,7 @@
 
     function tariffCard(x, trip) {
       const on = x.id === dr.tariff;
-      const locked = x.social && !B.eligibleSocial();
+      const locked = x.social && !socialOk();
       const price = trip ? B.money(B.fare(x, trip)) : t('from', { price: B.money(B.fare(x, null)) });
       const sub = x.social ? '−30%' : x.w ? L_(x.w) : t('taxi.eta', { n: x.eta });
       return `<button class="tariff${on ? ' on' : ''}${locked ? ' locked' : ''}" role="radio" aria-checked="${on}" data-act="tx-tariff" data-id="${x.id}">
@@ -62,11 +56,15 @@
     }
 
     function planHTML() {
-      const trip = dr.to ? B.trip(dr.from.ll, dr.to.ll) : null;
+      if (!tariffs.length) return `<div class="grab" aria-hidden="true"></div><p class="empty-line">${t('err.network')}</p>`;
+      const trip = dr.to ? B.trip(dr.from, dr.to) : null;
       const tar = tariffOf(dr.tariff);
-      const locked = tar.social && !B.eligibleSocial();
+      const locked = tar.social && !socialOk();
       const price = trip ? B.fare(tar, trip) : 0;
-      const quick = [['home', D.saved.home], ['work', D.saved.work], ['airport', D.places[0]], ['mega', D.places[1]], ['alm2', D.places[4]]];
+      const quick = [
+        ['home', B.addressOf('home')], ['work', B.addressOf('work')],
+        ['airport', D.places[0]], ['mega', D.places[1]], ['alm2', D.places[4]],
+      ].filter(([, pl]) => pl);
       return `<div class="grab" aria-hidden="true"></div>
         <h2 class="sr-only">${t('svc.' + mode)}</h2>
         <div class="route-box">
@@ -74,69 +72,71 @@
           ${routeRow('to', dr.to)}
           <button class="swap-btn" data-act="tx-swap" aria-label="${t('taxi.swap')}" ${dr.to ? '' : 'disabled'}>${B.ic('swap')}</button>
         </div>
-        ${dr.to ? '' : `<div class="chips quick">${quick.map(([id, pl]) => `<button class="chip" data-act="tx-quick" data-id="${id}">${B.esc(L_(pl.n))}</button>`).join('')}</div>`}
+        ${dr.to ? '' : `<div class="chips quick">${quick.map(([id, pl]) => `<button class="chip" data-act="tx-quick" data-id="${id}">${B.esc(id === 'home' || id === 'work' ? t('addr.' + id) : L_(pl.n))}</button>`).join('')}</div>`}
         <div class="tariffs" role="radiogroup" aria-label="${t('taxi.tariff')}">${tariffs.map((x) => tariffCard(x, trip)).join('')}</div>
         ${trip ? `<p class="trip-meta">${B.ic('clock')}<span>${t('taxi.trip', { km: B.dec(trip.km, 1), min: trip.min })}</span></p>` : ''}
-        ${locked ? `<p class="hint-line">${t('taxi.social.lock')} <button class="link" data-act="tab" data-tab="profile">${t('taxi.social.go')}</button></p>` : ''}
+        ${locked ? `<p class="hint-line">${t(B.session && B.session.user.social_status !== 'none' ? 'taxi.social.wait' : 'taxi.social.lock')} <button class="link" data-act="tab" data-tab="profile">${t('taxi.social.go')}</button></p>` : ''}
         ${mode === 'courier' ? `<label class="field"><span>${t('courier.what')}</span><input id="tx-pkg" data-in="tx-pkg" value="${B.esc(dr.pkg)}" placeholder="${t('courier.what.ph')}" maxlength="80" autocomplete="off"></label>` : ''}
-        <div class="opt-row">
-          <div class="seg" role="radiogroup" aria-label="${t('pay')}">
-            ${['card', 'cash'].map((k) => `<button class="seg-btn${S.pay === k ? ' on' : ''}" role="radio" aria-checked="${S.pay === k}" data-act="tx-pay" data-pay="${k}">${B.ic(k)}<span>${t('pay.' + k)}</span></button>`).join('')}
-          </div>
+        <div class="seg" role="radiogroup" aria-label="${t('pay')}">
+          <button class="seg-btn on" role="radio" aria-checked="true">${B.ic('cash')}<span>${t('pay.cash')}</span></button>
+          <button class="seg-btn" role="radio" aria-checked="false" data-act="soon-card">${B.ic('card')}<span>${t('pay.card')}</span><span class="tag tag-soon-inline">${t('soon')}</span></button>
         </div>
         <label class="field"><span>${t(mode === 'courier' ? 'courier.comment' : 'taxi.comment')}</span><input id="tx-comment" data-in="tx-comment" value="${B.esc(dr.comment)}" placeholder="${t(mode === 'courier' ? 'courier.comment.ph' : 'taxi.comment.ph')}" maxlength="120" autocomplete="off"></label>
         <div class="panel-cta">
-          <button class="btn btn-primary btn-block btn-lg" data-act="tx-order" ${trip && !locked ? '' : 'disabled'}>
+          <button class="btn btn-primary btn-block btn-lg" data-act="tx-order" ${trip && !locked && !busy ? '' : 'disabled'}>
             <span>${t(mode === 'courier' ? 'courier.order' : 'taxi.order')}</span>${trip && !locked ? `<span class="btn-price">${B.money(price)}</span>` : ''}
           </button>
         </div>`;
     }
 
-    function subline(o, st) {
-      const tar = tariffOf(o.tariff);
-      if (st.key === 'searching') return t('taxi.searching.sub', { n: o.nearby });
-      if (st.key === 'coming' || st.key === 'pickup') return t('taxi.arrives', { n: Math.max(1, Math.ceil(tar.eta * (1 - st.t))) });
-      if (st.key === 'arrived') return t('taxi.arrived.sub');
-      if (st.key === 'riding' || st.key === 'delivering') return t('taxi.left', { n: Math.max(1, Math.ceil(o.min * (1 - st.t))) });
-      return '';
+    function subline(o) {
+      const wp = workerPos(o);
+      switch (o.status) {
+        case 'searching': return o.nearby ? t('taxi.searching.sub', { n: o.nearby }) : t('taxi.searching.none');
+        case 'accepted': return wp ? t('taxi.arrives', { n: B.minutesTo(wp, o.from) }) : t('taxi.coming.noloc');
+        case 'arrived': return t('taxi.arrived.sub');
+        case 'riding':
+        case 'picked': return wp ? t('taxi.left', { n: B.minutesTo(wp, o.to) }) : t('taxi.left', { n: o.minutes });
+        default: return '';
+      }
     }
 
-    function driverHTML(o) {
-      const d = o.driver;
-      const vehicle = d.car ? `${B.esc(d.car)} · ${L_(d.color)}` : L_(d.vehicle);
+    function workerHTML(o) {
+      const w = o.worker;
+      if (!w) return '';
+      const vehicle = w.car_model ? `${B.esc(w.car_model)} · ${B.esc(w.car_color)}` : t('veh.' + w.vehicle);
       return `<div class="driver">
-          ${B.avatar(d.name, d.h)}
+          ${B.avatar(w.name)}
           <div class="driver-info">
-            <b>${B.esc(d.name)}</b>
-            <span class="meta">${B.ic('star', 'ic-star')}${B.dec(d.rating, 2)} · ${vehicle}</span>
+            <b>${B.esc(w.name)}</b>
+            <span class="meta">${B.ic('star', 'ic-star')}${B.dec(w.rating, 2)} · ${vehicle}</span>
           </div>
-          ${d.plate ? B.plate(d.plate) : ''}
+          ${w.car_plate ? B.plate(w.car_plate) : ''}
         </div>`;
     }
 
     function activeHTML(o) {
-      const st = B.status(o);
       const tar = tariffOf(o.tariff);
-      const canCancel = ['searching', 'coming', 'pickup'].includes(st.key);
+      const canCancel = ['searching', 'accepted', 'arrived'].includes(o.status) && !(kind === 'parcel' && o.status === 'arrived');
       return `<div class="grab" aria-hidden="true"></div>
         <div class="ride">
           <div class="ride-head">
-            ${st.key === 'searching' ? '<span class="radar" aria-hidden="true"><i></i><i></i></span>' : ''}
+            ${o.status === 'searching' ? '<span class="radar" aria-hidden="true"><i></i><i></i></span>' : ''}
             <div>
-              <h2 class="ride-title">${B.statusText(o, st)}</h2>
-              <p class="ride-sub" id="ride-sub">${subline(o, st)}</p>
+              <h2 class="ride-title">${B.statusText(o)}</h2>
+              <p class="ride-sub" id="ride-sub">${subline(o)}</p>
             </div>
           </div>
-          <div class="bar" aria-hidden="true"><i id="ride-bar" style="width:${Math.round(st.p * 100)}%"></i></div>
-          ${st.key !== 'searching' ? driverHTML(o) : ''}
+          <div class="bar" aria-hidden="true"><i style="width:${Math.round(B.progress(o) * 100)}%"></i></div>
+          ${workerHTML(o)}
           <ol class="ride-route">
-            <li><span class="dot dot-from" aria-hidden="true"></span>${B.esc(L_(o.from.n))}</li>
-            <li><span class="dot dot-to" aria-hidden="true"></span>${B.esc(L_(o.to.n))}</li>
+            <li><span class="dot dot-from" aria-hidden="true"></span>${B.esc(o.from.n)}</li>
+            <li><span class="dot dot-to" aria-hidden="true"></span>${B.esc(o.to.n)}</li>
           </ol>
           ${o.pkg ? `<p class="muted small">${t('courier.what')}: ${B.esc(o.pkg)}</p>` : ''}
-          <div class="ride-sum"><span>${L_(tar.n)} · ${t('pay.' + o.pay)}</span><b>${B.money(o.price)}</b></div>
+          <div class="ride-sum"><span>${tar ? L_(tar.n) : ''} · ${t('pay.' + o.pay)}</span><b>${B.money(o.price)}</b></div>
           <div class="ride-actions">
-            ${st.key !== 'searching' ? `<button class="act" data-act="tx-call">${B.ic('phone')}<span>${t('taxi.call')}</span></button>
+            ${o.worker ? `<button class="act" data-act="tx-call">${B.ic('phone')}<span>${t('taxi.call')}</span></button>
             <button class="act" data-act="tx-share">${B.ic('share')}<span>${t('taxi.share')}</span></button>` : ''}
             ${canCancel ? `<button class="act act-bad" data-act="tx-cancel">${B.ic('close')}<span>${t('taxi.cancel')}</span></button>` : ''}
           </div>
@@ -144,11 +144,11 @@
     }
 
     function rateHTML(o) {
-      const d = o.driver;
+      const w = o.worker || { name: '' };
       return `<div class="grab" aria-hidden="true"></div>
         <div class="rate">
           <h2 class="ride-title">${t(mode === 'courier' ? 'courier.done' : 'taxi.done')}</h2>
-          <p class="ride-sub">${B.esc(d.name)} · ${d.car ? B.esc(d.car) : L_(d.vehicle)}</p>
+          <p class="ride-sub">${B.esc(w.name)}${w.car_model ? ' · ' + B.esc(w.car_model) : ''}</p>
           <div class="stars" role="radiogroup" aria-label="${t('taxi.rate')}">
             ${[1, 2, 3, 4, 5].map((n) => `<button class="star${n <= rate.n ? ' on' : ''}" role="radio" aria-checked="${n === rate.n}" aria-label="${n}" data-act="tx-rate" data-n="${n}">${B.ic('star')}</button>`).join('')}
           </div>
@@ -158,60 +158,62 @@
           </div>
           <div class="ride-sum"><span>${t('taxi.paid')}</span><b>${B.money(o.price + rate.tip)}</b></div>
           ${B.split(o.price, mode === 'courier' ? 'split.courier' : 'split.driver', rate.tip)}
-          <div class="panel-cta"><button class="btn btn-primary btn-block" data-act="tx-rate-send">${t('taxi.rate.send')}</button></div>
+          <div class="panel-cta">
+            <button class="btn btn-primary btn-block" data-act="tx-rate-send">${t('taxi.rate.send')}</button>
+            <button class="link center" data-act="tx-rate-skip">${t('taxi.rate.skip')}</button>
+          </div>
         </div>`;
     }
 
+    const keyOf = (v) => v.k + ':' + (v.o ? v.o.id + ':' + v.o.status + ':' + (v.o.worker ? v.o.worker.id : '') : '');
     function renderPanel() {
       const panel = document.getElementById('taxi-panel');
       if (!panel) return;
       const v = view();
-      panelKey = v.k + ':' + (v.o ? v.o.id + ':' + B.status(v.o).key : '');
+      panelKey = keyOf(v);
       panel.innerHTML = v.k === 'plan' ? planHTML() : v.k === 'active' ? activeHTML(v.o) : rateHTML(v.o);
     }
 
     /* ---------- map ---------- */
-    function carPos(o) {
-      const st = B.status(o);
-      if (st.key === 'coming' || st.key === 'pickup') return B.map.along(B.routePts(o.start, o.from.ll), st.t);
-      if (st.key === 'riding' || st.key === 'delivering') return B.map.along(o.pts || B.routePts(o.from.ll, o.to.ll), st.t);
-      if (st.key === 'arrived') return { ll: o.from.ll, deg: 0 };
-      return { ll: o.to.ll, deg: 0 };
-    }
-
     function drawMap(fit) {
       if (!map) return;
       Object.values(lay).forEach((l) => map.removeLayer(l));
       lay = {};
       const v = view();
-      const from = v.k === 'plan' ? dr.from.ll : v.o.from.ll;
-      const to = v.k === 'plan' ? dr.to && dr.to.ll : v.o.to.ll;
+      const from = v.k === 'plan' ? dr.from : v.o.from;
+      const to = v.k === 'plan' ? dr.to : v.o.to;
       if (to) lay.route = B.map.route(map, B.routePts(from, to));
-      if (v.k === 'active') {
-        const st = B.status(v.o);
-        if (st.key === 'searching') lay.pulse = L.marker(from, { icon: B.map.pulse(), interactive: false, keyboard: false }).addTo(map);
+      if (v.k === 'active' && v.o.status === 'searching') lay.pulse = L.marker(B.ll(from), { icon: B.map.pulse(), interactive: false, keyboard: false }).addTo(map);
+      lay.a = L.marker(B.ll(from), { icon: B.map.pin('from'), interactive: false, keyboard: false }).addTo(map);
+      if (to) lay.b = L.marker(B.ll(to), { icon: B.map.pin('to'), interactive: false, keyboard: false }).addTo(map);
+      placeCar(v);
+      if (fit) fitView(from, to, v.k === 'active' ? workerPos(v.o) : null);
+    }
+    function placeCar(v) {
+      const wp = v.k === 'active' ? workerPos(v.o) : null;
+      if (!wp) {
+        if (lay.car) { map.removeLayer(lay.car); delete lay.car; }
+        return;
       }
-      lay.a = L.marker(from, { icon: B.map.pin('from'), interactive: false, keyboard: false }).addTo(map);
-      if (to) lay.b = L.marker(to, { icon: B.map.pin('to'), interactive: false, keyboard: false }).addTo(map);
-      if (v.k === 'active' && B.status(v.o).key !== 'searching') {
-        const c = carPos(v.o);
-        lay.car = L.marker(c.ll, { icon: B.map.car(), interactive: false, keyboard: false }).addTo(map);
-        B.map.rotate(lay.car, c.deg);
+      if (!lay.car) lay.car = L.marker(B.ll(wp), { icon: B.map.car(), interactive: false, keyboard: false }).addTo(map);
+      else {
+        const prev = lay.car.getLatLng();
+        if (prev.lat !== wp.lat || prev.lng !== wp.lng) B.map.rotate(lay.car, B.map.bearing([prev.lat, prev.lng], B.ll(wp)));
+        lay.car.setLatLng(B.ll(wp));
       }
-      if (fit) fitView(from, to, v.k === 'active' ? v.o : null);
     }
 
-    function fitView(from, to, o) {
+    function fitView(from, to, extra) {
       if (!map) return;
       const panel = document.getElementById('taxi-panel');
       const ph = panel ? panel.offsetHeight : 320;
-      const pts = [from];
-      if (to) pts.push(to);
-      if (o && B.status(o).key === 'coming') pts.push(o.start);
+      const pts = [B.ll(from)];
+      if (to) pts.push(B.ll(to));
+      if (extra) pts.push(B.ll(extra));
       if (pts.length > 1) {
         map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [40, 80], paddingBottomRight: [40, ph + 24], maxZoom: 16, animate: false });
       } else {
-        map.setView(from, 15, { animate: false });
+        map.setView(pts[0], 15, { animate: false });
         map.panBy([0, ph / 2 - 20], { animate: false });
       }
     }
@@ -221,67 +223,11 @@
       drawMap(true);
     }
 
-    /* ---------- address search ---------- */
-    function match(pl, q) {
-      return [L_(pl.n), L_(pl.a), pl.n[0], pl.n[1]].some((s) => s && String(s).toLowerCase().includes(q));
-    }
-    function renderResults(q, remote) {
-      const box = document.getElementById('tx-results');
-      if (!box) return;
-      const ql = q.trim().toLowerCase();
-      results = [];
-      [['home', D.saved.home], ['work', D.saved.work]].forEach(([id, pl]) => {
-        if (!ql || match(pl, ql)) results.push({ pl, icon: id === 'home' ? 'home' : 'briefcase' });
-      });
-      D.places.forEach((pl) => { if (!ql || match(pl, ql)) results.push({ pl, icon: 'pin' }); });
-      (remote || []).forEach((pl) => results.push({ pl, icon: 'search' }));
-      box.innerHTML = results.length
-        ? results.map((r, i) => `<button class="list-row" data-act="tx-result" data-i="${i}">
-            <span class="icon-box">${B.ic(r.icon)}</span>
-            <span class="lr-text"><b>${B.esc(L_(r.pl.n))}</b>${r.pl.a ? `<em>${B.esc(L_(r.pl.a))}</em>` : ''}</span>
-          </button>`).join('')
-        : `<p class="empty-line">${t('addr.none')}</p>`;
-    }
-    // OpenStreetMap search (Nominatim), limited to Almaty. Silently skipped when offline.
-    function geocode(q) {
-      const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=kz&bounded=1'
-        + '&viewbox=76.75,43.40,77.15,43.10&accept-language=' + (S.lang === 'ru' ? 'ru' : 'kk,ru')
-        + '&q=' + encodeURIComponent(q);
-      return fetch(url).then((r) => (r.ok ? r.json() : [])).then((arr) => arr.map((x) => {
-        const parts = String(x.display_name).split(', ');
-        return { n: parts[0], a: parts.slice(1, 3).join(', '), ll: [+x.lat, +x.lon] };
-      }));
-    }
-    function openAddr(field) {
-      addrField = field;
-      pickField = null;
-      hint(false);
-      const isFrom = field === 'from';
-      B.sheet.open(`<div class="sheet-head">
-            <h3 class="sheet-title">${t(isFrom ? 'addr.title.from' : 'addr.title.to')}</h3>
-            <button class="icon-btn" data-act="sheet-close" aria-label="${t('close')}">${B.ic('close')}</button>
-          </div>
-          <label class="search">${B.ic('search')}<span class="sr-only">${t('addr.ph')}</span>
-            <input id="tx-q" data-in="tx-q" type="search" placeholder="${t('addr.ph')}" autocomplete="off" enterkeyhint="search">
-          </label>
-          <div class="list">
-            ${isFrom ? `<button class="list-row" data-act="tx-loc"><span class="icon-box">${B.ic('locate')}</span><span class="lr-text"><b>${t('taxi.myloc')}</b><em>${t('addr.gps')}</em></span></button>` : ''}
-            <button class="list-row" data-act="tx-pickmap"><span class="icon-box">${B.ic('map')}</span><span class="lr-text"><b>${t('taxi.pickmap')}</b></span></button>
-          </div>
-          <div class="list" id="tx-results"></div>`, { focus: '#tx-q', label: t(isFrom ? 'addr.title.from' : 'addr.title.to') });
-      renderResults('');
-    }
-
-    function nearestPlace(ll) {
-      let best = null, bd = 0.35;
-      D.places.forEach((pl) => { const d = B.hav(ll, pl.ll); if (d < bd) { bd = d; best = pl; } });
-      return best || { n: ['Картадағы нүкте', 'Точка на карте'], a: B.dec(ll[0], 5) + ', ' + B.dec(ll[1], 5), ll };
-    }
+    /* ---------- choosing addresses ---------- */
     function setField(field, pl) {
       dr[field] = pl;
       pickField = null;
       hint(false);
-      B.sheet.close(true);
       renderAll();
     }
     function hint(on) {
@@ -290,122 +236,128 @@
       const root = document.querySelector('.taxi');
       if (root) root.classList.toggle('picking', !!on);
     }
+    function openAddr(field) {
+      pickField = null;
+      hint(false);
+      B.addressSheet({
+        title: t(field === 'from' ? 'addr.title.from' : 'addr.title.to'),
+        gps: field === 'from',
+        mapPick: () => { pickField = field; hint(true); },
+        onPick: (pl) => setField(field, pl),
+      });
+    }
     function onMapClick(e) {
       if (view().k !== 'plan') return;
       const f = pickField || (dr.to ? null : 'to');
-      if (f) setField(f, nearestPlace([e.latlng.lat, e.latlng.lng]));
+      if (f) setField(f, B.nearestPlace({ lat: e.latlng.lat, lng: e.latlng.lng }));
     }
 
     /* ---------- actions ---------- */
     Object.assign(B.actions, {
       'tx-field': (el) => openAddr(el.dataset.field),
-      'tx-result': (el) => { const r = results[+el.dataset.i]; if (r) setField(addrField, r.pl); },
       'tx-quick': (el) => {
         const id = el.dataset.id;
-        setField('to', D.saved[id] || D.places.find((x) => x.id === id));
-      },
-      'tx-pickmap': () => {
-        pickField = addrField;
-        B.sheet.close(true);
-        hint(true);
+        setField('to', B.addressOf(id) || D.places.find((x) => x.id === id));
       },
       'tx-pick-cancel': () => { pickField = null; hint(false); },
       'tx-swap': () => {
         if (!dr.to) return;
-        const f = dr.from;
-        dr.from = dr.to;
-        dr.to = f;
+        [dr.from, dr.to] = [dr.to, dr.from];
         renderAll();
       },
-      'tx-tariff': (el) => {
-        dr.tariff = el.dataset.id;
-        renderPanel();
-      },
-      'tx-pay': (el) => {
-        S.pay = el.dataset.pay;
-        B.save();
-        renderPanel();
-      },
+      'tx-tariff': (el) => { dr.tariff = el.dataset.id; renderPanel(); },
+      'soon-card': () => B.toast(t('pay.card.soon')),
       'tx-loc': () => {
-        const v = view();
-        if (v.k !== 'plan') return drawMap(true);
-        if (!navigator.geolocation) return B.toast(t('geo.fail'));
-        B.toast(t('geo.wait'));
-        navigator.geolocation.getCurrentPosition(
-          (pos) => setField('from', { n: D.here.n, a: B.dec(pos.coords.latitude, 5) + ', ' + B.dec(pos.coords.longitude, 5), ll: [pos.coords.latitude, pos.coords.longitude] }),
-          () => B.toast(t('geo.fail')),
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-        );
+        if (view().k !== 'plan') return drawMap(true);
+        B.locate((pl) => setField('from', pl));
       },
       'tx-order': () => {
-        if (!dr.to) return;
-        const tar = tariffOf(dr.tariff);
-        if (tar.social && !B.eligibleSocial()) return B.toast(t('taxi.social.lock'));
-        const trip = B.trip(dr.from.ll, dr.to.ll);
-        const o = {
-          id: B.uid(), type: mode, createdAt: Date.now(),
-          from: dr.from, to: dr.to, tariff: tar.id,
-          price: B.fare(tar, trip), km: trip.km, min: trip.min,
-          pay: S.pay, comment: dr.comment.trim(), pkg: dr.pkg.trim(),
-          driver: B.makeDriver(mode, tar), start: B.nearby(dr.from.ll),
-          nearby: 6 + Math.floor(Math.random() * 14),
-        };
-        S.orders.push(o);
-        B.save();
-        dr.to = null;
-        dr.comment = '';
-        dr.pkg = '';
-        renderAll();
+        if (!dr.to || busy) return;
+        B.requireLogin(async () => {
+          const tar = tariffOf(dr.tariff);
+          if (tar.social && !socialOk()) return renderPanel();
+          busy = true;
+          renderPanel();
+          try {
+            const o = await B.api.post('/api/orders/' + kind, {
+              from: B.toPoint(dr.from), to: B.toPoint(dr.to), tariff: tar.id, pay: 'cash',
+              comment: dr.comment.trim(), pkg: dr.pkg.trim(),
+            });
+            B.orders.put(o);
+            dr.to = null;
+            dr.comment = '';
+            dr.pkg = '';
+          } catch (e) {
+            B.fail(e);
+          }
+          busy = false;
+          renderAll();
+        }, t('login.why.order'));
       },
       'tx-cancel': () => {
-        const o = activeOrder();
+        const o = B.orders.activeOf(kind);
         if (!o) return;
-        B.confirm(t('taxi.cancel.q'), t('taxi.cancel.free'), t('taxi.cancel.yes'), () => {
-          o.cancelled = true;
-          o.notified = true;
-          B.save();
-          dr.from = o.from;
-          renderAll();
-          B.toast(t('taxi.cancelled'));
+        B.confirm(t('taxi.cancel.q'), t('taxi.cancel.free'), t('taxi.cancel.yes'), async () => {
+          try {
+            B.orders.put(await B.api.post(`/api/orders/${o.id}/cancel`));
+            dr.from = { n: o.from.n, a: o.from.a, lat: o.from.lat, lng: o.from.lng };
+            renderAll();
+            B.toast(t('taxi.cancelled'));
+          } catch (e) {
+            B.fail(e);
+          }
         }, true);
       },
-      'tx-call': () => B.toast(t('demo.call')),
+      'tx-call': () => {
+        const o = B.orders.activeOf(kind);
+        if (!o || !o.worker) return;
+        B.callSheet(o.worker.name, o.worker.phone);
+      },
       'tx-share': () => {
-        const o = activeOrder();
-        if (!o) return;
-        const d = o.driver;
-        const car = d.car ? `${d.car}, ${d.plate.num} ${d.plate.reg}` : L_(d.vehicle);
-        B.copy(t('taxi.share.text', { to: L_(o.to.n), car, name: d.name }), t('taxi.share.ok'));
+        const o = B.orders.activeOf(kind);
+        if (!o || !o.worker) return;
+        const w = o.worker;
+        const car = w.car_model ? `${w.car_model}, ${w.car_plate}` : t('veh.' + w.vehicle);
+        B.copy(t('taxi.share.text', { to: o.to.n, car, name: w.name }), t('taxi.share.ok'));
       },
       'tx-rate': (el) => { rate.n = +el.dataset.n; renderPanel(); },
       'tx-tip': (el) => { rate.tip = +el.dataset.n; renderPanel(); },
-      'tx-rate-send': () => {
-        const o = rateOrder();
+      'tx-rate-send': async () => {
+        const o = B.orders.toRate(kind);
         if (!o) return;
-        o.rated = true;
-        o.stars = rate.n;
-        o.tip = rate.tip;
-        B.save();
-        dr.from = o.to;
+        try {
+          B.orders.put(await B.api.post(`/api/orders/${o.id}/rate`, { stars: rate.n, tip: rate.tip }));
+          dr.from = { n: o.to.n, a: o.to.a, lat: o.to.lat, lng: o.to.lng };
+          renderAll();
+          B.toast(t('taxi.thanks'));
+        } catch (e) {
+          B.fail(e);
+        }
+      },
+      'tx-rate-skip': () => {
+        const o = B.orders.toRate(kind);
+        if (o) o.skipRate = true;
         renderAll();
-        B.toast(t('taxi.thanks'));
       },
     });
 
     Object.assign(B.inputs, {
       'tx-comment': (el) => { dr.comment = el.value; },
       'tx-pkg': (el) => { dr.pkg = el.value; },
-      'tx-q': (el) => {
-        const q = el.value;
-        renderResults(q);
-        clearTimeout(qTimer);
-        if (q.trim().length < 3) return;
-        const seq = ++qSeq;
-        qTimer = setTimeout(() => {
-          geocode(q).then((r) => { if (seq === qSeq) renderResults(q, r); }).catch(() => {});
-        }, 700);
-      },
     });
+
+    function sync() {
+      const v = view();
+      if (keyOf(v) !== panelKey) {
+        renderPanel();
+        drawMap(true);
+        return;
+      }
+      if (v.k !== 'active') return;
+      const sub = document.getElementById('ride-sub');
+      if (sub) sub.textContent = subline(v.o);
+      placeCar(v);
+    }
 
     return {
       html,
@@ -422,29 +374,16 @@
         if (p.focus === 'to' && view().k === 'plan') openAddr('to');
       },
       unmount() {
-        clearTimeout(qTimer);
         if (map) { map.remove(); map = null; }
       },
+      onOrder: sync,
+      onOrders: renderAll,
+      onLoc: sync,
       tick() {
-        const v = view();
-        const key = v.k + ':' + (v.o ? v.o.id + ':' + B.status(v.o).key : '');
-        if (key !== panelKey) {
-          renderPanel();
-          drawMap(true);
-          return;
-        }
-        if (v.k !== 'active') return;
-        const st = B.status(v.o);
-        const sub = document.getElementById('ride-sub');
-        if (sub) sub.textContent = subline(v.o, st);
-        const bar = document.getElementById('ride-bar');
-        if (bar) bar.style.width = Math.round(st.p * 100) + '%';
-        if (lay.car) {
-          const c = carPos(v.o);
-          lay.car.setLatLng(c.ll);
-          B.map.rotate(lay.car, c.deg);
-        }
+        // ETA text follows the driver; refresh every few seconds.
+        if (Date.now() % 5000 < 1000) sync();
       },
     };
   };
+
 })();
