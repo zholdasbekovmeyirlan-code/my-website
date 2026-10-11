@@ -1,0 +1,14 @@
+{
+  "name": "bari-server",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Бәрі — API server, realtime events and static hosting for the web apps",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning index.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  }
+}

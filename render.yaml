@@ -1,0 +1,30 @@
+# Render.com blueprint for a real pilot: New → Blueprint → pick this repository.
+# The disk keeps the database between deploys (disks need a paid instance, "starter").
+services:
+  - type: web
+    name: bari
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/config
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      # Your own phone, e.g. +77011234567. You become the administrator.
+      - key: ADMIN_PHONES
+        sync: false
+      - key: OTP_SECRET
+        generateValue: true
+      # Pilot: only people the admin invites can sign in, so on-screen codes are safe enough.
+      # After connecting an SMS provider set SMS_MODE=mobizon (or smsc) and INVITE_ONLY=0.
+      - key: INVITE_ONLY
+        value: "1"
+      - key: SMS_MODE
+        value: demo
+      # Real launch: no sample restaurants and no automatic test driving.
+      - key: SEED_DEMO
+        value: "0"
+      - key: SIMULATE
+        value: "0"

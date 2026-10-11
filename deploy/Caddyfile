@@ -1,0 +1,7 @@
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:3000 {
+		# Live order updates are a stream; send each event at once.
+		flush_interval -1
+	}
+}
