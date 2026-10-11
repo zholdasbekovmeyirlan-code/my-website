@@ -125,6 +125,7 @@ test('full platform flow', async () => {
   for (const s of ['arrived', 'riding', 'done']) await ok('POST', `/api/worker/orders/${ride.id}/status`, driver.token, { status: s });
   const rated = await ok('POST', `/api/orders/${ride.id}/rate`, client.token, { stars: 5, tip: 200 });
   assert.equal(rated.stars, 5);
+  assert.deepEqual([rated.worker.rating, rated.worker.rating_count], [5, 1], 'the first real rating counts');
   assert.equal(rated.total, ride.price + 200);
   assert.equal(rated.worker.phone, null, 'phone hidden after the ride');
   const ws = await ok('GET', '/api/worker', driver.token);
@@ -187,6 +188,9 @@ test('full platform flow', async () => {
   assert.equal((await call('PATCH', `/api/partner/venues/${v.id}`, partner.token, { status: 'approved', commission: 0 })).status, 200);
   assert.equal((await call('GET', `/api/venues/${v.id}`)).status, 404, 'a partner cannot approve itself');
   await ok('POST', `/api/admin/venues/${v.id}`, admin.token, { status: 'approved' });
+  const fresh = await ok('GET', `/api/venues/${v.id}`);
+  assert.equal(fresh.rating, null, 'no invented rating before anyone rated');
+  assert.equal(fresh.rating_count, 0);
   const partnerLive = await listen(partner.token);
 
   const o2 = await ok('POST', '/api/orders/delivery', client.token, { venue_id: v.id, items: [{ id: it.id, q: 1 }], to: ALMATY });

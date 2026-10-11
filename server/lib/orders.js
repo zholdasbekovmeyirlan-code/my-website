@@ -33,7 +33,8 @@ const SEARCH_TIMEOUT = 15 * 60e3;
 const VENUE_TIMEOUT = 15 * 60e3;
 
 const tariffOf = (kind, id) => (P.TARIFFS[kind] || []).find((t) => t.id === id);
-const avg = (sum, count) => (count ? Math.round((sum / count) * 100) / 100 : 5);
+// No rating until someone has rated: new venues and workers must not show an invented 5.0.
+const avg = (sum, count) => (count ? Math.round((sum / count) * 100) / 100 : null);
 
 function createOrders(db, rt, opts = {}) {
   const kitchen = opts.kitchenDelays || [5000, 25000];
@@ -76,7 +77,7 @@ function createOrders(db, rt, opts = {}) {
       );
       if (w) {
         worker = {
-          id: w.id, name: w.name, kind: w.kind, rating: avg(w.rating_sum, w.rating_count),
+          id: w.id, name: w.name, kind: w.kind, rating: avg(w.rating_sum, w.rating_count), rating_count: w.rating_count,
           car_model: w.car_model, car_color: w.car_color, car_plate: w.car_plate, vehicle: w.vehicle,
           phone: active ? '+' + w.phone : null,
           lat: active ? w.lat : null, lng: active ? w.lng : null,

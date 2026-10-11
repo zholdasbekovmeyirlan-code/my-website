@@ -302,7 +302,7 @@
           <p class="muted">${t('pro.offline.sub')}</p>
           <div class="pro-stats">
             <span><small>${t('pro.today')}</small><b>${B.money(W.info.stats.today)}</b><em>${t('pro.trips', { n: W.info.stats.trips })}</em></span>
-            <span><small>${t('pro.rating')}</small><b>${B.ic('star', 'ic-star')}${B.dec(w.rating, 2)}</b><em>${w.kind === 'driver' ? B.esc(w.car_model) : t('veh.' + w.vehicle)}</em></span>
+            <span><small>${t('pro.rating')}</small><b>${B.rating(w, 2)}</b><em>${w.kind === 'driver' ? B.esc(w.car_model) : t('veh.' + w.vehicle)}</em></span>
           </div>
           <div class="panel-cta"><button class="btn btn-primary btn-block btn-lg-c" data-act="pro-online" data-v="1">${B.ic('power')}<span>${t('pro.go.online')}</span></button></div>`;
       }
@@ -572,7 +572,7 @@
                 <div><dt>${t('pro.kind.' + w.kind)}</dt><dd>${w.kind === 'driver' ? B.esc(w.car_model) : t('veh.' + w.vehicle)}</dd></div>
                 ${w.car_plate ? `<div><dt>${t('pro.car_plate')}</dt><dd>${B.plate(w.car_plate)}</dd></div>` : ''}
                 ${w.kind === 'driver' ? `<div><dt>${t('pro.car_class')}</dt><dd>${t('pro.class.' + w.car_class)}</dd></div>` : ''}
-                <div><dt>${t('pro.rating')}</dt><dd>${B.ic('star', 'ic-star')}${B.dec(w.rating, 2)} (${w.rating_count})</dd></div>
+                <div><dt>${t('pro.rating')}</dt><dd>${B.rating(w, 2)}${w.rating_count ? ` (${w.rating_count})` : ''}</dd></div>
               </dl>`) : ''}` : `<button class="btn btn-primary btn-block" data-act="login">${t('login.title')}</button>`}
           <section class="block"><h2 class="label">${t('pf.lang')}</h2>${seg('pf-lang', B.state.lang, [['kk', 'Қазақша'], ['ru', 'Русский']])}</section>
           <section class="block"><h2 class="label">${t('pf.theme')}</h2>${seg('pf-theme', B.state.theme, [['system', t('pf.theme.system')], ['light', t('pf.theme.light')], ['dark', t('pf.theme.dark')]])}</section>

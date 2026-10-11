@@ -554,7 +554,7 @@
             <div><dt>${t('biz.type')}</dt><dd>${t('biz.type.' + v.type)}</dd></div>
             <div><dt>${t('biz.status')}</dt><dd><span class="tag${v.status === 'approved' ? ' tag-local' : ''}">${t('biz.status.' + v.status)}</span></dd></div>
             <div><dt>${t('biz.commission.l')}</dt><dd>${Math.round(v.commission * 100)}%</dd></div>
-            <div><dt>${t('pro.rating')}</dt><dd>${B.ic('star', 'ic-star')}${B.dec(v.rating, 1)}</dd></div>
+            <div><dt>${t('pro.rating')}</dt><dd>${B.rating(v)}${v.rating_count ? ` (${v.rating_count})` : ''}</dd></div>
           </dl></section>
           ${venueForm(v, false)}
           <button class="btn btn-soft" data-act="biz-new">${B.ic('plus')}<span>${t('biz.add.venue')}</span></button>

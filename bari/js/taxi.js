@@ -110,7 +110,7 @@
           ${B.avatar(w.name)}
           <div class="driver-info">
             <b>${B.esc(w.name)}</b>
-            <span class="meta">${B.ic('star', 'ic-star')}${B.dec(w.rating, 2)} · ${vehicle}</span>
+            <span class="meta">${B.rating(w, 2)} · ${vehicle}</span>
           </div>
           ${w.car_plate ? B.plate(w.car_plate) : ''}
         </div>`;

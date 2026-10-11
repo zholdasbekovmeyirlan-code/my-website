@@ -31,7 +31,7 @@ module.exports = function register(r, { db, auth, orders, config, uploads }) {
     return {
       id: v.id, type: v.type, name: v.name, name_ru: v.name_ru, note: v.note, note_ru: v.note_ru,
       cats: v.cats ? v.cats.split(',') : [], emoji: v.emoji, hue: v.hue, address: v.address, lat: v.lat, lng: v.lng,
-      rating: avg(v.rating_sum, v.rating_count), eta: [v.eta_min, v.eta_max], delivery_fee: v.delivery_fee, min_order: v.min_order,
+      rating: avg(v.rating_sum, v.rating_count), rating_count: v.rating_count, eta: [v.eta_min, v.eta_max], delivery_fee: v.delivery_fee, min_order: v.min_order,
       local: !!v.local, grid: !!v.grid, is_open: !!v.is_open, status: v.status, commission: v.commission, box: box || null,
       cover_url: v.cover_url || null,
     };

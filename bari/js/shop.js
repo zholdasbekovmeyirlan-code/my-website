@@ -36,7 +36,7 @@
         </span>
         <span class="rest-body">
           <span class="rest-name">${B.esc(B.N(v))}${v.local ? `<span class="tag tag-local">${t('local')}</span>` : ''}</span>
-          <span class="meta">${B.ic('star', 'ic-star')}<b>${B.dec(v.rating, 1)}</b>${cats ? ` · ${cats}` : ''}</span>
+          <span class="meta">${B.rating(v)}${cats ? ` · ${cats}` : ''}</span>
           <span class="meta muted">${t('delivery')} ${v.delivery_fee ? B.money(v.delivery_fee) : t('free')} · ${t('rest.min', { price: B.money(v.min_order) })}</span>
         </span>
       </button>`;
@@ -96,7 +96,7 @@
     const pass = (v) => {
       if (cat !== 'all' && !v.cats.includes(cat)) return false;
       if (on.has('free') && v.delivery_fee) return false;
-      if (on.has('top') && v.rating < 4.8) return false;
+      if (on.has('top') && !(v.rating_count && v.rating >= 4.8)) return false;
       if (on.has('local') && !v.local) return false;
       if (on.has('deal') && !v.box) return false;
       const ql = q.trim().toLowerCase();
@@ -449,7 +449,7 @@
       const w = o.worker;
       if (!w) return o.kind === 'delivery' && B.isActive(o) ? `<div class="card driver-card"><p class="muted">${t('track.nocourier')}</p></div>` : '';
       return `<div class="card driver-card">
-          <div class="driver">${B.avatar(w.name)}<div class="driver-info"><b>${B.esc(w.name)}</b><span class="meta">${B.ic('star', 'ic-star')}${B.dec(w.rating, 2)} · ${w.car_model ? B.esc(w.car_model) : t('veh.' + w.vehicle)}</span></div>${w.car_plate ? B.plate(w.car_plate) : ''}</div>
+          <div class="driver">${B.avatar(w.name)}<div class="driver-info"><b>${B.esc(w.name)}</b><span class="meta">${B.rating(w, 2)} · ${w.car_model ? B.esc(w.car_model) : t('veh.' + w.vehicle)}</span></div>${w.car_plate ? B.plate(w.car_plate) : ''}</div>
           ${w.phone ? `<button class="btn btn-soft btn-block" data-act="ord-call">${B.ic('phone')}<span>${t('taxi.call')}</span></button>` : ''}
         </div>`;
     }

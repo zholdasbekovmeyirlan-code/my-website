@@ -29,6 +29,10 @@
   const nf = new Intl.NumberFormat('ru-RU');
   B.money = (n) => nf.format(Math.round(n || 0)) + ' ₸';
   B.dec = (x, d) => Number(x).toFixed(d).replace('.', ',');
+  // Stars only when someone has rated; otherwise "new". Never an invented 5.0.
+  B.rating = (x, d) => (x && x.rating != null && x.rating_count
+    ? `${B.ic('star', 'ic-star')}<b>${B.dec(x.rating, d || 1)}</b>`
+    : `<span class="tag tag-new">${B.t('rating.new')}</span>`);
   // "+77071234567" → "+7 707 123 45 67"
   B.phone = (p) => {
     const d = String(p || '').replace(/\D/g, '');
