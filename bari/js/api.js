@@ -31,16 +31,20 @@
     }
   }
 
-  async function req(method, path, body) {
+  // opts.idem: an Idempotency-Key. Such requests are safe to send again, so a lost connection is retried once.
+  async function req(method, path, body, opts) {
+    opts = opts || {};
+    const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) };
+    if (opts.idem) headers['Idempotency-Key'] = opts.idem;
     let res;
-    try {
-      res = await fetch(path, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-    } catch (e) {
-      throw new ApiError(0, 'network');
+    for (let attempt = 0; ; attempt++) {
+      try {
+        res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+        break;
+      } catch (e) {
+        if (!opts.idem || attempt >= 1) throw new ApiError(0, 'network');
+        await new Promise((r) => setTimeout(r, 1500));
+      }
     }
     let data = null;
     try { data = await res.json(); } catch (e) { /* empty */ }
@@ -52,10 +56,29 @@
   }
   B.api = {
     get: (p) => req('GET', p),
-    post: (p, b) => req('POST', p, b || {}),
+    post: (p, b, o) => req('POST', p, b || {}, o),
     patch: (p, b) => req('PATCH', p, b || {}),
     del: (p) => req('DELETE', p),
   };
+
+  // One key per order the user is placing: the same order (same body) keeps its key until it succeeds,
+  // so pressing the button again after a timeout cannot create a second order.
+  const pendingKeys = {};
+  const newKey = () => {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const a = new Uint8Array(16);
+    crypto.getRandomValues(a);
+    return Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+  };
+  B.idemKey = (slot, body) => {
+    const sig = JSON.stringify(body);
+    const p = pendingKeys[slot];
+    if (p && p.sig === sig) return p.key;
+    const key = newKey();
+    pendingKeys[slot] = { key, sig };
+    return key;
+  };
+  B.idemDone = (slot) => { delete pendingKeys[slot]; };
 
   // A readable message for any API error.
   B.errText = function (e) {

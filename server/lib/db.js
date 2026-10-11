@@ -133,6 +133,14 @@ CREATE TABLE IF NOT EXISTS order_events (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS order_events_order ON order_events(order_id);
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
+  request_hash TEXT NOT NULL,
+  response TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, key)
+);
 `;
 
 function open(file) {

@@ -1,7 +1,6 @@
 /* Бәрі — local preferences, formatting and geo helpers shared by all apps. */
 (function () {
   const B = window.Bari;
-  const D = B.data;
   const KEY = 'bari:prefs:v2';
 
   function defaults() {

@@ -334,11 +334,13 @@
         const btn = document.querySelector('[data-act="ct-place"]');
         if (btn) btn.disabled = true;
         try {
-          const o = await B.api.post('/api/orders/delivery', {
+          const body = {
             venue_id: v.id,
             items: Object.entries(c.items).map(([id, l]) => ({ id: Number(id), q: l.q })),
             to: B.toPoint(S.dest), pay: 'cash', comment: cartComment.trim(), round_up: S.roundUp,
-          });
+          };
+          const o = await B.api.post('/api/orders/delivery', body, { idem: B.idemKey('delivery', body) });
+          B.idemDone('delivery');
           B.orders.put(o);
           S.cart = null;
           cartComment = '';

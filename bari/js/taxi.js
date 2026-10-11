@@ -280,10 +280,12 @@
           busy = true;
           renderPanel();
           try {
-            const o = await B.api.post('/api/orders/' + kind, {
+            const body = {
               from: B.toPoint(dr.from), to: B.toPoint(dr.to), tariff: tar.id, pay: 'cash',
               comment: dr.comment.trim(), pkg: dr.pkg.trim(),
-            });
+            };
+            const o = await B.api.post('/api/orders/' + kind, body, { idem: B.idemKey(kind, body) });
+            B.idemDone(kind);
             B.orders.put(o);
             dr.to = null;
             dr.comment = '';

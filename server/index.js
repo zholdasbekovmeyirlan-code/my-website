@@ -9,6 +9,7 @@ const { createOrders } = require('./lib/orders');
 const rt = require('./lib/realtime');
 const { seed } = require('./seed');
 const registerApi = require('./routes/api');
+const { createIdempotency } = require('./lib/idempotency');
 
 function start(opts = {}) {
   const cfg = { ...config, ...opts };
@@ -52,7 +53,8 @@ function start(opts = {}) {
       }
       const body = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method) ? await readJson(req, 64 * 1024) : {};
       const query = Object.fromEntries(url.searchParams);
-      const out = await route.handler({ req, res, params, query, body, user, ip, token });
+      const idemKey = req.headers['idempotency-key'];
+      const out = await route.handler({ req, res, params, query, body, user, ip, token, idemKey });
       sendJson(res, 200, out === undefined ? { ok: true } : out);
     } catch (e) {
       if (e instanceof HttpError) return sendJson(res, e.status, { error: e.code, detail: e.message !== e.code ? e.message : undefined });
@@ -61,8 +63,9 @@ function start(opts = {}) {
     }
   });
 
+  const idem = createIdempotency(db);
   const sweeper = setInterval(() => {
-    try { orders.sweep(); } catch (e) { console.error(e); }
+    try { orders.sweep(); idem.sweep(); } catch (e) { console.error(e); }
   }, 30000);
   sweeper.unref();
 

@@ -191,7 +191,8 @@
     router = http.createRouter();
     load('routes/api')(router, { db, auth, orders, config });
     orders.resumeDemoKitchens();
-    setInterval(() => { try { orders.sweep(); } catch (e) { console.error(e); } }, 30000);
+    const idem = load('lib/idempotency').createIdempotency(db);
+    setInterval(() => { try { orders.sweep(); idem.sweep(); } catch (e) { console.error(e); } }, 30000);
     setInterval(save, 800);
     window.addEventListener('pagehide', save);
     document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
@@ -233,7 +234,8 @@
       if (bodyText) {
         try { body = JSON.parse(bodyText); } catch (e) { throw new HttpError(400, 'bad_json'); }
       }
-      const out = await route.handler({ req: {}, res: {}, params, query: Object.fromEntries(url.searchParams), body, user, ip: 'demo-' + Math.random(), token });
+      const idemKey = headers.get('Idempotency-Key') || undefined;
+      const out = await route.handler({ req: {}, res: {}, params, query: Object.fromEntries(url.searchParams), body, user, ip: 'demo-' + Math.random(), token, idemKey });
       return [200, out === undefined ? { ok: true } : out];
     } catch (e) {
       if (HttpError && e instanceof HttpError) return [e.status, { error: e.code, detail: e.message !== e.code ? e.message : undefined }];

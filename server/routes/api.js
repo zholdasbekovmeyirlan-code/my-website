@@ -4,6 +4,7 @@ const V = require('../lib/validate');
 const P = require('../lib/pricing');
 const { fail } = require('../lib/http');
 const { avg } = require('../lib/orders');
+const { createIdempotency } = require('../lib/idempotency');
 
 const SOCIAL = ['none', 'pension', 'disability', 'large'];
 const VEHICLES = ['walk', 'bike', 'scooter', 'car', 'truck'];
@@ -12,6 +13,7 @@ const VENUE_TYPES = ['food', 'shop', 'pharm'];
 const CATS = ['doner', 'fast', 'pizza', 'sushi', 'national', 'coffee', 'dessert', 'healthy', 'grill', 'bakery'];
 
 module.exports = function register(r, { db, auth, orders, config }) {
+  const idem = createIdempotency(db);
   /* ---------- shared views ---------- */
   const workerView = (w) => w && ({
     kind: w.kind, status: w.status, online: !!w.online,
@@ -99,10 +101,14 @@ module.exports = function register(r, { db, auth, orders, config }) {
 
   r.add('GET', '/api/orders', ({ user }) => orders.listForClient(user), { auth: 'user' });
   r.add('GET', '/api/orders/:id', ({ user, params }) => orders.getFor(user, V.int(params.id, 'id')), { auth: 'user' });
-  r.add('POST', '/api/orders/ride', ({ user, body }) => orders.createTrip(user, 'ride', tripBody(body)), { auth: 'user' });
-  r.add('POST', '/api/orders/parcel', ({ user, body }) => orders.createTrip(user, 'parcel', tripBody(body)), { auth: 'user' });
+  // Order creation accepts an Idempotency-Key header: a retried request returns the order created the first time.
+  const current = (user) => (o) => orders.getFor(user, o.id);
+  r.add('POST', '/api/orders/ride', ({ user, body, idemKey }) =>
+    idem.run(user, idemKey, body, () => orders.createTrip(user, 'ride', tripBody(body)), current(user)), { auth: 'user' });
+  r.add('POST', '/api/orders/parcel', ({ user, body, idemKey }) =>
+    idem.run(user, idemKey, body, () => orders.createTrip(user, 'parcel', tripBody(body)), current(user)), { auth: 'user' });
 
-  r.add('POST', '/api/orders/delivery', ({ user, body }) => {
+  r.add('POST', '/api/orders/delivery', ({ user, body, idemKey }) => idem.run(user, idemKey, body, () => {
     if (!Array.isArray(body.items) || !body.items.length || body.items.length > 40) fail(400, 'invalid', 'items');
     const seen = new Set();
     const lines = body.items.map((l, i) => {
@@ -119,7 +125,7 @@ module.exports = function register(r, { db, auth, orders, config }) {
       comment: V.str(body.comment, 'comment', { max: 120, optional: true }),
       roundUp: V.bool(body.round_up),
     });
-  }, { auth: 'user' });
+  }, current(user)), { auth: 'user' });
 
   r.add('POST', '/api/orders/:id/cancel', ({ user, params }) => orders.cancelByClient(user, V.int(params.id, 'id')), { auth: 'user' });
   r.add('POST', '/api/orders/:id/rate', ({ user, params, body }) =>
