@@ -10,6 +10,9 @@ const rt = require('./lib/realtime');
 const { seed } = require('./seed');
 const registerApi = require('./routes/api');
 const { createIdempotency } = require('./lib/idempotency');
+const { createUploads } = require('./lib/uploads');
+const os = require('node:os');
+const path = require('node:path');
 
 function start(opts = {}) {
   const cfg = { ...config, ...opts };
@@ -17,8 +20,13 @@ function start(opts = {}) {
   if (cfg.seedDemo && seed(db)) console.log('Demo venues added');
   const auth = createAuth(db, cfg);
   const orders = createOrders(db, rt, { kitchenDelays: cfg.kitchenDelays });
+  // Photos live next to the database (on the persistent disk); tests with an in-memory database use a temp folder.
+  const uploadsDir = cfg.uploadsDir || (cfg.dbPath === ':memory:'
+    ? path.join(os.tmpdir(), 'bari-uploads-' + process.pid + '-' + Date.now())
+    : path.join(path.dirname(cfg.dbPath), 'uploads'));
+  const uploads = createUploads(uploadsDir);
   const router = createRouter();
-  registerApi(router, { db, auth, orders, config: cfg });
+  registerApi(router, { db, auth, orders, config: cfg, uploads });
   orders.resumeDemoKitchens();
 
   const bearer = (req, url) => {
@@ -31,6 +39,7 @@ function start(opts = {}) {
     const url = new URL(req.url, 'http://localhost');
     const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
     if (!url.pathname.startsWith('/api/')) {
+      if ((req.method === 'GET' || req.method === 'HEAD') && url.pathname.startsWith('/uploads/') && uploads.serve(req, res, url.pathname)) return;
       if ((req.method === 'GET' || req.method === 'HEAD') && serveStatic(cfg.staticDir, req, res)) return;
       return sendJson(res, 404, { error: 'not_found' });
     }
@@ -51,7 +60,7 @@ function start(opts = {}) {
         if (!user && route.opts.auth !== 'optional') throw new HttpError(401, 'auth');
         if (route.opts.auth === 'admin' && !user.is_admin) throw new HttpError(403, 'forbidden');
       }
-      const body = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method) ? await readJson(req, 64 * 1024) : {};
+      const body = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method) ? await readJson(req, route.opts.maxBody || 64 * 1024) : {};
       const query = Object.fromEntries(url.searchParams);
       const idemKey = req.headers['idempotency-key'];
       const out = await route.handler({ req, res, params, query, body, user, ip, token, idemKey });

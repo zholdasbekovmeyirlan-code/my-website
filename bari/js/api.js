@@ -157,6 +157,39 @@
   }
   B.startLive = startLive;
 
+  /* ---------- photos ---------- */
+  // Opens the photo picker, shrinks the picture on the phone (long side ≤ max px) and uploads it as JPEG.
+  B.pickPhoto = function (max) {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/jpeg,image/png,image/webp';
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        if (!file) return reject(new ApiError(0, 'cancelled'));
+        // Read as a data: URL (allowed by the page's security policy, unlike blob: URLs).
+        const reader = new FileReader();
+        const img = new Image();
+        img.onload = async () => {
+          const k = Math.min(1, (max || 1200) / Math.max(img.naturalWidth, img.naturalHeight));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.naturalWidth * k);
+          c.height = Math.round(img.naturalHeight * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          try {
+            const r = await B.api.post('/api/partner/upload', { image: c.toDataURL('image/jpeg', 0.82) });
+            resolve(r.url);
+          } catch (e) { reject(e); }
+        };
+        img.onerror = () => reject(new ApiError(400, 'invalid', 'image'));
+        reader.onload = () => { img.src = reader.result; };
+        reader.onerror = () => reject(new ApiError(400, 'invalid', 'image'));
+        reader.readAsDataURL(file);
+      });
+      input.click();
+    });
+  };
+
   /* ---------- config ---------- */
   B.cfg = null;
   B.loadConfig = async function () {

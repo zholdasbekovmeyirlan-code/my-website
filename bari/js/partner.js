@@ -73,6 +73,14 @@
     'biz.menu.empty': ['Мәзір бос. Бөлім мен тағам қосудан бастаңыз.', 'Меню пустое. Начните с раздела и блюд.'],
     'biz.no.section': ['Бөлімсіз', 'Без раздела'],
     'biz.status': ['Күйі', 'Статус'],
+    'biz.photo': ['Фото', 'Фото'],
+    'biz.photo.add': ['Фото қосу', 'Добавить фото'],
+    'biz.photo.change': ['Ауыстыру', 'Заменить'],
+    'biz.photo.remove': ['Алып тастау', 'Убрать'],
+    'biz.photo.hint': ['Тағамның өз фотосы. Жарық жерде, жоғарыдан түсірілгені жақсы.', 'Настоящее фото блюда. Лучше при хорошем свете и сверху.'],
+    'biz.cover': ['Мұқаба фотосы', 'Фото обложки'],
+    'biz.cover.hint': ['Мекеменің немесе ең танымал тағамның фотосы. Тізімде осы көрінеді.', 'Фото заведения или самого популярного блюда. Его видно в списке.'],
+    'biz.photo.uploading': ['Жүктеліп жатыр…', 'Загрузка…'],
     'biz.commission.l': ['Комиссия', 'Комиссия'],
     'pro.rating': ['Рейтинг', 'Рейтинг'],
     'biz.status.pending': ['Тексерілуде', 'На проверке'],
@@ -136,6 +144,7 @@
     const seg = (name, val, label) => `<button type="button" class="seg-btn${f[name] === val ? ' on' : ''}" data-act="vf-set" data-name="${name}" data-v="${val}"><span>${label}</span></button>`;
     return `<form id="venue-form" class="stack-16" novalidate>
         ${isNew ? `<div class="block"><h2 class="label">${t('biz.type')}</h2><div class="seg seg-wrap">${['food', 'shop', 'pharm'].map((x) => seg('type', x, t('biz.type.' + x))).join('')}</div><input type="hidden" name="type" value="${f.type}"></div>` : ''}
+        ${photoField('cover_url', f.cover_url, t('biz.cover'), t('biz.cover.hint'), f.emoji, 'wide')}
         <label class="field"><span>${t('biz.name')}</span><input name="name" required maxlength="50" value="${B.esc(f.name)}"></label>
         <label class="field"><span>${t('biz.name_ru')}</span><input name="name_ru" maxlength="50" value="${B.esc(f.name_ru || '')}"></label>
         <label class="field"><span>${t('biz.note')}</span><input name="note" maxlength="160" value="${B.esc(f.note || '')}"></label>
@@ -157,6 +166,49 @@
         <button class="btn btn-primary btn-block btn-lg-c" type="submit">${t(isNew ? 'biz.create' : 'biz.save')}</button>
       </form>`;
   }
+  // A photo picker inside a form: preview, add/replace, remove. The URL travels in a hidden input.
+  function photoField(name, url, label, hint, emoji, shape) {
+    return `<div class="block photo-field" data-photo="${name}">
+        <h2 class="label">${label}</h2>
+        <div class="photo-row">
+          <span class="photo-prev ${shape || ''}" aria-hidden="true">${url ? `<img src="${B.esc(url)}" alt="">` : `<span>${emoji || '📷'}</span>`}</span>
+          <span class="photo-btns">
+            <button type="button" class="btn btn-soft btn-sm" data-act="photo-pick" data-name="${name}" data-max="${shape === 'wide' ? 1600 : 1000}">${B.ic('plus')}<span>${t(url ? 'biz.photo.change' : 'biz.photo.add')}</span></button>
+            ${url ? `<button type="button" class="btn btn-soft-bad btn-sm" data-act="photo-clear" data-name="${name}">${t('biz.photo.remove')}</button>` : ''}
+          </span>
+        </div>
+        <p class="muted small">${hint}</p>
+        <input type="hidden" name="${name}" value="${B.esc(url || '')}">
+      </div>`;
+  }
+  const photoBox = (name) => document.querySelector(`[data-photo="${name}"]`);
+  function setPhoto(name, url) {
+    const box = photoBox(name);
+    if (!box) return;
+    box.querySelector('input[type=hidden]').value = url || '';
+    box.querySelector('.photo-prev').innerHTML = url ? `<img src="${B.esc(url)}" alt="">` : '<span>📷</span>';
+    const btns = box.querySelector('.photo-btns');
+    const pick = btns.querySelector('[data-act="photo-pick"]');
+    btns.innerHTML = `<button type="button" class="btn btn-soft btn-sm" data-act="photo-pick" data-name="${name}" data-max="${pick.dataset.max}">${B.ic('plus')}<span>${t(url ? 'biz.photo.change' : 'biz.photo.add')}</span></button>`
+      + (url ? `<button type="button" class="btn btn-soft-bad btn-sm" data-act="photo-clear" data-name="${name}">${t('biz.photo.remove')}</button>` : '');
+  }
+  B.actions['photo-pick'] = async (el) => {
+    const label = el.querySelector('span');
+    const old = label.textContent;
+    try {
+      const pending = B.pickPhoto(Number(el.dataset.max));
+      label.textContent = t('biz.photo.uploading');
+      el.disabled = true;
+      setPhoto(el.dataset.name, await pending);
+    } catch (e) {
+      if (e.code !== 'cancelled') B.fail(e);
+      label.textContent = old;
+      el.disabled = false;
+    }
+  };
+  B.actions['photo-clear'] = (el) => setPhoto(el.dataset.name, null);
+  const photoValue = (form, name) => (form.querySelector(`input[name="${name}"]`) ? form.querySelector(`input[name="${name}"]`).value || null : undefined);
+
   function bindVenueForm(v, onSaved) {
     const form = document.getElementById('venue-form');
     if (!form) return () => {};
@@ -204,6 +256,7 @@
         lat: Number(fd.lat), lng: Number(fd.lng), emoji: fd.emoji,
         delivery_fee: Number(fd.delivery_fee), min_order: Number(fd.min_order),
         eta_min: Number(fd.eta_min), eta_max: Number(fd.eta_max), cats: [...cats],
+        cover_url: photoValue(form, 'cover_url'),
       };
       if (fd.type) body.type = fd.type;
       try {
@@ -348,6 +401,7 @@
     const surplus = f.old_price != null;
     return `<form class="sheet-body" id="item-form" novalidate>
         <h3 class="sheet-title">${t(it ? 'biz.item.edit' : 'biz.item.add')}</h3>
+        ${photoField('photo_url', f.photo_url, t('biz.photo'), t('biz.photo.hint'), f.emoji)}
         <label class="field"><span>${t('biz.item.name')}</span><input name="name" required maxlength="60" value="${B.esc(f.name)}"></label>
         <label class="field"><span>${t('biz.item.name_ru')}</span><input name="name_ru" maxlength="60" value="${B.esc(f.name_ru || '')}"></label>
         <label class="field"><span>${t('biz.item.descr')}</span><input name="descr" maxlength="140" value="${B.esc(f.descr || '')}"></label>
@@ -383,7 +437,7 @@
       const loose = items.filter((i) => !i.section_id || !sections.some((s) => s.id === i.section_id));
       if (loose.length) groups.push({ s: { id: 0, name: t('biz.no.section') }, items: loose });
       const row = (it) => `<div class="item">
-          <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${it.emoji}</span>
+          <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : it.emoji}</span>
           <button class="item-body as-btn" data-act="item-edit" data-id="${it.id}">
             <b class="item-name">${B.esc(it.name)}</b>
             ${it.descr ? `<span class="item-desc">${B.esc(it.descr)}</span>` : ''}
@@ -420,6 +474,7 @@
           available: fd.get('available') === 'on',
           old_price: surplus && fd.get('old_price') ? Number(fd.get('old_price')) : null,
           stock: surplus && fd.get('stock') !== '' ? Number(fd.get('stock')) : null,
+          photo_url: fd.get('photo_url') || null,
         };
         if (fd.get('section_id')) body.section_id = Number(fd.get('section_id'));
         try {

@@ -30,7 +30,7 @@
     const deal = v.box && v.box.old_price ? Math.round((1 - v.box.price / v.box.old_price) * 100) : 0;
     return `<button class="rest${v.is_open ? '' : ' closed'}" data-act="go" data-to="store" data-id="${v.id}">
         <span class="cover rest-cover" style="--h:${v.hue}" aria-hidden="true">
-          <span class="cover-e">${v.emoji}</span>
+          ${v.cover_url ? `<img class="cover-img" src="${B.esc(v.cover_url)}" alt="" loading="lazy">` : `<span class="cover-e">${v.emoji}</span>`}
           <span class="rest-time">${v.is_open ? `${v.eta[0]}–${v.eta[1]} ${t('min')}` : t('venue.closed')}</span>
           ${deal ? `<span class="rest-deal">−${deal}% ${t('deal.evening')}</span>` : ''}
         </span>
@@ -190,8 +190,9 @@
     const id = Number(p.id);
     let v = B.venues.cachedOne(id) || null;
 
+    const pic = (it) => (it.photo_url ? `<img class="cover-img" src="${B.esc(it.photo_url)}" alt="" loading="lazy">` : it.emoji);
     const itemRow = (it, closed) => `<div class="item">
-        <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${it.emoji}</span>
+        <span class="cover item-pic" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
         <span class="item-body">
           <b class="item-name">${B.esc(B.N(it))}</b>
           ${it.descr ? `<span class="item-desc">${B.esc(B.N(it, 'descr'))}</span>` : ''}
@@ -200,7 +201,7 @@
         <span class="item-ctl" data-ctl="${it.id}">${itemCtl(it, closed)}</span>
       </div>`;
     const prodCard = (it, closed) => `<div class="prod">
-        <span class="cover prod-pic" style="--h:${v.hue}" aria-hidden="true">${it.emoji}</span>
+        <span class="cover prod-pic" style="--h:${v.hue}" aria-hidden="true">${pic(it)}</span>
         <b class="prod-price">${B.money(it.price)}</b>
         <span class="prod-name">${B.esc(B.N(it))}</span>
         <span class="prod-unit">${B.esc(B.N(it, 'descr'))}</span>
@@ -248,9 +249,10 @@
     B.actions.dec = (el) => { const it = findItem(el.dataset.id); if (it) B.cartChange(v, it, -1); };
 
     const hero = (vv) => `<div class="cover store-hero" style="--h:${vv ? vv.hue : 190}">
+        ${vv && vv.cover_url ? `<img class="cover-img" src="${B.esc(vv.cover_url)}" alt="">` : ''}
         <button class="icon-btn on-hero" data-act="back" aria-label="${t('back')}">${B.ic('back')}</button>
         <span class="store-hero-right">${B.cartBtn()}</span>
-        <span class="store-emoji" aria-hidden="true">${vv ? vv.emoji : ''}</span>
+        ${vv && vv.cover_url ? '' : `<span class="store-emoji" aria-hidden="true">${vv ? vv.emoji : ''}</span>`}
       </div>`;
 
     return {

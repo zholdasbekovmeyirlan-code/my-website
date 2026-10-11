@@ -12,7 +12,7 @@ const CAR_CLASSES = ['econom', 'comfort', 'business'];
 const VENUE_TYPES = ['food', 'shop', 'pharm'];
 const CATS = ['doner', 'fast', 'pizza', 'sushi', 'national', 'coffee', 'dessert', 'healthy', 'grill', 'bakery'];
 
-module.exports = function register(r, { db, auth, orders, config }) {
+module.exports = function register(r, { db, auth, orders, config, uploads }) {
   const idem = createIdempotency(db);
   /* ---------- shared views ---------- */
   const workerView = (w) => w && ({
@@ -33,6 +33,7 @@ module.exports = function register(r, { db, auth, orders, config }) {
       cats: v.cats ? v.cats.split(',') : [], emoji: v.emoji, hue: v.hue, address: v.address, lat: v.lat, lng: v.lng,
       rating: avg(v.rating_sum, v.rating_count), eta: [v.eta_min, v.eta_max], delivery_fee: v.delivery_fee, min_order: v.min_order,
       local: !!v.local, grid: !!v.grid, is_open: !!v.is_open, status: v.status, commission: v.commission, box: box || null,
+      cover_url: v.cover_url || null,
     };
   };
   const menuOf = (venueId, all) => {
@@ -192,6 +193,7 @@ module.exports = function register(r, { db, auth, orders, config }) {
       f.lng = p.lng;
     }
     if (body.emoji !== undefined) f.emoji = V.emoji(body.emoji, 'emoji');
+    if (body.cover_url !== undefined) f.cover_url = photo(body.cover_url, 'cover_url');
     if (body.hue !== undefined) f.hue = V.int(body.hue, 'hue', { min: 0, max: 359 });
     if (body.cats !== undefined) {
       if (!Array.isArray(body.cats)) fail(400, 'invalid', 'cats');
@@ -275,6 +277,19 @@ module.exports = function register(r, { db, auth, orders, config }) {
     return { ok: true };
   }, { auth: 'user' });
 
+  // A photo must be one uploaded here (or bundled with the app); null removes it.
+  const photo = (url, field) => {
+    if (url === null || url === '') return null;
+    if (!uploads || !uploads.isOwnUrl(url)) fail(400, 'invalid', field);
+    return url;
+  };
+
+  r.add('POST', '/api/partner/upload', ({ user, body }) => {
+    const partner = user.is_admin || db.one('SELECT id FROM venues WHERE owner_id = ? LIMIT 1', user.id);
+    if (!partner) fail(403, 'forbidden');
+    return { url: uploads.saveImage(body.image) };
+  }, { auth: 'user', maxBody: 3 * 1024 * 1024 });
+
   const itemFields = (body, partial) => {
     const f = {};
     if (!partial || body.name !== undefined) f.name = V.str(body.name, 'name', { min: 1, max: 60 });
@@ -285,6 +300,7 @@ module.exports = function register(r, { db, auth, orders, config }) {
     if (body.old_price !== undefined) f.old_price = V.int(body.old_price, 'old_price', { min: 1, max: 1000000, optional: true });
     if (body.stock !== undefined) f.stock = V.int(body.stock, 'stock', { min: 0, max: 10000, optional: true });
     if (body.emoji !== undefined) f.emoji = V.emoji(body.emoji, 'emoji');
+    if (body.photo_url !== undefined) f.photo_url = photo(body.photo_url, 'photo_url');
     if (body.available !== undefined) f.available = V.bool(body.available) ? 1 : 0;
     if (body.section_id !== undefined) f.section_id = V.int(body.section_id, 'section_id', { min: 1, optional: true });
     return f;
@@ -305,10 +321,10 @@ module.exports = function register(r, { db, auth, orders, config }) {
     checkSection(v.id, f.section_id);
     const sort = db.one('SELECT COALESCE(MAX(sort), 0) + 1 AS s FROM items WHERE venue_id = ?', v.id).s;
     const res = db.run(
-      `INSERT INTO items (venue_id, section_id, name, name_ru, descr, descr_ru, price, old_price, stock, emoji, available, sort)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO items (venue_id, section_id, name, name_ru, descr, descr_ru, price, old_price, stock, emoji, available, sort, photo_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       v.id, f.section_id || null, f.name, f.name_ru || null, f.descr || '', f.descr_ru || null, f.price,
-      f.old_price ?? null, f.stock ?? null, f.emoji || '🍽️', f.available ?? 1, sort
+      f.old_price ?? null, f.stock ?? null, f.emoji || '🍽️', f.available ?? 1, sort, f.photo_url || null
     );
     return db.one('SELECT * FROM items WHERE id = ?', Number(res.lastInsertRowid));
   }, { auth: 'user' });

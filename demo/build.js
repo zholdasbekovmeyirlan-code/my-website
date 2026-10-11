@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(process.argv[2] || path.join(__dirname, 'dist'));
-const SERVER_MODULES = ['lib/http', 'lib/validate', 'lib/pricing', 'lib/orders', 'lib/auth', 'lib/sms', 'lib/db', 'lib/idempotency', 'routes/api', 'seed'];
+const SERVER_MODULES = ['lib/http', 'lib/validate', 'lib/pricing', 'lib/orders', 'lib/auth', 'lib/sms', 'lib/db', 'lib/idempotency', 'lib/uploads', 'routes/api', 'seed'];
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(path.join(out, 'demo'), { recursive: true });

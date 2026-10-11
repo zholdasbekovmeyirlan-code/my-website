@@ -17,6 +17,7 @@ const flag = (v, def) => (v === undefined || v === '' ? def : v === '1' || v.toL
 module.exports = {
   port: Number(env.PORT) || 3000,
   dbPath: path.resolve(__dirname, '..', env.DB_PATH || './data/bari.db'),
+  uploadsDir: env.UPLOADS_DIR ? path.resolve(__dirname, '..', env.UPLOADS_DIR) : null,
   staticDir: path.resolve(__dirname, '..', '..', 'bari'),
   smsMode: env.SMS_MODE || 'demo',
   adminPhones: (env.ADMIN_PHONES || '').split(',').map((s) => s.replace(/\D/g, '')).filter(Boolean),

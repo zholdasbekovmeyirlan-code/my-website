@@ -143,6 +143,20 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
 );
 `;
 
+// Columns added after the first release. Missing ones are added on start, so old databases keep working.
+const COLUMNS = {
+  venues: { cover_url: 'TEXT' },
+  items: { photo_url: 'TEXT' },
+};
+function migrate(db) {
+  for (const [table, cols] of Object.entries(COLUMNS)) {
+    const have = new Set(db.all(`PRAGMA table_info(${table})`).map((c) => c.name));
+    for (const [col, type] of Object.entries(cols)) {
+      if (!have.has(col)) db.run(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+    }
+  }
+}
+
 function open(file) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const raw = new DatabaseSync(file);
@@ -157,7 +171,7 @@ function open(file) {
   };
   const plain = (row) => (row ? { ...row } : row);
 
-  return {
+  const api = {
     raw,
     one: (sql, ...p) => plain(stmt(sql).get(...p)),
     all: (sql, ...p) => stmt(sql).all(...p).map(plain),
@@ -174,7 +188,9 @@ function open(file) {
       }
     },
     close: () => raw.close(),
-  };
+  };  migrate(api);
+  return api;
+
 }
 
-module.exports = { open, SCHEMA };
+module.exports = { open, SCHEMA, migrate };

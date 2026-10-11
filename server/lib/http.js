@@ -35,16 +35,25 @@ function createRouter() {
   };
 }
 
+// Reads a JSON body up to `limit` bytes. A bigger body is refused with a clear 413 (the rest is discarded).
 function readJson(req, limit) {
   return new Promise((resolve, reject) => {
     let size = 0;
+    let over = false;
     const chunks = [];
     req.on('data', (c) => {
+      if (over) return;
       size += c.length;
-      if (size > limit) { reject(new HttpError(413, 'too_large')); req.destroy(); return; }
+      if (size > limit) {
+        over = true;
+        chunks.length = 0;
+        reject(new HttpError(413, 'too_large'));
+        return;
+      }
       chunks.push(c);
     });
     req.on('end', () => {
+      if (over) return;
       if (!chunks.length) return resolve({});
       try {
         const v = JSON.parse(Buffer.concat(chunks).toString('utf8'));

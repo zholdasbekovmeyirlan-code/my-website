@@ -185,11 +185,25 @@
     } catch (e) {
       db = makeDb(SQL, null, load('lib/db').SCHEMA);
     }
+    load('lib/db').migrate(db);
     load('seed').seed(db);
     auth = load('lib/auth').createAuth(db, config);
     orders = load('lib/orders').createOrders(db, overrides['lib/realtime'], { offlineAfter: 24 * 3600e3 });
     router = http.createRouter();
-    load('routes/api')(router, { db, auth, orders, config });
+    // Photos stay inside the demo database as small data URLs (there is no file storage in the browser).
+    const BUNDLED = load('lib/uploads').BUNDLED;
+    const uploads = {
+      saveImage(dataUrl) {
+        const m = typeof dataUrl === 'string' && dataUrl.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+        if (!m || m[2].length > 600000) throw new HttpError(400, 'invalid', 'image');
+        const head = atob(m[2].slice(0, 24));
+        const ok = head.charCodeAt(0) === 0xff || head.slice(1, 4) === 'PNG' || head.slice(8, 12) === 'WEBP';
+        if (!ok) throw new HttpError(400, 'invalid', 'image');
+        return dataUrl;
+      },
+      isOwnUrl: (u) => typeof u === 'string' && (BUNDLED.test(u) || (/^data:image\/(jpeg|png|webp);base64,/.test(u) && u.length < 620000)),
+    };
+    load('routes/api')(router, { db, auth, orders, config, uploads });
     orders.resumeDemoKitchens();
     const idem = load('lib/idempotency').createIdempotency(db);
     setInterval(() => { try { orders.sweep(); idem.sweep(); } catch (e) { console.error(e); } }, 30000);

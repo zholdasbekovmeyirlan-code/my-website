@@ -914,3 +914,14 @@ a.act { color: inherit; text-decoration: none; }
 .rest .meta b { font-weight: 700; }
 .rest.closed .rest-time { background: var(--fg); color: var(--bg); }
 .adm-phone { width: 150px !important; }
+
+/* ---------- photos ---------- */
+.cover { position: relative; overflow: hidden; }
+.cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rest-cover .rest-time, .rest-cover .rest-deal, .rest-cover .closed-tag, .store-hero .icon-btn, .store-hero-right { z-index: 1; }
+.store-hero .cover-img { filter: saturate(1.05); }
+.photo-row { display: flex; align-items: center; gap: 12px; }
+.photo-prev { flex: none; width: 88px; height: 88px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); font-size: 36px; }
+.photo-prev.wide { width: 140px; height: 88px; }
+.photo-prev img { width: 100%; height: 100%; object-fit: cover; }
+.photo-btns { display: flex; flex-wrap: wrap; gap: 8px; }
