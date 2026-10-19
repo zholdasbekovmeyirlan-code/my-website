@@ -196,7 +196,7 @@ kbd {
 .side-card-sub span { color: var(--text-3); }
 .side-card-spark { margin: 10px -4px -6px; }
 .side-card-spark svg { width: 100%; }
-.side-foot { display: flex; }
+.side-foot { display: flex; flex-wrap: wrap; gap: 2px; }
 .kbd-hint { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3); padding: 6px 8px; border-radius: 8px; }
 .kbd-hint:hover { color: var(--text); background: var(--surface-2); }
 .kbd-hint .ic { width: 16px; height: 16px; }

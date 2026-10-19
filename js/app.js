@@ -38,6 +38,7 @@
     arrowDown: '<path d="M7 7l10 10M17 9v8H9"/>',
     sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
     coach: '<path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 16.5l.6 1.4 1.4.6-1.4.6L5 20.5l-.6-1.4L3 18.5l1.4-.6z"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.4"/><path d="M12 17h.01"/>',
     send: '<path d="M5 12h13M13 6l6 6-6 6"/>',
     rules: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
     logout: '<path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/>',
@@ -208,7 +209,8 @@
       '</div>' +
       (Cloud.user ? '<div class="side-user"><span class="avatar">' + esc((Cloud.user.email || '?').charAt(0).toUpperCase()) + '</span><div class="side-user-info"><b>' + esc(Cloud.user.email || '') + '</b><small>' + (Cloud.isPro ? 'Pro' : 'Free') + '</small></div>' +
         '<button class="icon-btn sm" data-action="sign-out" title="' + t('sign_out') + '" aria-label="' + t('sign_out') + '">' + icon('logout') + '</button></div>' : '') +
-      '<div class="side-foot"><button class="kbd-hint" data-action="shortcuts">' + icon('keyboard') + t('shortcuts') + '</button></div>';
+      '<div class="side-foot"><button class="kbd-hint" data-action="shortcuts">' + icon('keyboard') + t('shortcuts') + '</button>' +
+        (supportHref() ? '<a class="kbd-hint" href="' + esc(supportHref()) + '" target="_blank" rel="noopener">' + icon('help') + t('support') + '</a>' : '') + '</div>';
   }
 
   function tgNav() {
@@ -669,7 +671,7 @@
     const s = S();
     let bytes = 0;
     try { bytes = new Blob([localStorage.getItem(Store.key()) || '']).size; } catch (e) { bytes = new Blob([JSON.stringify(Store.state)]).size; }
-    v.innerHTML = accountCard() + telegramCard() +
+    v.innerHTML = accountCard() + telegramCard() + supportCard() +
       '<div class="grid g-2 settings">' +
       '<div class="card"><div class="card-head"><div><h3>' + t('profile') + '</h3><p>' + t('profile_sub') + '</p></div></div>' +
       '<form id="setForm" class="form-grid">' +
@@ -1155,6 +1157,16 @@
 
   /* ---------- Telegram bot ---------- */
   const TG_SVG = '<svg class="tg-logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#29a9eb"/><path fill="#fff" d="M5.4 11.8 16.9 7.3c.5-.2 1 .1.8.9l-2 9.3c-.1.6-.5.8-1.1.5l-3-2.2-1.4 1.4c-.2.2-.3.3-.6.3l.2-3.1 5.6-5.1c.2-.2 0-.4-.4-.1l-6.9 4.4-3-.9c-.7-.2-.7-.6.3-1z"/></svg>';
+  function supportHref() {
+    const lg = (window.EDGEBOOK_CONFIG || {}).legal || {};
+    return lg.support || (lg.email ? 'mailto:' + lg.email : '');
+  }
+  function supportCard() {
+    const href = supportHref();
+    if (!href) return '';
+    return '<div class="card tg-card support-card"><div class="tg-ic">' + (/t\.me\//.test(href) ? TG_SVG : icon('help')) + '</div><div class="tg-copy"><h3>' + t('support_t') + '</h3><p>' + t('support_x') + '</p></div>' +
+      '<div class="tg-actions"><a class="btn btn-ghost btn-sm" href="' + esc(href) + '" target="_blank" rel="noopener">' + t('support_btn') + '</a></div></div>';
+  }
   function telegramCard() {
     const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot;
     if (!bot || !Cloud.enabled || !Cloud.user) return '';

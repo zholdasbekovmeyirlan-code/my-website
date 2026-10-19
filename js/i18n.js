@@ -14,7 +14,7 @@
 
     greet_morning: 'Қайырлы таң', greet_day: 'Қайырлы күн', greet_evening: 'Қайырлы кеш', greet_night: 'Қайырлы түн',
     new_trade: 'Жаңа мәміле', log_trade: 'Мәмілені жазу', edit_trade: 'Өңдеу', add_trade: 'Қосу', add: 'Қосу',
-    range_all: 'Барлығы', theme: 'Тақырып', shortcuts: 'Пернелер',
+    range_all: 'Барлығы', theme: 'Тақырып', shortcuts: 'Пернелер', support: 'Қолдау', support_t: 'Сұрақ немесе мәселе бар ма?', support_x: 'Төлем, аккаунт немесе кез келген сұрақ бойынша бізге Telegram-ға жазыңыз — көмектесеміз.', support_btn: 'Қолдауға жазу',
     demo_banner: 'Бұл — демо деректер. Өз мәмілелеріңізді жазу үшін оларды тазалаңыз.', demo_clear: 'Демоны тазалау',
     clear_demo_text: 'Барлық демо мәмілелер мен күнделік жазбалары өшіріледі. Баптаулар сақталады.',
 
@@ -173,7 +173,7 @@
 
     greet_morning: 'Good morning', greet_day: 'Good afternoon', greet_evening: 'Good evening', greet_night: 'Good night',
     new_trade: 'New trade', log_trade: 'Log a trade', edit_trade: 'Edit', add_trade: 'Add trade', add: 'Add',
-    range_all: 'All', theme: 'Theme', shortcuts: 'Shortcuts',
+    range_all: 'All', theme: 'Theme', shortcuts: 'Shortcuts', support: 'Support', support_t: 'Questions or a problem?', support_x: 'Payments, your account or anything else — message us on Telegram and we will help.', support_btn: 'Contact support',
     demo_banner: 'You are viewing demo data. Clear it to start logging your own trades.', demo_clear: 'Clear demo',
     clear_demo_text: 'All demo trades and journal entries will be removed. Your settings are kept.',
 
@@ -331,7 +331,7 @@
     title_settings: 'Настройки', sub_settings: 'Профиль, аккаунт и данные',
     greet_morning: 'Доброе утро', greet_day: 'Добрый день', greet_evening: 'Добрый вечер', greet_night: 'Доброй ночи',
     new_trade: 'Новая сделка', log_trade: 'Записать сделку', edit_trade: 'Изменить', add_trade: 'Добавить сделку', add: 'Добавить',
-    range_all: 'Всё', theme: 'Тема', shortcuts: 'Горячие клавиши',
+    range_all: 'Всё', theme: 'Тема', shortcuts: 'Горячие клавиши', support: 'Поддержка', support_t: 'Есть вопрос или проблема?', support_x: 'Оплата, аккаунт или любой другой вопрос — напишите нам в Telegram, мы поможем.', support_btn: 'Написать в поддержку',
     demo_banner: 'Это демо-данные. Очистите их, чтобы вести свои сделки.', demo_clear: 'Очистить демо',
     clear_demo_text: 'Все демо-сделки и записи дневника будут удалены. Настройки сохранятся.',
     equity: 'Капитал', start: 'Старт', current: 'сейчас',

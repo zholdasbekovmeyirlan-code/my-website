@@ -65,7 +65,7 @@
       q4: 'Басқа құрылғыға қалай көшіремін?', a4: 'Pro-да бәрі автоматты синхрондалады. Free-де: Баптаулар → Сақтық көшірме (JSON), содан кейін жаңа құрылғыда «Көшірмені қалпына келтіру».',
       q5: 'Телефонда жұмыс істей ме?', a5: 'Иә. Интерфейс телефонға толық бейімделген: төменгі навигация және ыңғайлы формалар.',
       fc_title: 'Келесі мәмілеңізді<br><em>жазыңыз</em>.', fc_sub: 'Бір айдан кейін өз саудаңызды мүлде басқаша көресіз.',
-      foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.', l_terms: 'Шарттар', l_privacy: 'Құпиялылық', l_refund: 'Төлем шарттары'
+      foot: 'Трейдерлер үшін жасалған.', foot_disc: 'Қаржылық кеңес емес.', l_terms: 'Шарттар', l_privacy: 'Құпиялылық', l_refund: 'Төлем шарттары', l_support: 'Қолдау'
     },
     ru: {
       nav_features: 'Возможности', nav_analytics: 'Аналитика', nav_how: 'Как это работает', nav_faq: 'Вопросы', nav_open: 'Начать', nav_login: 'Войти',
@@ -126,7 +126,7 @@
       q4: 'Как перенести данные на другое устройство?', a4: 'В Pro всё синхронизируется автоматически. На Free: Настройки → Резервная копия (JSON), затем «Восстановить копию» на новом устройстве.',
       q5: 'Работает ли на телефоне?', a5: 'Да. Интерфейс полностью адаптирован для телефона: нижняя навигация и удобные формы.',
       fc_title: 'Запишите<br><em>следующую сделку</em>.', fc_sub: 'Через месяц вы увидите свою торговлю совсем иначе.',
-      foot: 'Создано для трейдеров.', foot_disc: 'Не является финансовым советом.', l_terms: 'Условия', l_privacy: 'Конфиденциальность', l_refund: 'Условия оплаты'
+      foot: 'Создано для трейдеров.', foot_disc: 'Не является финансовым советом.', l_terms: 'Условия', l_privacy: 'Конфиденциальность', l_refund: 'Условия оплаты', l_support: 'Поддержка'
     },
     en: {
       nav_features: 'Features', nav_analytics: 'Analytics', nav_how: 'How it works', nav_faq: 'FAQ', nav_open: 'Get started', nav_login: 'Sign in',
@@ -187,7 +187,7 @@
       q4: 'How do I move to another device?', a4: 'On Pro it syncs automatically. On Free: Settings → Backup (JSON), then “Restore backup” on the new device.',
       q5: 'Does it work on mobile?', a5: 'Yes. The interface is fully adapted to phones, with bottom navigation and touch-friendly forms.',
       fc_title: 'Log your<br><em>next trade</em>.', fc_sub: 'A month from now, you will see your trading completely differently.',
-      foot: 'Crafted for traders.', foot_disc: 'Not financial advice.', l_terms: 'Terms', l_privacy: 'Privacy', l_refund: 'Payment terms'
+      foot: 'Crafted for traders.', foot_disc: 'Not financial advice.', l_terms: 'Terms', l_privacy: 'Privacy', l_refund: 'Payment terms', l_support: 'Support'
     }
   };
 
@@ -364,6 +364,10 @@
 
   // Until crypto checkout is configured, don't promise a payment method that isn't live yet.
   if (!(window.EDGEBOOK_CONFIG || {}).payFunction) { const fp = $('#faqPay'); if (fp) fp.remove(); }
+  { // support contact (Telegram link or email) from config.legal
+    const lg = (window.EDGEBOOK_CONFIG || {}).legal || {}, a = $('#footSupport'), href = lg.support || (lg.email ? 'mailto:' + lg.email : '');
+    if (a && href) { a.href = href; a.hidden = false; if (/^https?:/.test(href)) { a.target = '_blank'; a.rel = 'noopener'; } }
+  }
 
   // Hero film: start the video only when it can play smoothly (skip on reduced motion / data saver)
   (function () {
