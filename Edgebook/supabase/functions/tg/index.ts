@@ -78,7 +78,6 @@ const L: Record<string, Record<string, string>> = {
     d1: "1 күн", dn: "{n} күн", b_buy: "💎 Pro алу", b_extend: "💎 Ұзарту",
     pl_trial: "⏳ <b>Pro сынақ мерзімі бітуге {d} қалды</b>\n\nAI коуч, осы бот, бөлісу карточкасы және тәуекел қорғаушысы қалсын десеңіз, Pro-ны қазір алыңыз. Деректеріңіз ешқашан жоғалмайды.",
     pl_paid: "⏳ <b>Pro мерзімі бітуге {d} қалды</b>\n\nPro автоматты түрде ұзармайды. Үзіліс болмас үшін қазір ұзартыңыз.",
-    pl_ended: "🔒 <b>Pro мерзімі аяқталды</b>\n\nБарлық деректеріңіз сақтаулы. Pro-ны қайта қоссаңыз, AI коуч пен осы бот қайта жұмыс істейді.",
     back: "⬅️ Мәзір", b_lang: "🌐 Тіл", lang_pick: "🌐 <b>Тілді таңдаңыз</b>\n<i>Выберите язык · Choose language</i>", lang_set: "✅ Бот енді <b>қазақша</b> сөйлейді.",
     menu_title: "Трейдинг журналыңыз", menu_pick: "Бөлімді таңдаңыз 👇", menu_empty: "Бүгін әзірге мәміле жоқ.", ai_t: "✨ <b>AI коуч</b>", wins_l: "ұтыс", losses_l: "шығын", per90: "соңғы 90 күн", open_l: "ашық",
     welcome: "👋 <b>EntryX ботына қош келдіңіз!</b>\n\nМен сіздің трейдинг журналыңызды білемін: P&L, сетаптар, эмоциялар, тәуекел және AI коуч — бәрі Telegram-да.\n\n<b>Қосу үшін:</b> сайтта <b>Баптаулар → Telegram → Қосу</b> батырмасын басыңыз.",
@@ -114,7 +113,6 @@ const L: Record<string, Record<string, string>> = {
     d1: "1 день", dn: "{n} дня", b_buy: "💎 Оформить Pro", b_extend: "💎 Продлить",
     pl_trial: "⏳ <b>До конца пробного Pro осталось {d}</b>\n\nСохраните AI-коуча, этого бота, карточку для соцсетей и риск-менеджер — оформите Pro сейчас. Ваши данные никуда не пропадут.",
     pl_paid: "⏳ <b>До конца Pro осталось {d}</b>\n\nPro не продлевается автоматически. Продлите сейчас, чтобы не было перерыва.",
-    pl_ended: "🔒 <b>Срок Pro закончился</b>\n\nВсе ваши данные сохранены. Включите Pro снова — AI-коуч и этот бот снова заработают.",
     back: "⬅️ Меню", b_lang: "🌐 Язык", lang_pick: "🌐 <b>Выберите язык</b>\n<i>Тілді таңдаңыз · Choose language</i>", lang_set: "✅ Теперь бот говорит <b>по-русски</b>.",
     menu_title: "Ваш торговый дневник", menu_pick: "Выберите раздел 👇", menu_empty: "Сегодня сделок пока нет.", ai_t: "✨ <b>AI-коуч</b>", wins_l: "прибыльных", losses_l: "убыточных", per90: "последние 90 дней", open_l: "открыто",
     welcome: "👋 <b>Добро пожаловать в бот EntryX!</b>\n\nЯ знаю ваш торговый дневник: P&L, сетапы, эмоции, риск и AI-коуч — всё в Telegram.\n\n<b>Чтобы подключить:</b> на сайте нажмите <b>Настройки → Telegram → Подключить</b>.",
@@ -150,7 +148,6 @@ const L: Record<string, Record<string, string>> = {
     d1: "1 day", dn: "{n} days", b_buy: "💎 Get Pro", b_extend: "💎 Extend",
     pl_trial: "⏳ <b>{d} left in your Pro trial</b>\n\nKeep the AI coach, this bot, the share card and the risk guard — get Pro now. Your data is never lost.",
     pl_paid: "⏳ <b>{d} left on your Pro plan</b>\n\nPro does not renew automatically. Extend now to avoid a gap.",
-    pl_ended: "🔒 <b>Your Pro plan has ended</b>\n\nAll your data is safe. Turn Pro back on and the AI coach and this bot will work again.",
     back: "⬅️ Menu", b_lang: "🌐 Language", lang_pick: "🌐 <b>Choose a language</b>\n<i>Тілді таңдаңыз · Выберите язык</i>", lang_set: "✅ The bot now speaks <b>English</b>.",
     menu_title: "Your trading journal", menu_pick: "Pick a section 👇", menu_empty: "No trades yet today.", ai_t: "✨ <b>AI coach</b>", wins_l: "wins", losses_l: "losses", per90: "last 90 days", open_l: "open",
     welcome: "👋 <b>Welcome to the EntryX bot!</b>\n\nI know your trading journal: P&L, setups, emotions, risk and an AI coach — all in Telegram.\n\n<b>To connect:</b> on the website open <b>Settings → Telegram → Connect</b>.",
@@ -531,16 +528,14 @@ async function runReminders() {
 
 /* ---------------- Pro ending reminders ----------------
    Crypto payments are prepaid, so both trials and paid plans just run out. Runs from the hourly cron and
-   speaks once a day, at 12:00 in the trader's time zone: 2 and 1 days before a trial ends, 3 and 1 days
-   before a paid plan ends, and on the day after it has ended. */
+   sends a single message per plan period: at 12:00 in the trader's time zone, one day before it ends. */
 function planDue(p: any, now = Date.now()) {
   if (!p) return null;
   const day = 864e5, left = (d: string) => Math.ceil((new Date(d).getTime() - now) / day);
   const paid = p.plan === "pro" && (!p.plan_until || new Date(p.plan_until).getTime() > now);
-  if (paid) return p.plan_until && [3, 1].includes(left(p.plan_until)) ? { kind: "paid", n: left(p.plan_until) } : null;
-  if (p.trial_until && new Date(p.trial_until).getTime() > now) return [2, 1].includes(left(p.trial_until)) ? { kind: "trial", n: left(p.trial_until) } : null;
-  const ends = [p.plan === "pro" ? p.plan_until : null, p.trial_until].filter(Boolean).map((d: string) => new Date(d).getTime()).filter((t: number) => t <= now);
-  return ends.length && now - Math.max(...ends) < day ? { kind: "ended", n: 0 } : null;
+  if (paid) return p.plan_until && left(p.plan_until) === 1 ? { kind: "paid", n: 1 } : null;
+  if (p.trial_until && new Date(p.trial_until).getTime() > now) return left(p.trial_until) === 1 ? { kind: "trial", n: 1 } : null;
+  return null;
 }
 async function runPlanReminders() {
   const links = (await db("telegram_links?select=*")) || [];

@@ -260,13 +260,15 @@
     const now = Date.now(), day = 864e5;
     if (Cloud.isPaid) {
       const left = p.plan_until ? Math.ceil((new Date(p.plan_until) - now) / day) : Infinity;
-      return left <= 3 ? { kind: 'paid', n: Math.max(1, left) } : null;
+      return left <= 3 ? { kind: 'paid', n: Math.max(1, left), end: p.plan_until } : null;
     }
-    if (Cloud.isTrial) return Cloud.trialDaysLeft <= 2 ? { kind: 'trial', n: Cloud.trialDaysLeft } : null;
+    if (Cloud.isTrial) return Cloud.trialDaysLeft <= 2 ? { kind: 'trial', n: Cloud.trialDaysLeft, end: p.trial_until } : null;
     const ends = [p.plan === 'pro' ? p.plan_until : null, p.trial_until].filter(Boolean).map(d => new Date(d).getTime()).filter(x => x < now);
-    return ends.length && now - Math.max(...ends) < 14 * day ? { kind: 'ended' } : null;
+    const last = ends.length ? Math.max(...ends) : 0;
+    return last && now - last < 14 * day ? { kind: 'ended', end: new Date(last).toISOString() } : null;
   }
-  function planBarKey(n) { return 'entryx:plan-bar:' + Cloud.user.id + ':' + n.kind + ':' + new Date().toISOString().slice(0, 10); }
+  // One ✕ hides the notice for good for this plan period; a new trial or paid period can remind again.
+  function planBarKey(n) { return 'entryx:plan-bar:' + Cloud.user.id + ':' + n.kind + ':' + String(n.end).slice(0, 10); }
   function renderPlanBar() {
     const b = $('#planBar');
     if (!b) return;
