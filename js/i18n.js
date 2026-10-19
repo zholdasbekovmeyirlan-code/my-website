@@ -4,7 +4,7 @@
 
   const kk = {
     brand_sub: 'Trading Journal',
-    nav_dashboard: 'Шолу', nav_trades: 'Мәмілелер', nav_calendar: 'Күнтізбе', nav_analytics: 'Аналитика', nav_journal: 'Күнделік', nav_settings: 'Баптаулар',
+    nav_more: 'Тағы', nav_dashboard: 'Шолу', nav_trades: 'Мәмілелер', nav_calendar: 'Күнтізбе', nav_analytics: 'Аналитика', nav_journal: 'Күнделік', nav_settings: 'Баптаулар',
     title_dashboard: 'Шолу', sub_dashboard: 'Сауда нәтижелеріңіз бір көзқараста',
     title_trades: 'Мәмілелер', sub_trades: 'Барлық позициялар, сүзгі және іздеу',
     title_calendar: 'Күнтізбе', sub_calendar: 'Күндік P&L жылу картасы',
@@ -164,7 +164,7 @@
 
   const en = {
     brand_sub: 'Trading Journal',
-    nav_dashboard: 'Overview', nav_trades: 'Trades', nav_calendar: 'Calendar', nav_analytics: 'Analytics', nav_journal: 'Journal', nav_settings: 'Settings',
+    nav_more: 'More', nav_dashboard: 'Overview', nav_trades: 'Trades', nav_calendar: 'Calendar', nav_analytics: 'Analytics', nav_journal: 'Journal', nav_settings: 'Settings',
     title_dashboard: 'Overview', sub_dashboard: 'Your trading performance at a glance',
     title_trades: 'Trades', sub_trades: 'Every position, filterable and searchable',
     title_calendar: 'Calendar', sub_calendar: 'Daily P&L heatmap',
@@ -324,7 +324,7 @@
 
   const ru = {
     brand_sub: 'Trading Journal',
-    nav_dashboard: 'Обзор', nav_trades: 'Сделки', nav_calendar: 'Календарь', nav_analytics: 'Аналитика', nav_journal: 'Дневник', nav_settings: 'Настройки',
+    nav_more: 'Ещё', nav_dashboard: 'Обзор', nav_trades: 'Сделки', nav_calendar: 'Календарь', nav_analytics: 'Аналитика', nav_journal: 'Дневник', nav_settings: 'Настройки',
     title_dashboard: 'Обзор', sub_dashboard: 'Ваши результаты в одном окне',
     title_trades: 'Сделки', sub_trades: 'Все позиции, фильтры и поиск',
     title_calendar: 'Календарь', sub_calendar: 'Тепловая карта дневного P&L',
