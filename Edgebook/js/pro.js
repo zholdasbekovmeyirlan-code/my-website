@@ -256,8 +256,13 @@
       });
 
       // footer
+      // the site address, so anyone who sees a shared card can find EntryX
+      const site = String((window.EDGEBOOK_CONFIG || {}).siteUrl || location.host).replace(/^https?:\/\//, '').replace(/\/$/, '');
+      c.font = '600 28px Inter, sans-serif'; c.fillStyle = 'rgba(255,255,255,.88)';
+      c.fillText(site, 80, H - 70);
+      const sw = c.measureText(site).width;
       c.font = '500 26px Inter, sans-serif'; c.fillStyle = 'rgba(255,255,255,.42)';
-      c.fillText(t('sc_footer'), 80, H - 70);
+      c.fillText('  ·  ' + t('sc_footer'), 80 + sw, H - 70);
       const dl = dateLabel(new Date(), 'full');
       c.fillText(dl, W - 80 - c.measureText(dl).width, H - 70);
       rr(c, 80, H - 118, W - 160, 2, 1); const lg = c.createLinearGradient(80, 0, W - 80, 0); lg.addColorStop(0, 'rgba(168,85,247,.8)'); lg.addColorStop(1, 'rgba(168,85,247,0)'); c.fillStyle = lg; c.fill();
