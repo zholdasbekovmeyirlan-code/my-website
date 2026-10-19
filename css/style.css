@@ -1249,12 +1249,3 @@ button.chip:hover { color: var(--text); border-color: var(--text-3); }
 .acc-card.flash { animation: planFlash 1.6s ease; }
 @keyframes planFlash { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 3px var(--accent-line); } }
 @media (max-width: 760px) { .plan-bar { flex-wrap: wrap; } .plan-bar > div { flex-basis: calc(100% - 70px); } .plan-bar .btn { margin-left: 36px; } }
-
-/* ---------- install as an app ---------- */
-.pwa-ic { width: 36px; height: 36px; border-radius: 9px; display: block; box-shadow: 0 6px 18px -6px rgba(168, 85, 247, .6); }
-.pwa-card .tg-ic { background: none; box-shadow: none; }
-.pwa-card .pwa-ic { width: 48px; height: 48px; border-radius: 12px; }
-.pwa-banner { border-color: var(--accent-line); background: linear-gradient(90deg, var(--accent-soft), transparent 85%); }
-.pwa-steps { margin: 0; padding-left: 22px; display: grid; gap: 14px; color: var(--text-2); line-height: 1.55; }
-.pwa-steps b { color: var(--text); }
-.ios-share { width: 18px; height: 18px; vertical-align: -3px; color: #0a84ff; }
