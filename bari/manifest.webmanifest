@@ -1,0 +1,14 @@
+{
+  "name": "Бәрі — бәрі бір қосымшада",
+  "short_name": "Бәрі",
+  "description": "Такси, тамақ, дүкен, дәріхана және курьер бір қосымшада",
+  "lang": "kk",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3F6F7",
+  "theme_color": "#00728A",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
