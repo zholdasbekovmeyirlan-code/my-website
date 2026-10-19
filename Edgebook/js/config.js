@@ -32,7 +32,7 @@ window.EDGEBOOK_CONFIG = {
 
   // Shown on legal.html (Terms / Privacy / Refunds). Fill these in before launch.
   // email: support address shown to customers; or support: a link such as https://t.me/<support_account>.
-  legal: { owner: '', email: '', support: '', country: 'Kazakhstan' },
+  legal: { owner: '', email: '', support: 'https://t.me/mikommmm11', country: 'Kazakhstan' },
 
   // Prices shown on the landing page and in the app
   pricing: { currency: '$', monthly: 12, yearly: 99 }
