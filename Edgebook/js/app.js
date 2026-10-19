@@ -374,7 +374,7 @@
       (open.length ? '<div class="pill accent">' + icon('bolt') + t('open_n', { n: open.length }) + '</div>' : '') +
       '<button class="pill pill-btn" data-action="share">' + icon('image') + t('share') + (hasPro() ? '' : ' <b class="pro-badge">PRO</b>') + '</button>' +
       '</div></div>' +
-      (tgBanner() || installBanner()) + PRO.dashboardWidgets() +
+      tgBanner() + PRO.dashboardWidgets() +
 
       '<div class="grid kpis">' +
       kpi({ hero: true, icon: 'trades', label: t('net_pnl'), value: money(st.net, { sign: true }), cls: cls(st.net),
@@ -708,7 +708,7 @@
     const s = S();
     let bytes = 0;
     try { bytes = new Blob([localStorage.getItem(Store.key()) || '']).size; } catch (e) { bytes = new Blob([JSON.stringify(Store.state)]).size; }
-    v.innerHTML = accountCard() + telegramCard() + installCard() + supportCard() +
+    v.innerHTML = accountCard() + telegramCard() + supportCard() +
       '<div class="grid g-2 settings">' +
       '<div class="card"><div class="card-head"><div><h3>' + t('profile') + '</h3><p>' + t('profile_sub') + '</p></div></div>' +
       '<form id="setForm" class="form-grid">' +
@@ -1194,37 +1194,6 @@
 
   /* ---------- Telegram bot ---------- */
   const TG_SVG = '<svg class="tg-logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#29a9eb"/><path fill="#fff" d="M5.4 11.8 16.9 7.3c.5-.2 1 .1.8.9l-2 9.3c-.1.6-.5.8-1.1.5l-3-2.2-1.4 1.4c-.2.2-.3.3-.6.3l.2-3.1 5.6-5.1c.2-.2 0-.4-.4-.1l-6.9 4.4-3-.9c-.7-.2-.7-.6.3-1z"/></svg>';
-  /* ---------- install as an app (see js/pwa.js) ---------- */
-  const PWA_ = () => window.PWA || { available: false };
-  const SHARE_IC = '<svg class="ios-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
-  const APP_IC = '<img class="pwa-ic" src="img/icon-192.png" alt=""/>';
-  function installCard() {
-    if (!PWA_().available) return '';
-    return '<div class="card tg-card pwa-card"><div class="tg-ic">' + APP_IC + '</div><div class="tg-copy"><h3>' + t('pwa_t') + '</h3><p>' + t('pwa_x') + '</p></div>' +
-      '<div class="tg-actions"><button class="btn btn-primary btn-sm" data-action="pwa-install">' + t('pwa_btn') + '</button></div></div>';
-  }
-  function installBanner() {
-    let hidden = false; try { hidden = localStorage.getItem('entryx:pwa-banner') === '1'; } catch (e) { /* storage blocked */ }
-    if (hidden || !PWA_().available || !PWA_().mobile) return '';
-    return '<div class="tg-banner pwa-banner">' + APP_IC + '<div><b>' + t('pwa_t') + '</b><span>' + t('pwa_x') + '</span></div>' +
-      '<button class="btn btn-primary btn-sm" data-action="pwa-install">' + t('pwa_btn') + '</button><button class="icon-btn sm" data-action="pwa-hide" aria-label="close">' + icon('x') + '</button></div>';
-  }
-  async function pwaInstall() {
-    const r = await PWA_().install();
-    if (r === 'ios') {
-      openModal('<div class="modal-head"><div><h2 class="display">' + t('pwa_ios_t') + '</h2></div><button class="icon-btn" data-close>' + icon('x') + '</button></div>' +
-        '<div class="modal-body"><ol class="pwa-steps">' +
-        '<li>' + t('pwa_ios_1') + '</li><li>' + t('pwa_ios_2', { icon: SHARE_IC }) + '</li><li>' + t('pwa_ios_3') + '</li><li>' + t('pwa_ios_4') + '</li></ol></div>', 'sm');
-    } else if (r === 'accepted') toast(t('pwa_done'));
-    renderIfIdle();
-  }
-  // the browser can offer installing a moment after load; refresh the card/banner then
-  function renderIfIdle() {
-    const typing = document.activeElement && document.activeElement.closest && document.activeElement.closest('form');
-    if (!typing && $('#modal').hidden && ['dashboard', 'settings'].includes(ui.route)) render();
-  }
-  if (window.PWA) window.PWA.onChange(renderIfIdle);
-
   function supportHref() {
     const lg = (window.EDGEBOOK_CONFIG || {}).legal || {};
     return lg.support || (lg.email ? 'mailto:' + lg.email : '');
@@ -1506,8 +1475,6 @@
         break;
       case 'sync-now': Cloud.syncNow(); break;
       case 'tc-upsell': proUpsell('pro_f8'); break;
-      case 'pwa-install': pwaInstall(); break;
-      case 'pwa-hide': try { localStorage.setItem('entryx:pwa-banner', '1'); } catch (err) { /* storage blocked */ } render(); break;
       case 'plan-hide': { const n = planNotice(); if (n) try { localStorage.setItem(planBarKey(n), '1'); } catch (err) { /* storage blocked */ } renderPlanBar(); break; }
       case 'tg-hide': try { localStorage.setItem('entryx:tg-banner:' + Cloud.user.id, '1'); } catch (err) { /* storage blocked */ } render(); break;
       case 'sign-out': Cloud.signOut().then(() => { location.replace('login.html'); }); break;
