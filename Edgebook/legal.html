@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Onest:wght@500;600;700&family=Michroma&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=1791130341" />
+  <link rel="stylesheet" href="css/style.css?v=1792400829" />
   <style>
     body.legal { background: #050608; }
     .lg-top { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: rgba(5, 6, 8, .82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
@@ -238,8 +238,8 @@
     </div>
   </main>
 
-  <script src="js/config.js?v=1791130341"></script>
-  <script src="js/store.js?v=1791130341"></script>
+  <script src="js/config.js?v=1792400829"></script>
+  <script src="js/store.js?v=1792400829"></script>
   <script>
     (function () {
       var C = (window.EDGEBOOK_CONFIG || {}).legal || {};
@@ -248,11 +248,15 @@
       function apply() {
         document.documentElement.lang = lang;
         document.querySelectorAll('[data-lang]').forEach(function (b) { b.classList.toggle('on', b.dataset.lang === lang); });
-        var ph = lang === 'kk' ? '[сайт иесі]' : lang === 'ru' ? '[владелец]' : '[owner]';
-        var eph = lang === 'kk' ? '[email]' : '[email]';
-        document.querySelectorAll('.js-owner').forEach(function (e) { e.textContent = C.owner || ph; e.classList.toggle('fill', !C.owner); });
-        document.querySelectorAll('.js-country').forEach(function (e) { e.textContent = C.country || ''; });
-        document.querySelectorAll('.js-email').forEach(function (e) { e.textContent = C.email || eph; e.href = C.email ? 'mailto:' + C.email : '#'; });
+        // The brand is the operator unless an owner is configured; the country is shown in the page language.
+        var COUNTRY = { Kazakhstan: { kk: 'Қазақстан', ru: 'Казахстан', en: 'Kazakhstan' } };
+        document.querySelectorAll('.js-owner').forEach(function (e) { e.textContent = C.owner || 'EntryX'; e.classList.remove('fill'); });
+        document.querySelectorAll('.js-country').forEach(function (e) { var c = C.country || ''; e.textContent = (COUNTRY[c] && COUNTRY[c][lang]) || c; });
+        document.querySelectorAll('.js-email').forEach(function (e) {
+          if (C.email) { e.textContent = C.email; e.href = 'mailto:' + C.email; }
+          else if (C.support) { e.textContent = C.support.replace(/^https?:\/\/(www\.)?/, ''); e.href = C.support; e.target = '_blank'; e.rel = 'noopener'; }
+          else { e.textContent = '[email]'; e.removeAttribute('href'); }
+        });
         document.querySelectorAll('.js-date').forEach(function (e) { e.textContent = '2026-09-29'; });
         // English anchors mirror the Kazakh ones
         if (lang !== 'kk' && /^#(terms|privacy|refund)$/.test(location.hash)) {

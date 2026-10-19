@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app.html
+Disallow: /setup-ai.html
+Disallow: /supabase/
+
+Sitemap: https://entryxx.netlify.app/sitemap.xml
