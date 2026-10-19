@@ -38,6 +38,7 @@
     arrowDown: '<path d="M7 7l10 10M17 9v8H9"/>',
     sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>',
     coach: '<path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 16.5l.6 1.4 1.4.6-1.4.6L5 20.5l-.6-1.4L3 18.5l1.4-.6z"/>',
+    more: '<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.4"/><path d="M12 17h.01"/>',
     send: '<path d="M5 12h13M13 6l6 6-6 6"/>',
     rules: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
@@ -197,7 +198,7 @@
       '<span>' + t('nav_' + r) + '</span><kbd>' + (i + 1) + '</kbd></a>').join('');
     $('#sidebar').innerHTML =
       '<a class="brand" href="index.html" title="' + t('home') + '"><img class="logo-mark" src="img/entryx-mark.svg" alt="" /><span class="brand-name"><span class="wordmark">ENTRY<b>X</b></span><em>' + t('brand_sub') + (Cloud.isPro ? ' <b class="pro-badge">PRO' + (Cloud.isTrial ? ' · ' + t('days_left', { n: Cloud.trialDaysLeft }) : '') + '</b>' : '') + '</em></span></a>' +
-      '<nav class="nav" aria-label="Main">' + nav + tgNav() + '</nav>' +
+      '<nav class="nav" aria-label="Main">' + nav + tgNav() + '</nav>' + mobileTabs() +
       '<div class="side-card">' +
       '<div class="side-card-label">' + t('equity') + (Cloud.isPro ? '<span class="sync-dot s-' + Cloud.status + '" title="' + t('sync_' + Cloud.status) + '"></span>' : '') + '</div>' +
       '<div class="side-card-value mono">' + money(eq) + '</div>' +
@@ -211,6 +212,26 @@
         '<button class="icon-btn sm" data-action="sign-out" title="' + t('sign_out') + '" aria-label="' + t('sign_out') + '">' + icon('logout') + '</button></div>' : '') +
       '<div class="side-foot"><button class="kbd-hint" data-action="shortcuts">' + icon('keyboard') + t('shortcuts') + '</button>' +
         (supportHref() ? '<a class="kbd-hint" href="' + esc(supportHref()) + '" target="_blank" rel="noopener">' + icon('help') + t('support') + '</a>' : '') + '</div>';
+  }
+
+  /* ---------- phone tab bar: 4 main sections + «More» sheet (the desktop sidebar is unchanged) ---------- */
+  const MTABS = ['dashboard', 'trades', 'calendar', 'coach'];
+  function mobileTabs() {
+    const more = !MTABS.includes(ui.route);
+    return '<nav class="mtabs" aria-label="Main">' +
+      MTABS.map(r => '<a href="#/' + r + '" class="mtab' + (ui.route === r ? ' active' : '') + '"' + (ui.route === r ? ' aria-current="page"' : '') + '>' + icon(r) + '<span>' + t('nav_' + r) + '</span></a>').join('') +
+      '<button type="button" class="mtab' + (more ? ' active' : '') + '" data-action="more-nav" aria-haspopup="dialog">' + icon('more') + '<span>' + t('nav_more') + '</span></button></nav>';
+  }
+  function moreSheet() {
+    const tile = (href, ic, label, extra) => '<a class="more-tile' + (extra.active ? ' active' : '') + '" href="' + href + '"' + (extra.attrs || '') + ' data-close>' + ic + '<span>' + label + '</span></a>';
+    const routes = ROUTES.filter(r => !MTABS.includes(r)).map(r => tile('#/' + r, icon(r), t('nav_' + r), { active: ui.route === r }));
+    const bot = (window.EDGEBOOK_CONFIG || {}).telegramBot;
+    if (bot && Cloud.user) routes.push(Cloud.tgLinked
+      ? tile('https://t.me/' + esc(bot.replace(/^@/, '')), TG_SVG, t('tg_nav'), { attrs: ' target="_blank" rel="noopener"' })
+      : tile('#/settings', TG_SVG, t('tg_nav'), { attrs: ' data-tg-goto' }));
+    if (supportHref()) routes.push(tile(esc(supportHref()), icon('help'), t('support'), { attrs: ' target="_blank" rel="noopener"' }));
+    openModal('<div class="modal-head"><div><h2 class="display">' + t('nav_more') + '</h2></div><button class="icon-btn" data-close aria-label="close">' + icon('x') + '</button></div>' +
+      '<div class="modal-body more-body"><div class="more-grid">' + routes.join('') + '</div></div>', 'sm');
   }
 
   function tgNav() {
@@ -1475,6 +1496,7 @@
         break;
       case 'sync-now': Cloud.syncNow(); break;
       case 'tc-upsell': proUpsell('pro_f8'); break;
+      case 'more-nav': moreSheet(); break;
       case 'plan-hide': { const n = planNotice(); if (n) try { localStorage.setItem(planBarKey(n), '1'); } catch (err) { /* storage blocked */ } renderPlanBar(); break; }
       case 'tg-hide': try { localStorage.setItem('entryx:tg-banner:' + Cloud.user.id, '1'); } catch (err) { /* storage blocked */ } render(); break;
       case 'sign-out': Cloud.signOut().then(() => { location.replace('login.html'); }); break;
