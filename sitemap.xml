@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://entryxx.netlify.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://entryxx.netlify.app/login.html</loc><priority>0.6</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://entryxx.netlify.app/</loc>
+    <changefreq>weekly</changefreq><priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="kk" href="https://entryxx.netlify.app/?lang=kk"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://entryxx.netlify.app/?lang=ru"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://entryxx.netlify.app/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://entryxx.netlify.app/"/>
+  </url>
+  <url>
+    <loc>https://entryxx.netlify.app/?lang=kk</loc>
+    <changefreq>weekly</changefreq><priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="kk" href="https://entryxx.netlify.app/?lang=kk"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://entryxx.netlify.app/?lang=ru"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://entryxx.netlify.app/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://entryxx.netlify.app/"/>
+  </url>
+  <url>
+    <loc>https://entryxx.netlify.app/?lang=ru</loc>
+    <changefreq>weekly</changefreq><priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="kk" href="https://entryxx.netlify.app/?lang=kk"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://entryxx.netlify.app/?lang=ru"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://entryxx.netlify.app/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://entryxx.netlify.app/"/>
+  </url>
+  <url>
+    <loc>https://entryxx.netlify.app/?lang=en</loc>
+    <changefreq>weekly</changefreq><priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="kk" href="https://entryxx.netlify.app/?lang=kk"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://entryxx.netlify.app/?lang=ru"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://entryxx.netlify.app/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://entryxx.netlify.app/"/>
+  </url>
+  <url><loc>https://entryxx.netlify.app/login.html</loc><priority>0.5</priority></url>
   <url><loc>https://entryxx.netlify.app/legal.html</loc><priority>0.3</priority></url>
 </urlset>

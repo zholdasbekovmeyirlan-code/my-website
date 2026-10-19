@@ -195,8 +195,22 @@
   Store.load();
   const s = Store.state.settings;
   const nl = (navigator.language || '').toLowerCase();
-  let lang = s.langChosen || s.seeded ? s.lang : (nl.startsWith('en') ? 'en' : nl.startsWith('ru') ? 'ru' : 'kk');
+  // ?lang=kk|ru|en (shared links and search engines) wins; otherwise the saved choice, then the browser language
+  const ql = new URLSearchParams(location.search).get('lang');
+  let lang = L[ql] ? ql : s.langChosen || s.seeded ? s.lang : (nl.startsWith('en') ? 'en' : nl.startsWith('ru') ? 'ru' : 'kk');
   if (!L[lang]) lang = 'kk';
+  const SEO = {
+    kk: ['EntryX — трейдинг журналы және AI коуч', 'Трейдинг журналы: P&L, ұтыс %, сетаптар, тәуекел қорғаушысы, prop челлендж және AI коуч. Қазақша, орысша, ағылшынша. Тегін бастаңыз.'],
+    ru: ['EntryX — дневник трейдера с AI-коучем', 'Дневник трейдера: P&L, винрейт, сетапы, риск-менеджер, проп-челлендж и AI-коуч. На русском, казахском и английском. Начните бесплатно.'],
+    en: ['EntryX — Trading Journal with an AI Coach', 'Trading journal with P&L, win rate, setups, a risk guard, a prop challenge tracker and an AI coach. In English, Kazakh and Russian. Start free.'],
+  };
+  function applySeo() {
+    document.title = SEO[lang][0];
+    const md = document.querySelector('meta[name=description]'); if (md) md.content = SEO[lang][1];
+    let cl = document.querySelector('link[rel=canonical]');
+    if (!cl) { cl = document.createElement('link'); cl.rel = 'canonical'; document.head.appendChild(cl); }
+    cl.href = location.origin + location.pathname + (L[ql] ? '?lang=' + ql : '');
+  }
   I18N.use(() => lang);
 
   let bill = 'monthly';
@@ -217,6 +231,7 @@
 
   function applyLang() {
     document.documentElement.lang = lang;
+    applySeo();
     $$('[data-l]').forEach(el => { const v = L[lang][el.dataset.l]; if (v != null) el.innerHTML = v; });
     $$('[data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
     const d = new Date();
@@ -231,6 +246,8 @@
     lang = b.dataset.lang;
     s.lang = lang; s.langChosen = true;
     Store.save();
+    // keep a ?lang the visitor came with in sync, so the address they share opens in the language they see
+    if (ql) { const u = new URL(location.href); u.searchParams.set('lang', lang); history.replaceState(null, '', u); }
     applyLang();
   });
 
