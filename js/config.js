@@ -14,6 +14,8 @@ window.EDGEBOOK_CONFIG = {
   // Supported here: 'google', 'github', 'apple'
   oauthProviders: ['google', 'github'],
   // Telegram bot username from @BotFather (without @). Empty = hide the Telegram card.
+  // Public address printed on the share card (change it when you move to your own domain).
+  siteUrl: 'https://entryxx.netlify.app',
   telegramBot: 'entryx_journal_bot',
 
   // false = only the buttons above (no email/password form on the sign-in page)

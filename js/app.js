@@ -252,12 +252,47 @@
     } else b.hidden = true;
   }
 
+  /* ---------- Pro ending / ended reminder ----------
+     Crypto payments are prepaid (no auto-renewal), so paid plans need the same nudge as trials. */
+  function planNotice() {
+    const p = Cloud.profile;
+    if (!Cloud.enabled || !Cloud.user || !p) return null;
+    const now = Date.now(), day = 864e5;
+    if (Cloud.isPaid) {
+      const left = p.plan_until ? Math.ceil((new Date(p.plan_until) - now) / day) : Infinity;
+      return left <= 3 ? { kind: 'paid', n: Math.max(1, left) } : null;
+    }
+    if (Cloud.isTrial) return Cloud.trialDaysLeft <= 2 ? { kind: 'trial', n: Cloud.trialDaysLeft } : null;
+    const ends = [p.plan === 'pro' ? p.plan_until : null, p.trial_until].filter(Boolean).map(d => new Date(d).getTime()).filter(x => x < now);
+    return ends.length && now - Math.max(...ends) < 14 * day ? { kind: 'ended' } : null;
+  }
+  function planBarKey(n) { return 'entryx:plan-bar:' + Cloud.user.id + ':' + n.kind + ':' + new Date().toISOString().slice(0, 10); }
+  function renderPlanBar() {
+    const b = $('#planBar');
+    if (!b) return;
+    const n = planNotice();
+    let hidden = false; try { hidden = !!n && localStorage.getItem(planBarKey(n)) === '1'; } catch (e) { /* storage blocked */ }
+    if (!n || hidden || !(window.EDGEBOOK_CONFIG || {}).payFunction) { b.hidden = true; b.innerHTML = ''; return; }
+    const days = t(n.n === 1 ? 'plan_day1' : 'plan_days', { n: n.n });
+    b.hidden = false;
+    b.className = 'plan-bar plan-' + n.kind;
+    b.innerHTML = icon(n.kind === 'ended' ? 'shield' : 'clock') +
+      '<div><b>' + t('plan_' + n.kind + '_t', { d: days }) + '</b><span>' + t('plan_' + n.kind + '_x') + '</span></div>' +
+      '<a class="btn btn-primary btn-sm" href="#/settings" data-plan-goto>' + t(n.kind === 'paid' ? 'plan_cta_extend' : 'plan_cta_buy') + '</a>' +
+      '<button class="icon-btn sm" data-action="plan-hide" aria-label="close">' + icon('x') + '</button>';
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-plan-goto]')) return;
+    setTimeout(() => { const c = $('.acc-card'); if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.classList.add('flash'); setTimeout(() => c.classList.remove('flash'), 1600); } }, 250);
+  });
+
   function render() {
     document.documentElement.lang = S().lang;
     document.documentElement.dataset.theme = S().theme;
     renderSidebar();
     renderTopbar();
     renderBanner();
+    renderPlanBar();
     const v = $('#view');
     v.className = 'view view-' + ui.route;
     VIEWS[ui.route](v);
@@ -1438,6 +1473,7 @@
         break;
       case 'sync-now': Cloud.syncNow(); break;
       case 'tc-upsell': proUpsell('pro_f8'); break;
+      case 'plan-hide': { const n = planNotice(); if (n) try { localStorage.setItem(planBarKey(n), '1'); } catch (err) { /* storage blocked */ } renderPlanBar(); break; }
       case 'tg-hide': try { localStorage.setItem('entryx:tg-banner:' + Cloud.user.id, '1'); } catch (err) { /* storage blocked */ } render(); break;
       case 'sign-out': Cloud.signOut().then(() => { location.replace('login.html'); }); break;
     }
