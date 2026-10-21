@@ -5,7 +5,9 @@
   const SUBJ = U.subjects;
   const STORAGE_KEY = "bilimpath_ubt_v1";
   const L = ["A", "B", "C", "D", "E", "F", "G", "H"];
-  const VIEWS = ["home", "practice", "mock", "mistakes", "progress"];
+  const VIEWS = ["home", "practice", "mock", "konspekt", "mistakes", "progress"];
+  const DAILY_N = 10;
+  const QUIZ_N = 10;
   const SHORT = { history: "Тарих", readlit: "Оқу сауат.", mathlit: "Мат. сауат." };
   const FULL_MAX = { history: 20, readlit: 10, mathlit: 10, profile: 50 };
 
@@ -54,6 +56,13 @@
     fire: '<path d="M12 21c-3.9 0-6.5-2.7-6.5-6.3 0-3.2 2.2-5.3 3.6-7.4.4 2 1.4 3 2.4 3.6C11.6 7.6 13 5 15 3c.3 3.4 3.5 5.6 3.5 10.2C18.5 17.6 16 21 12 21z"/>',
     trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8.5 20.5h7"/>',
     spark: '<path d="M12 3.5 13.8 10 20.5 12l-6.7 2L12 20.5 10.2 14 3.5 12l6.7-2z"/>',
+    notes: '<path d="M7 3.5h8.5L19 7v13.5H7a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2z"/><path d="M9 9.5h6M9 13h6M9 16.5h4"/>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    star: '<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1.1 5.8L12 16.8l-5.3 2.8 1.1-5.8-4.3-4.1 5.9-.8z"/>',
+    phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>',
+    share: '<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4M8.2 13.2l7.6 4"/>',
+    pause: '<path d="M8.5 5.5v13M15.5 5.5v13"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
     refresh: '<path d="M20 11.5a8 8 0 1 1-2.4-5.7L20 8"/><path d="M20 3.5V8h-4.5"/>',
     // subjects
     shanyrak: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5V9M12 15v5.5M3.5 12H9M15 12h5.5M6 6l3.9 3.9M14.1 14.1 18 18M18 6l-3.9 3.9M9.9 14.1 6 18"/>',
@@ -94,7 +103,16 @@
     last: null,
     day: { date: "", n: 0 },
     streak: { last: "", count: 0 },
+    profile: { name: "", onboarded: false },
+    xp: 0,
+    days: {},
+    badges: {},
+    stars: {},
+    daily: { date: "", idx: 0, ok: 0, res: [], done: false },
+    settings: { sound: true, confetti: true, fs: 1 },
+    counters: { answered: 0, gen: 0, fixed: 0, bestStreak: 0, bestDays: 0, daily: 0, focus: 0, night: 0, early: 0 },
   });
+  const NESTED = ["profile", "daily", "settings", "counters", "day", "streak"];
 
   let state = load();
   let view = "home";
@@ -102,14 +120,31 @@
   let mockScreen = "setup";
   let mockMode = "full";
   let reviewFilter = "wrong";
+  let kFilter = "all";
   let toastTimer = null;
+  const toastQueue = [];
+  let installEvent = null;
+  const F = { total: 25 * 60, left: 25 * 60, endAt: 0, running: false }; // focus timer
+
+  function hydrate(data) {
+    const d = defaults();
+    const st = Object.assign(d, data || {});
+    NESTED.forEach((k) => { st[k] = Object.assign(defaults()[k], (data && data[k]) || {}); });
+    // carry earlier progress into the newer counters
+    const totals = Object.values(st.stats).reduce((a, x) => ({ n: a.n + x.n, ok: a.ok + x.ok }), { n: 0, ok: 0 });
+    if (!st.counters.answered && totals.n) st.counters.answered = totals.n;
+    if (!st.xp && totals.n) st.xp = totals.ok * 10 + (totals.n - totals.ok) * 2;
+    if (st.day.date && !st.days[st.day.date]) st.days[st.day.date] = st.day.n;
+    if (st.streak.count > st.counters.bestDays) st.counters.bestDays = st.streak.count;
+    return st;
+  }
 
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return Object.assign(defaults(), JSON.parse(raw));
+      if (raw) return hydrate(JSON.parse(raw));
     } catch (e) { /* storage unavailable */ }
-    return defaults();
+    return hydrate(null);
   }
 
   function save() {
@@ -153,14 +188,112 @@
     if (/<p[\s>]/.test(text)) return text;
     return text.split(/\n\s*\n/).map((p) => `<p>${p.trim()}</p>`).join("");
   }
+  const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // Toasts queue up so several unlocks in a row are all readable
   function toast(msg, kind = "info") {
+    // keep the queue short: drop older routine messages, never achievements
+    while (toastQueue.length >= 2) {
+      const i = toastQueue.findIndex(([, k]) => k !== "badge" && k !== "level");
+      toastQueue.splice(i >= 0 ? i : 0, 1);
+    }
+    toastQueue.push([msg, kind]);
+    if (!toastTimer) showToast();
+  }
+  function showToast() {
+    const next = toastQueue.shift();
     const el = $("#toast");
+    if (!next) { el.hidden = true; toastTimer = null; return; }
+    const [msg, kind] = next;
+    const icon = { ok: "check", warn: "timer", badge: "trophy", level: "star" }[kind] || "spark";
     el.className = "toast toast-" + kind;
-    el.innerHTML = ic(kind === "ok" ? "check" : kind === "warn" ? "timer" : "spark") + "<span></span>";
+    el.innerHTML = ic(icon) + "<span></span>";
     el.lastChild.textContent = msg;
     el.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.hidden = true; }, 2400);
+    el.style.animation = "none";
+    void el.offsetWidth;
+    el.style.animation = "";
+    toastTimer = setTimeout(showToast, toastQueue.length ? 1700 : 2600);
+  }
+
+  const fx = (kind) => { if (state.settings.sound && window.BP_FX) window.BP_FX.sound(kind); };
+  const boom = (opts) => { if (state.settings.confetti && window.BP_FX) window.BP_FX.confetti(opts); };
+  function celebrate(msg, kind = "done", count = 140) {
+    toast(msg, kind === "level" ? "level" : "ok");
+    fx(kind);
+    boom({ count });
+  }
+
+  /* ---------- XP, levels, achievements ---------- */
+  const LEVELS = [[0, "Бастаушы"], [150, "Ізденуші"], [400, "Талапкер"], [800, "Білімқұмар"], [1400, "Зерделі"], [2200, "Озат"], [3200, "Білімпаз"], [4500, "Шебер"], [6000, "Ғұлама"], [8000, "Данышпан"]];
+  function levelOf(xp) {
+    let i = 0;
+    while (i + 1 < LEVELS.length && xp >= LEVELS[i + 1][0]) i++;
+    const cur = LEVELS[i][0], next = LEVELS[i + 1] ? LEVELS[i + 1][0] : null;
+    return { lv: i + 1, name: LEVELS[i][1], cur, next, pct: next ? (xp - cur) / (next - cur) : 1, toNext: next ? next - xp : 0 };
+  }
+  function addXP(n) {
+    if (!n) return;
+    const before = levelOf(state.xp).lv;
+    state.xp += n;
+    if (P && P.session) P.session.xp += n;
+    const after = levelOf(state.xp);
+    if (after.lv > before) celebrate(`Жаңа деңгей: ${after.lv} · ${after.name}!`, "level", 180);
+  }
+
+  const fullBest = (s) => Math.max(0, ...s.history.filter((h) => h.mode === "full").map((h) => h.total));
+  // [id, icon, name, how to get it, current value, goal]
+  const BADGES = [
+    ["first", "spark", "Алғашқы қадам", "Бірінші сұраққа жауап бер", (s) => s.counters.answered, 1],
+    ["q100", "check", "Жүз сұрақ", "100 сұраққа жауап бер", (s) => s.counters.answered, 100],
+    ["q500", "trophy", "Жарты мың", "500 сұраққа жауап бер", (s) => s.counters.answered, 500],
+    ["streak5", "fire", "Бес қатарынан", "5 сұраққа қатарынан дұрыс жауап бер", (s) => s.counters.bestStreak, 5],
+    ["streak15", "bolt", "Тоқтаусыз", "15 сұраққа қатарынан дұрыс жауап бер", (s) => s.counters.bestStreak, 15],
+    ["days3", "calendar", "Тұрақтылық", "3 күн қатарынан жаттық", (s) => s.counters.bestDays, 3],
+    ["days7", "calendar", "Апталық марафон", "7 күн қатарынан жаттық", (s) => s.counters.bestDays, 7],
+    ["mock1", "timer", "Алғашқы сынақ", "Кез келген сынақты аяқта", (s) => s.history.length, 1],
+    ["full1", "flag", "Толық ҰБТ", "240 минуттық толық сынақты аяқта", (s) => s.history.filter((h) => h.mode === "full").length, 1],
+    ["pass", "target", "Шектен өттім", "Сынақта шекті балдан өт", (s) => s.history.filter((h) => h.pass).length, 1],
+    ["s100", "trophy", "Жүздік клуб", "Толық сынақта 100 балл жина", fullBest, 100],
+    ["daily1", "sun", "Күн сұрақтары", "Күн сұрақтарын аяқта", (s) => s.counters.daily, 1],
+    ["daily7", "calendar", "Апта бойы", "Күн сұрақтарын 7 рет аяқта", (s) => s.counters.daily, 7],
+    ["all14", "grid", "Жан-жақты", "14 пәннің әрқайсысынан сұрақ шеш", (s) => Object.keys(SUBJ).filter((k) => s.stats[k] && s.stats[k].n).length, 14],
+    ["gen50", "calc", "Есепші", "50 генерацияланған есепті дұрыс шеш", (s) => s.counters.gen, 50],
+    ["fix10", "refresh", "Қатемен жұмыс", "Қателер банкінен 10 сұрақты түзет", (s) => s.counters.fixed, 10],
+    ["focus1", "target", "Терең фокус", "Бір фокус сессиясын аяқта", (s) => s.counters.focus, 1],
+    ["star10", "star", "Жинақшы", "10 сұрақты таңдаулыға қос", (s) => Object.keys(s.stars).length, 10],
+    ["early", "sun", "Таңғы құс", "Таңғы 7-ге дейін жаттық", (s) => s.counters.early, 1],
+    ["night", "moon", "Түнгі жұлдыз", "Түнгі 23-тен кейін жаттық", (s) => s.counters.night, 1],
+  ];
+  function checkBadges() {
+    const fresh = [];
+    BADGES.forEach(([id, , name, , val, goal]) => {
+      if (!state.badges[id] && val(state) >= goal) { state.badges[id] = Date.now(); fresh.push(name); }
+    });
+    if (!fresh.length) return;
+    save();
+    fresh.forEach((n) => toast(`Жаңа жетістік: ${n}`, "badge"));
+    setTimeout(() => { fx("badge"); boom({ count: 90 }); }, 250);
+  }
+
+  // Seeded random for the daily set: same questions for everyone on the same day and combo
+  function seedOf(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function rng(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function greeting() {
+    const h = new Date().getHours();
+    return h < 5 ? "Қайырлы түн" : h < 12 ? "Қайырлы таң" : h < 18 ? "Қайырлы күн" : "Қайырлы кеш";
   }
   function streakNow() {
     const s = state.streak;
@@ -271,6 +404,7 @@
       <span class="q-topic"><span class="q-dot" style="--sc:${scColor(inst.subj)}"></span>${SUBJ[inst.subj].name} · ${inst.topic}</span>
       <span class="pill pill-${inst.t}">${U.typeNames[inst.t]}</span>
       <span class="pill pill-pts">${maxPts(inst)} балл</span>
+      ${o.star ? starBtn(inst.id) : ""}
     </div>`;
     const ctx = inst.ctx ? `<div class="q-ctx"><div class="q-ctx-label">Мәтін</div>${paras(inst.ctx)}</div>` : "";
     let hint = "";
@@ -324,15 +458,28 @@
     return `<article class="q-card${o.anim ? " anim" : ""}${tone}" data-qid="${inst.id}">${meta}${ctx}<p class="q-text">${inst.q}</p>${hint}${body}${o.actions || ""}${explain}</article>`;
   }
 
+  function starBtn(id) {
+    const on = !!state.stars[id];
+    return `<button type="button" class="star-btn${on ? " on" : ""}" data-act="star" data-qid="${id}" aria-pressed="${on}" title="${on ? "Таңдаулыдан алып тастау" : "Таңдаулыға қосу"}">${ic("star")}</button>`;
+  }
+
   /* ---------- progress bookkeeping ---------- */
   function bumpDay(k = 1) {
     const today = dayKey();
     if (state.day.date !== today) state.day = { date: today, n: 0 };
     state.day.n += k;
+    state.days[today] = (state.days[today] || 0) + k;
     if (state.streak.last !== today) {
       state.streak.count = state.streak.last === yesterdayKey() ? state.streak.count + 1 : 1;
       state.streak.last = today;
+      state.counters.bestDays = Math.max(state.counters.bestDays, state.streak.count);
+      // keep about a year of activity history
+      const keys = Object.keys(state.days).sort();
+      while (keys.length > 400) delete state.days[keys.shift()];
     }
+    const h = new Date().getHours();
+    if (h >= 23) state.counters.night = 1;
+    if (h >= 4 && h < 7) state.counters.early = 1;
   }
 
   function recordAnswer(inst, pts, max) {
@@ -352,6 +499,11 @@
       delete state.mistakes[inst.id];
       cleared = true;
     }
+    const c = state.counters;
+    c.answered++;
+    if (inst.gen && ok) c.gen++;
+    if (cleared) c.fixed++;
+    addXP(ok ? 10 * max : pts > 0 ? 5 : 2);
     bumpDay();
     return cleared;
   }
@@ -375,6 +527,7 @@
     if (view === "home") renderHome();
     else if (view === "practice") renderPractice();
     else if (view === "mock") renderMock();
+    else if (view === "konspekt") renderKonspekt();
     else if (view === "mistakes") renderMistakes();
     else if (view === "progress") renderProgress();
     updateChrome();
@@ -385,6 +538,10 @@
     $("#navMistakes").textContent = n ? String(n) : "";
     $("#tabMistakes").textContent = n ? String(n > 99 ? "99+" : n) : "";
     $("#streakChip").innerHTML = `${ic("fire")}${streakNow()} күн`;
+    const L1 = levelOf(state.xp);
+    $("#levelChip").innerHTML = `<span class="lv-ring" style="--p:${Math.round(L1.pct * 100)}"><b>${L1.lv}</b></span><span class="lv-text"><b>${L1.name}</b><small>${state.xp} XP</small></span>`;
+    $("#levelChip").title = `${L1.lv}-деңгей · ${L1.name} · ${state.xp} XP`;
+    renderFocusChip();
     const banner = $("#examBanner");
     banner.hidden = !(state.exam && view !== "mock");
     if (state.exam) $("#examBannerTime").textContent = fmtClock(state.exam.endAt - Date.now());
@@ -492,6 +649,177 @@
     $("#weakTopics").innerHTML = weak.length
       ? weak.map((w) => `<button type="button" class="weak-item" data-act="weak" data-subj="${w.subj}" data-topic="${encodeURIComponent(w.topic)}">${scIcon(w.subj, "sm")}<span class="wi-text"><span>${w.topic}</span><small>${SUBJ[w.subj].name} · ${w.n} жауап</small></span><b>${w.acc}%</b></button>`).join("")
       : `<div class="empty"><span class="empty-icon">${ic("target")}</span><p>Әр тақырыптан кемінде 3 сұрақ шешкенде, дәлдігі 80%-дан төмен тақырыптар осында шығады.</p></div>`;
+
+    const name = state.profile.name;
+    const eb = $("#heroEyebrow");
+    eb.classList.toggle("greet", !!name);
+    eb.innerHTML = name
+      ? `<span class="dot"></span>${greeting()}, <b>${esc(name)}</b>!`
+      : `<span class="dot"></span>ҰБТ · 120 тапсырма · 140 балл · 240 минут`;
+    renderWelcome();
+    renderDaily();
+    renderLevelCard();
+    renderFocus();
+  }
+
+  function renderWelcome() {
+    const box = $("#welcomeCard");
+    if (state.profile.onboarded) { box.innerHTML = ""; return; }
+    const options = U.combos.map((c) => { const k = c.join("-"); return `<option value="${k}"${k === state.combo ? " selected" : ""}>${comboName(k)}</option>`; }).join("");
+    box.innerHTML = `<section class="welcome" aria-labelledby="wlTitle">
+      <div class="wl-copy">
+        <span class="wl-icon">${ic("spark")}</span>
+        <div><h2 class="h2" id="wlTitle">Танысайық!</h2><p>Атыңды және бейіндік пәндеріңді жаз. Сонда күн сұрақтары, сынақ пен кері санақ саған бейімделеді.</p></div>
+      </div>
+      <form class="wl-form" id="welcomeForm">
+        <label class="field"><span>Атың</span><input id="obName" maxlength="24" autocomplete="given-name" placeholder="Мысалы, Айдана" value="${esc(state.profile.name)}" /></label>
+        <label class="field"><span>Бейіндік пәндер</span><select id="obCombo">${options}</select></label>
+        <label class="field"><span>ҰБТ күні</span><input type="date" id="obDate" value="${state.examDate}" /></label>
+        <label class="field"><span>Мақсатты балл</span><input type="number" id="obTarget" min="50" max="140" inputmode="numeric" value="${state.target}" /></label>
+        <div class="wl-actions">
+          <button type="submit" class="btn btn-primary">${ic("check")}Сақтау</button>
+          <button type="button" class="btn btn-ghost" data-act="ob-skip">Кейін</button>
+        </div>
+      </form>
+    </section>`;
+  }
+
+  function saveWelcome() {
+    state.profile.name = $("#obName").value.trim().slice(0, 24);
+    state.combo = $("#obCombo").value;
+    state.examDate = $("#obDate").value;
+    const t = Math.round(Number($("#obTarget").value));
+    state.target = Math.min(140, Math.max(50, Number.isFinite(t) ? t : 100));
+    state.profile.onboarded = true;
+    save();
+    renderHome();
+    updateChrome();
+    celebrate(state.profile.name ? `Танысқаныма қуаныштымын, ${state.profile.name}!` : "Баптаулар сақталды!", "done", 110);
+  }
+
+  /* ---------- daily questions ---------- */
+  function dailyState() {
+    if (state.daily.date !== dayKey()) state.daily = { date: dayKey(), idx: 0, ok: 0, res: [], done: false };
+    return state.daily;
+  }
+
+  function dailyItems() {
+    const rand = rng(seedOf(dayKey() + "|" + state.combo));
+    const [p1, p2] = state.combo.split("-");
+    const out = [];
+    [["history", 3], ["mathlit", 2], [p1, 3], [p2, 2]].forEach(([subj, n]) => {
+      const pool = shuffle(U.items[subj].filter((it) => it.t !== "c"), rand).slice(0, n);
+      const gens = U.gens[subj];
+      pool.forEach((it, i) => {
+        const g = gens.length && i === n - 1 ? U.runGen(gens[Math.floor(rand() * gens.length)], rand) : null;
+        out.push(g || it);
+      });
+    });
+    return out.map((it) => instantiate(it, rand));
+  }
+
+  function renderDaily() {
+    const d = dailyState();
+    const dots = Array.from({ length: DAILY_N }, (_, i) => `<i class="${i < d.res.length ? (d.res[i] ? "ok" : "bad") : ""}"></i>`).join("");
+    const text = d.done
+      ? `Бүгінгі нәтиже: <b>${d.ok} / ${DAILY_N}</b>. Жаңа сұрақтар ертең шығады.`
+      : d.idx ? `${d.idx} / ${DAILY_N} сұраққа жауап бердің. Жалғастыр!` : "Тарих, мат. сауаттылық және өз бейіндік пәндеріңнен 10 сұрақ. Шамамен 8 минут.";
+    $("#dailyCard").innerHTML = `
+      <div class="dc-head"><span class="dc-icon">${ic("sun")}</span><div><b>Күн сұрақтары</b><small>${fmtDate(Date.now())} · ${comboName(state.combo)}</small></div><span class="dc-xp">+30 XP</span></div>
+      <p class="dc-text">${text}</p>
+      <div class="dc-dots" aria-hidden="true">${dots}</div>
+      ${d.done
+        ? `<button type="button" class="btn btn-light" data-nav="practice">${ic("pen")}Жаттығуды жалғастыру</button>`
+        : `<button type="button" class="btn btn-light" data-act="daily">${ic("play")}${d.idx ? "Жалғастыру" : "Бастау"}</button>`}`;
+  }
+
+  function openDaily() {
+    const d = dailyState();
+    if (d.done) return;
+    P = newSession("daily", "daily");
+    P.queue = dailyItems().slice(d.idx);
+    P.session = { total: DAILY_N, done: d.idx, ok: d.ok, xp: 0 };
+    if (view !== "practice") go("practice");
+    nextPractice();
+  }
+
+  function renderLevelCard() {
+    const L1 = levelOf(state.xp);
+    const R = 34, C = 2 * Math.PI * R;
+    $("#levelCard").innerHTML = `
+      <div class="lc-top">
+        <div class="lc-ring"><svg viewBox="0 0 84 84" aria-hidden="true">
+          <circle class="lr-track" cx="42" cy="42" r="${R}"/>
+          ${L1.pct > 0 ? `<circle class="lr-val" cx="42" cy="42" r="${R}" stroke-dasharray="${(L1.pct * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 42 42)"/>` : ""}
+        </svg><b>${L1.lv}</b></div>
+        <div class="lc-copy"><small>Деңгей</small><b>${L1.name}</b><span>${state.xp} XP</span></div>
+      </div>
+      <div class="lc-bar"><i style="width:${Math.round(L1.pct * 100)}%"></i></div>
+      <p class="lc-hint">${L1.next ? `Келесі деңгейге дейін <b>${L1.toNext} XP</b>. Дұрыс жауап +10, 2 балдық тапсырма +20 XP.` : "Ең жоғары деңгейге жеттің. Керемет!"}</p>
+      <button type="button" class="btn btn-soft btn-sm" data-nav="progress">${ic("trophy")}Жетістіктер · ${Object.keys(state.badges).length}/${BADGES.length}</button>`;
+  }
+
+  /* ---------- focus timer ---------- */
+  function focusLeft() {
+    return F.running ? Math.max(0, Math.round((F.endAt - Date.now()) / 1000)) : F.left;
+  }
+  const mmss = (sec) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+  function renderFocus() {
+    const box = $("#focusCard");
+    if (!box) return;
+    const left = focusLeft();
+    const f = F.total ? 1 - left / F.total : 0;
+    const R = 46, C = 2 * Math.PI * R;
+    const presets = [15, 25, 45].map((m) => `<button type="button" class="chip-btn${F.total === m * 60 ? " active" : ""}" data-act="focus-set" data-min="${m}"${F.running ? " disabled" : ""}>${m} мин</button>`).join("");
+    box.innerHTML = `
+      <h2 class="h2">${ic("timer")}Фокус уақыты</h2>
+      <div class="fc-body">
+        <div class="fc-ring"><svg viewBox="0 0 108 108" aria-hidden="true">
+          <circle class="fr-track" cx="54" cy="54" r="${R}"/>
+          <circle class="fr-val" cx="54" cy="54" r="${R}" stroke-dasharray="${(f * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 54 54)"/>
+        </svg><b id="focusTime">${mmss(left)}</b></div>
+        <div class="fc-side">
+          <div class="chips">${presets}</div>
+          <div class="row">
+            ${F.running
+              ? `<button type="button" class="btn btn-ghost btn-sm" data-act="focus-pause">${ic("pause")}Кідірту</button>`
+              : `<button type="button" class="btn btn-primary btn-sm" data-act="focus-start">${ic("play")}${left < F.total ? "Жалғастыру" : "Бастау"}</button>`}
+            <button type="button" class="btn btn-ghost btn-sm" data-act="focus-reset" aria-label="Қайта бастау">${ic("refresh")}</button>
+          </div>
+        </div>
+      </div>
+      <p class="fc-hint">Телефонды ысырып қой да, осы уақыт ішінде тек жаттығумен айналыс. Аяқтасаң +20 XP.</p>`;
+  }
+
+  function renderFocusChip() {
+    const chip = $("#focusChip");
+    chip.hidden = !F.running;
+    if (F.running) $("#focusChipTime").textContent = mmss(focusLeft());
+  }
+
+  function focusTick() {
+    if (!F.running) return;
+    const left = focusLeft();
+    if (left <= 0) {
+      F.running = false;
+      F.left = F.total;
+      state.counters.focus++;
+      addXP(20);
+      save();
+      celebrate("Фокус сессиясы аяқталды! +20 XP", "done");
+      checkBadges();
+      if (view === "home") renderFocus();
+      updateChrome();
+      return;
+    }
+    const t = $("#focusTime");
+    if (t && view === "home") {
+      t.textContent = mmss(left);
+      const val = $("#focusCard .fr-val");
+      if (val) { const C = 2 * Math.PI * 46; val.setAttribute("stroke-dasharray", `${((1 - left / F.total) * C).toFixed(1)} ${C.toFixed(1)}`); }
+    }
+    renderFocusChip();
   }
 
   /* ---------- practice ---------- */
@@ -517,19 +845,48 @@
     if (P) renderPracticeRun();
   }
 
+  function newSession(subj, mode, topic = null) {
+    return { subj, topic, mode, n: 0, ok: 0, pts: 0, max: 0, streak: 0, recent: [], inst: null, resp: null, checked: false, queue: null, session: null };
+  }
+
   function openPractice(subj, opts = {}) {
-    P = { subj, topic: opts.topic || null, mode: opts.mode || "all", n: 0, ok: 0, pts: 0, max: 0, streak: 0, recent: [], inst: null, resp: null, checked: false, queue: null };
-    if (P.mode === "mistakes") P.queue = mistakeQueue(subj);
+    P = newSession(subj, opts.mode || "all", opts.topic || null);
+    setupMode();
     if (view !== "practice") go("practice");
     nextPractice();
   }
 
-  function mistakeQueue(subj) {
-    return shuffle(Object.values(state.mistakes).filter((m) => subj === "all" || m.subj === subj));
+  // Fill the queue for queue-driven modes
+  function setupMode() {
+    P.queue = null;
+    P.session = null;
+    if (P.mode === "mistakes") P.queue = refQueue(state.mistakes, P.subj, true);
+    else if (P.mode === "stars") P.queue = refQueue(state.stars, P.subj, false);
+    else if (P.mode === "quiz") {
+      P.queue = quizItems();
+      P.session = { total: P.queue.length, done: 0, ok: 0, xp: 0 };
+    }
+  }
+
+  function refQueue(map, subj, mustStay) {
+    return shuffle(Object.values(map).filter((m) => subj === "all" || m.subj === subj)).map((m) => ({ ref: m, mustStay }));
+  }
+
+  function quizItems() {
+    const items = shuffle(U.items[P.subj].filter((it) => !P.topic || it.topic === P.topic));
+    const gens = U.gens[P.subj].filter((g) => !P.topic || g.topic === P.topic);
+    const out = [];
+    const nGen = gens.length ? Math.min(QUIZ_N, Math.max(Math.round(QUIZ_N * 0.3), QUIZ_N - items.length)) : 0;
+    items.slice(0, QUIZ_N - nGen).forEach((it) => out.push(it));
+    for (let k = 0; k < nGen * 3 && out.length < QUIZ_N; k++) {
+      const it = U.runGen(pick(gens), Math.random);
+      if (it && !out.some((o) => o.id === it.id)) out.push(it);
+    }
+    return shuffle(out);
   }
 
   function practiceTopics() {
-    if (P.subj === "all") return [];
+    if (!SUBJ[P.subj]) return [];
     if (P.mode === "gen") return Array.from(new Set(U.gens[P.subj].map((g) => g.topic))).map((t) => [t, 0]);
     const map = {};
     U.items[P.subj].forEach((it) => { map[it.topic] = (map[it.topic] || 0) + 1; });
@@ -538,11 +895,16 @@
   }
 
   function pickPractice() {
-    if (P.mode === "mistakes") {
+    if (P.mode === "daily") return P.queue.shift() || null;
+    if (P.mode === "quiz") {
+      const it = P.queue.shift();
+      return it ? instantiate(it) : null;
+    }
+    if (P.mode === "mistakes" || P.mode === "stars") {
       while (P.queue.length) {
-        const m = P.queue.shift();
-        const it = m.item || U.byId[m.id];
-        if (it && state.mistakes[m.id]) return instantiate(it);
+        const { ref, mustStay } = P.queue.shift();
+        const it = ref.item || U.byId[ref.id];
+        if (it && (!mustStay || state.mistakes[ref.id])) return instantiate(it);
       }
       return null;
     }
@@ -589,63 +951,132 @@
     if (card && card.getBoundingClientRect().top < 60) card.scrollIntoView({ block: "start" });
   }
 
+  function practiceHeader() {
+    if (P.subj === "daily") return `<span class="sc-icon" style="--sc:#e08a00">${ic("sun")}</span><h2 class="h2">Күн сұрақтары</h2>`;
+    if (P.subj === "all") {
+      return P.mode === "stars"
+        ? `<span class="sc-icon" style="--sc:#e08a00">${ic("star")}</span><h2 class="h2">Таңдаулы сұрақтар</h2>`
+        : `<span class="sc-icon" style="--sc:#cc3b3b">${ic("bookmark")}</span><h2 class="h2">Барлық қателер</h2>`;
+    }
+    return `${scIcon(P.subj)}<h2 class="h2">${SUBJ[P.subj].name}</h2>`;
+  }
+
   function renderPracticeRun() {
     $("#subjectPicker").hidden = true;
     $("#practiceRun").hidden = false;
-    $("#practiceSubject").innerHTML = P.subj === "all"
-      ? `<span class="sc-icon" style="--sc:#cc3b3b">${ic("bookmark")}</span><h2 class="h2">Барлық қателер</h2>`
-      : `${scIcon(P.subj)}<h2 class="h2">${SUBJ[P.subj].name}</h2>`;
+    $("#practiceSubject").innerHTML = practiceHeader();
     $("#practiceScore").innerHTML = `<span class="stat-chip ok" title="Дұрыс жауап">${ic("check")}${P.ok}</span><span class="stat-chip" title="Барлық жауап">${P.n} жауап</span>${P.streak >= 2 ? `<span class="stat-chip fire" title="Қатарынан дұрыс">${ic("fire")}${P.streak}</span>` : ""}`;
 
+    const inSubject = !!SUBJ[P.subj];
     const nMist = Object.values(state.mistakes).filter((m) => P.subj === "all" || m.subj === P.subj).length;
+    const nStar = Object.values(state.stars).filter((m) => P.subj === "all" || m.subj === P.subj).length;
     const modes = [];
-    if (P.subj !== "all") {
-      modes.push(["all", "Барлығы", "grid"], ["new", "Жаңа сұрақтар", "spark"]);
+    if (inSubject) {
+      modes.push(["all", "Барлығы", "grid"], ["quiz", `${QUIZ_N} сұрақ`, "flag"], ["new", "Жаңа сұрақтар", "spark"]);
       if (U.gens[P.subj].length) modes.push(["gen", "Шексіз есептер", "bolt"]);
     }
-    if (nMist || P.mode === "mistakes") modes.push(["mistakes", `Қателер · ${nMist}`, "bookmark"]);
+    if (P.subj !== "daily") {
+      if (nMist || P.mode === "mistakes") modes.push(["mistakes", `Қателер · ${nMist}`, "bookmark"]);
+      if (nStar || P.mode === "stars") modes.push(["stars", `Таңдаулы · ${nStar}`, "star"]);
+    }
+    $("#practiceModes").hidden = !modes.length;
     $("#practiceModes").innerHTML = modes.map(([k, label, icon]) => `<button type="button" class="chip-btn chip-mode${P.mode === k ? " active" : ""}" data-act="p-mode" data-mode="${k}">${ic(icon)}${label}</button>`).join("");
 
-    const topics = P.mode === "mistakes" ? [] : practiceTopics();
+    const topics = ["mistakes", "stars", "daily"].includes(P.mode) ? [] : practiceTopics();
     const topicsEl = $("#practiceTopics");
     topicsEl.hidden = topics.length < 2;
     topicsEl.innerHTML = `<button type="button" class="chip-btn${!P.topic ? " active" : ""}" data-act="p-topic" data-topic="">Барлық тақырып</button>` +
       topics.map(([t, n]) => `<button type="button" class="chip-btn${P.topic === t ? " active" : ""}" data-act="p-topic" data-topic="${encodeURIComponent(t)}">${t}<small>${n || "∞"}</small></button>`).join("");
 
+    const ses = P.session;
+    const bar = $("#practiceSession");
+    if (ses && P.inst) {
+      const current = Math.min(ses.total, ses.done + (P.checked ? 0 : 1));
+      bar.hidden = false;
+      bar.innerHTML = `<span class="ps-count"><b>${current}</b> / ${ses.total}</span><span class="ps-track"><i style="width:${(ses.done / ses.total) * 100}%"></i></span><span class="ps-xp">${ic("bolt")}+${ses.xp} XP</span>`;
+    } else bar.hidden = true;
+
     const card = $("#practiceCard");
     if (!P.inst) {
-      card.innerHTML = P.mode === "mistakes"
-        ? `<div class="empty-state"><span class="empty-icon ok">${ic("trophy")}</span><p>Қателер тізімі бос. Барлығын дұрыс шештің!</p><button type="button" class="btn btn-primary" data-act="p-mode" data-mode="all"${P.subj === "all" ? " hidden" : ""}>${ic("pen")}Жаттығуды жалғастыру</button></div>`
-        : `<div class="empty-state"><span class="empty-icon">${ic("book")}</span><p>Бұл тақырыпта сұрақ жоқ.</p></div>`;
+      if (ses) { card.innerHTML = sessionSummary(); return; }
+      if (P.mode === "mistakes") card.innerHTML = `<div class="empty-state"><span class="empty-icon ok">${ic("trophy")}</span><h2 class="h2">Қателер тізімі бос</h2><p>Барлығын дұрыс шештің. Жарайсың!</p>${inSubject ? `<button type="button" class="btn btn-primary" data-act="p-mode" data-mode="all">${ic("pen")}Жаттығуды жалғастыру</button>` : ""}</div>`;
+      else if (P.mode === "stars") card.innerHTML = `<div class="empty-state"><span class="empty-icon">${ic("star")}</span><h2 class="h2">Таңдаулылар бітті</h2><p>Барлық таңдаулы сұрақты қайталап шықтың.</p><button type="button" class="btn btn-primary" data-act="p-mode" data-mode="stars">${ic("refresh")}Қайтадан</button></div>`;
+      else card.innerHTML = `<div class="empty-state"><span class="empty-icon">${ic("book")}</span><p>Бұл тақырыпта сұрақ жоқ.</p></div>`;
       return;
     }
     const inst = P.inst;
     const needsCheck = inst.t === "x" || inst.t === "m";
+    const canSkip = P.mode !== "daily";
     let actions;
     if (!P.checked) {
       actions = `<div class="q-actions">
         ${needsCheck ? `<button type="button" class="btn btn-primary" data-act="p-check" ${isAnswered(inst, P.resp) ? "" : "disabled"}>${ic("check")}Тексеру</button>` : ""}
-        <button type="button" class="btn btn-ghost" data-act="p-skip">Өткізу${ic("skip")}</button>
+        ${canSkip ? `<button type="button" class="btn btn-ghost" data-act="p-skip">Өткізу${ic("skip")}</button>` : ""}
         <span class="spacer"></span><span class="kbd-hint"><kbd>1</kbd>–<kbd>${inst.opts.length}</kbd> <kbd>Enter</kbd></span>
       </div>`;
     } else {
-      actions = `<div class="q-actions"><button type="button" class="btn btn-primary" data-act="p-next">Келесі сұрақ${ic("arrow")}</button><span class="spacer"></span><span class="kbd-hint"><kbd>Enter</kbd></span></div>`;
+      const last = ses && !P.queue.length;
+      actions = `<div class="q-actions"><button type="button" class="btn btn-primary" data-act="p-next">${last ? `${ic("trophy")}Қорытынды` : `Келесі сұрақ${ic("arrow")}`}</button><span class="spacer"></span><span class="kbd-hint"><kbd>Enter</kbd></span></div>`;
     }
-    card.innerHTML = questionHTML(inst, { resp: P.resp, reveal: P.checked, locked: P.checked, actions, anim: P.checked });
+    card.innerHTML = questionHTML(inst, { resp: P.resp, reveal: P.checked, locked: P.checked, actions, anim: P.checked, star: true });
+  }
+
+  function sessionSummary() {
+    const ses = P.session;
+    const total = ses.total || 1;
+    const p = Math.round((ses.ok / total) * 100);
+    const msg = p >= 90 ? "Керемет! Сен дайынсың." : p >= 70 ? "Жақсы нәтиже!" : p >= 40 ? "Жаман емес, тағы да жаттығайық" : "Бастау — жартылай жеңіс";
+    const sub = p >= 70 ? "Осы қарқынмен жалғастыр, ҰБТ-да да солай болады." : "Қате жауаптар «Қателер» бөліміне сақталды. Оларды қайталап шық.";
+    if (!ses.celebrated) {
+      ses.celebrated = true;
+      if (p >= 70) setTimeout(() => { fx("done"); boom({ count: 150 }); }, 200);
+    }
+    const again = P.mode === "daily"
+      ? `<button type="button" class="btn btn-primary" data-nav="home">${ic("home")}Басты бетке</button>`
+      : `<button type="button" class="btn btn-primary" data-act="p-mode" data-mode="quiz">${ic("refresh")}Тағы ${QUIZ_N} сұрақ</button>`;
+    const mistakesBtn = Object.keys(state.mistakes).length ? `<button type="button" class="btn btn-soft" data-act="mistakes-all">${ic("bookmark")}Қателерді қайталау</button>` : "";
+    return `<div class="summary-card">
+      ${scoreRing(ses.ok, total, "дұрыс")}
+      <div class="result-copy">
+        <span class="status ok">${ic("bolt")}+${ses.xp} XP</span>
+        <h2 class="h1">${msg}</h2>
+        <p>${sub}</p>
+        <div class="row wrap-row">${again}${mistakesBtn}</div>
+      </div>
+    </div>`;
   }
 
   function practiceCheck() {
     if (!P || !P.inst || P.checked || !isAnswered(P.inst, P.resp)) return;
     const g = grade(P.inst, P.resp);
+    const ok = g.pts === g.max;
     P.checked = true;
     P.n++;
     P.pts += g.pts;
     P.max += g.max;
-    if (g.pts === g.max) { P.ok++; P.streak++; } else P.streak = 0;
+    if (ok) { P.ok++; P.streak++; } else P.streak = 0;
+    state.counters.bestStreak = Math.max(state.counters.bestStreak, P.streak);
     const cleared = recordAnswer(P.inst, g.pts, g.max);
+    if (P.session) {
+      P.session.done++;
+      if (ok) P.session.ok++;
+    }
+    if (P.mode === "daily") {
+      const d = dailyState();
+      d.idx++;
+      d.res.push(ok);
+      if (ok) d.ok++;
+      if (d.idx >= DAILY_N && !d.done) {
+        d.done = true;
+        state.counters.daily++;
+        addXP(30);
+      }
+    }
+    fx(ok ? "ok" : "bad");
     save();
     if (cleared) toast("Бұл сұрақ қателер тізімінен шықты", "ok");
-    else if (P.streak > 0 && P.streak % 5 === 0) toast(`Қатарынан ${P.streak} дұрыс жауап!`, "ok");
+    else if (P.streak > 0 && P.streak % 5 === 0) { toast(`Қатарынан ${P.streak} дұрыс жауап!`, "ok"); boom({ count: 60 }); }
+    checkBadges();
     renderPracticeRun();
     updateChrome();
     // keep the explanation and the next button in view on small screens
@@ -654,6 +1085,28 @@
       const r = next.getBoundingClientRect();
       if (r.bottom > window.innerHeight - 100) window.scrollBy({ top: r.bottom - window.innerHeight + 130, behavior: "smooth" });
     }
+  }
+
+  function toggleStar(id) {
+    let inst = P && P.inst && P.inst.id === id ? P.inst : null;
+    if (!inst && state.last) state.last.sections.forEach((sec) => sec.items.forEach((it) => { if (it.id === id) inst = it; }));
+    if (state.stars[id]) {
+      delete state.stars[id];
+      toast("Таңдаулыдан алынды");
+    } else {
+      const it = inst || U.byId[id];
+      if (!it) return;
+      state.stars[id] = { id, subj: it.subj, at: Date.now(), item: inst && inst.gen ? inst.src : undefined };
+      toast("Таңдаулыға қосылды", "ok");
+    }
+    save();
+    $all(`.star-btn[data-qid="${id}"]`).forEach((b) => {
+      const on = !!state.stars[id];
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    checkBadges();
+    if (view === "mistakes") renderMistakes();
   }
 
   function practiceClick(el) {
@@ -886,7 +1339,10 @@
     if (state.history.length > 60) state.history = state.history.slice(-60);
     state.last = Object.assign({}, ex, { finishedAt: Date.now(), parts, total, totalMax, totalMin, pass, mins, auto: !!auto });
     state.exam = null;
+    addXP((ex.mode === "full" ? 50 : 25) + (pass ? 50 : 0));
     save();
+    if (pass) setTimeout(() => { fx("done"); boom({ count: 200 }); }, 300);
+    checkBadges();
     mockScreen = "result";
     reviewFilter = "wrong";
     $("#examConfirm").hidden = true;
@@ -932,6 +1388,7 @@
           <div class="row wrap-row">
             <button type="button" class="btn btn-primary" data-act="mock-new">${ic("refresh")}Жаңа сынақ</button>
             ${wrong.length ? `<button type="button" class="btn btn-soft" data-act="mistakes-all">${ic("bookmark")}Қателерді жаттықтыру</button>` : ""}
+            <button type="button" class="btn btn-ghost" data-act="share">${ic("share")}Бөлісу</button>
           </div>
         </div>
       </div>
@@ -944,17 +1401,17 @@
           <button type="button" class="chip-btn chip-mode${reviewFilter === "all" ? " active" : ""}" data-act="rev" data-f="all">${ic("grid")}Барлығы<small>${flat.length}</small></button>
         </div>
       </div>
-      <div class="review-list">${shown.length ? shown.map((x) => questionHTML(x.inst, { num: x.num, resp: x.resp, reveal: true, locked: true })).join("") : `<div class="empty"><span class="empty-icon ok">${ic("check")}</span><p>Бұл тізім бос.</p></div>`}</div>`;
+      <div class="review-list">${shown.length ? shown.map((x) => questionHTML(x.inst, { num: x.num, resp: x.resp, reveal: true, locked: true, star: true })).join("") : `<div class="empty"><span class="empty-icon ok">${ic("check")}</span><p>Бұл тізім бос.</p></div>`}</div>`;
   }
 
-  function scoreRing(total, max) {
+  function scoreRing(total, max, cap = "балл") {
     const R = 58, C = 2 * Math.PI * R, f = max ? Math.min(1, total / max) : 0;
     return `<div class="score-ring"><svg viewBox="0 0 140 140" role="img" aria-label="${total} / ${max} балл">
       <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--sky-hi)"/><stop offset="0.65" style="stop-color:var(--sky)"/><stop offset="1" style="stop-color:var(--gold-hi)"/></linearGradient></defs>
       <circle class="sr-track" cx="70" cy="70" r="${R}"/>
       ${f > 0 ? `<circle class="sr-val" cx="70" cy="70" r="${R}" stroke-dasharray="${(f * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 70 70)"/>` : ""}
       <text class="sr-num" x="70" y="76" text-anchor="middle">${total}</text>
-      <text class="sr-cap" x="70" y="98" text-anchor="middle">/ ${max} балл</text>
+      <text class="sr-cap" x="70" y="98" text-anchor="middle">/ ${max} ${cap}</text>
     </svg></div>`;
   }
 
@@ -975,6 +1432,7 @@
   function renderMistakes() {
     const list = Object.values(state.mistakes);
     const body = $("#mistakesBody");
+    renderStars();
     if (!list.length) {
       body.innerHTML = `<div class="empty-state"><span class="empty-icon ok">${ic("trophy")}</span><h2 class="h2">Қателер жоқ</h2><p>Жаттығу немесе сынақ кезінде қате жауап берген сұрақтар осында жиналады.</p><button type="button" class="btn btn-primary" data-nav="practice">${ic("pen")}Жаттығуды бастау</button></div>`;
       return;
@@ -983,6 +1441,135 @@
     list.forEach((m) => { by[m.subj] = (by[m.subj] || 0) + 1; });
     const cards = Object.keys(SUBJ).filter((k) => by[k]).map((k) => `<button type="button" class="mistake-card" style="--sc:${scColor(k)}" data-act="mistakes-subj" data-subj="${k}"><span class="mc-top">${scIcon(k)}<b>${by[k]}</b></span><span class="mc-name">${SUBJ[k].name}</span><small>Қайта шешу ${ic("arrow")}</small></button>`).join("");
     body.innerHTML = `<div class="mistakes-cta"><div><b>${list.length}</b><span>сұрақ қайталауды күтіп тұр</span></div><button type="button" class="btn btn-primary btn-lg" data-act="mistakes-all">${ic("refresh")}Барлығын қайта шешу</button></div><div class="mistake-grid">${cards}</div>`;
+  }
+
+  function renderStars() {
+    const list = Object.values(state.stars).sort((a, b) => b.at - a.at);
+    const body = $("#starsBody");
+    const preview = (m) => {
+      const it = m.item || U.byId[m.id];
+      if (!it) return "";
+      const text = String(it.q).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      return `<li>${scIcon(m.subj, "xs")}<span>${esc(text.length > 110 ? text.slice(0, 110) + "…" : text)}</span><button type="button" class="star-btn on" data-act="star" data-qid="${m.id}" title="Таңдаулыдан алып тастау">${ic("star")}</button></li>`;
+    };
+    body.innerHTML = `<section class="panel stars-panel">
+      <div class="panel-head">
+        <h2 class="h2">${ic("star")}Таңдаулы сұрақтар</h2>
+        ${list.length ? `<button type="button" class="btn btn-primary btn-sm" data-act="stars-all">${ic("refresh")}Қайталау · ${list.length}</button>` : ""}
+      </div>
+      ${list.length
+        ? `<ul class="star-list">${list.slice(0, 12).map(preview).join("")}</ul>${list.length > 12 ? `<p class="muted small">Тағы ${list.length - 12} сұрақ бар.</p>` : ""}`
+        : `<div class="empty"><span class="empty-icon">${ic("star")}</span><p>Маңызды немесе қиын сұрақты жұлдызша арқылы таңдаулыға қос. Олар осында жиналып, қайталауға дайын тұрады.</p></div>`}
+    </section>`;
+  }
+
+  /* ---------- konspekt ---------- */
+  const K_FILTERS = [["all", "Барлығы"], ["tips", "Стратегия"], ["math", "Математика"], ["physics", "Физика"], ["chemistry", "Химия"], ["history", "Тарих"], ["kazlang", "Қазақ тілі"], ["english", "Ағылшын"], ["informatics", "Информатика"], ["geography", "География"]];
+
+  function konspektCard(c) {
+    const tips = c.subj === "tips";
+    const icon = tips ? `<span class="sc-icon sm" style="--sc:#d97706">${ic("target")}</span>` : scIcon(c.subj, "sm");
+    let body;
+    if (c.kind === "formulas") body = `<div class="kf">${c.items.map(([f, d]) => `<div class="kf-row"><span class="kf-f">${f}</span>${d ? `<span class="kf-d">${d}</span>` : ""}</div>`).join("")}</div>`;
+    else if (c.kind === "timeline") body = `<ol class="kt">${c.items.map(([y, e]) => `<li><b>${y}</b><span>${e}</span></li>`).join("")}</ol>`;
+    else if (c.kind === "table") body = `<div class="table-wrap"><table class="kx"><thead><tr>${c.head.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${c.items.map((r) => `<tr>${r.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    else body = `<ul class="kl">${c.items.map((t) => `<li>${t}</li>`).join("")}</ul>`;
+    const foot = tips || !SUBJ[c.subj] ? "" : `<button type="button" class="btn btn-soft btn-sm" data-act="open-subj" data-subj="${c.subj}">${ic("pen")}Осы пәннен жаттығу</button>`;
+    return `<article class="k-card${tips ? " k-tips" : ""}" style="--sc:${tips ? "#d97706" : scColor(c.subj)}">
+      <header class="k-head">${icon}<div><h2 class="k-title">${c.title}</h2><small>${tips ? "ҰБТ" : SUBJ[c.subj].name}</small></div></header>
+      ${body}${foot}
+    </article>`;
+  }
+
+  function renderKonspekt() {
+    const data = window.BP_KONSPEKT || [];
+    $("#konspektFilter").innerHTML = K_FILTERS.filter(([k]) => k === "all" || data.some((c) => c.subj === k))
+      .map(([k, label]) => `<button type="button" class="chip-btn${kFilter === k ? " active" : ""}" data-act="kf" data-k="${k}">${k === "all" ? ic("grid") : k === "tips" ? ic("target") : `<span class="q-dot" style="--sc:${scColor(k)}"></span>`}${label}</button>`).join("");
+    const groups = K_FILTERS.filter(([k]) => k !== "all" && (kFilter === "all" || kFilter === k))
+      .map(([k, label]) => [label, data.filter((c) => c.subj === k)])
+      .filter(([, list]) => list.length);
+    $("#konspektGrid").innerHTML = groups.map(([label, list]) => `${kFilter === "all" ? `<h2 class="h3">${label}</h2>` : ""}<div class="konspekt-cols">${list.map(konspektCard).join("")}</div>`).join("");
+  }
+
+  /* ---------- achievements & activity ---------- */
+  function renderBadges() {
+    const got = BADGES.filter(([id]) => state.badges[id]).length;
+    $("#badgesCount").textContent = `${got} / ${BADGES.length}`;
+    $("#badgeGrid").innerHTML = BADGES.map(([id, icon, name, desc, val, goal]) => {
+      const ts = state.badges[id];
+      const v = Math.min(goal, val(state));
+      return `<div class="badge${ts ? " got" : ""}">
+        <span class="bd-icon">${ic(ts ? icon : "lock")}</span>
+        <b>${name}</b>
+        <small>${desc}</small>
+        ${ts ? `<small class="bd-date">${fmtDate(ts)}</small>` : goal > 1 ? `<span class="bd-prog"><i style="width:${(v / goal) * 100}%"></i></span><small class="bd-num">${v} / ${goal}</small>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  const WEEKDAYS = ["Дс", "Сс", "Ср", "Бс", "Жм", "Сн", "Жс"];
+  const MON_SHORT = ["қаң", "ақп", "нау", "сәу", "мам", "мау", "шіл", "там", "қыр", "қаз", "қар", "жел"];
+  function renderHeatmap() {
+    const width = ($("#heatmap") && $("#heatmap").clientWidth) || 360;
+    const WEEKS = Math.max(12, Math.min(53, Math.floor((width - 34) / 19)));
+    const today = new Date(dayKey() + "T00:00:00");
+    const dow = (today.getDay() + 6) % 7; // Monday = 0
+    const start = new Date(today);
+    start.setDate(start.getDate() - dow - (WEEKS - 1) * 7);
+    let cols = "", months = "", total = 0, active = 0, best = 0, lastMonth = -1, lastLabel = -9;
+    for (let w = 0; w < WEEKS; w++) {
+      let cells = "";
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + w * 7 + d);
+        if (d === 0 && day.getMonth() !== lastMonth) {
+          lastMonth = day.getMonth();
+          if (w - lastLabel >= 3) { months += `<span style="grid-column:${w + 1}">${MON_SHORT[lastMonth]}</span>`; lastLabel = w; }
+        }
+        if (day > today) { cells += `<i class="future"></i>`; continue; }
+        const k = dayKey(day);
+        const n = state.days[k] || 0;
+        total += n;
+        if (n) active++;
+        best = Math.max(best, n);
+        const lvl = n === 0 ? 0 : n < 10 ? 1 : n < 25 ? 2 : n < 50 ? 3 : 4;
+        cells += `<i class="l${lvl}" title="${day.getDate()} ${MONTHS[day.getMonth()]}: ${n} сұрақ"></i>`;
+      }
+      cols += `<div class="hm-col">${cells}</div>`;
+    }
+    $("#heatSum").textContent = `Соңғы ${WEEKS} апта: ${total} сұрақ · ${active} белсенді күн`;
+    $("#heatmap").innerHTML = `<div class="hm">
+      <div class="hm-months" style="grid-template-columns:repeat(${WEEKS}, 15px)">${months}</div>
+      <div class="hm-body"><div class="hm-days">${WEEKDAYS.map((w, i) => `<span>${i % 2 === 0 ? w : ""}</span>`).join("")}</div><div class="hm-grid">${cols}</div></div>
+    </div>
+    <div class="hm-legend"><span>Аз</span><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>Көп</span><span class="hm-best">Ең белсенді күн: <b>${best}</b> сұрақ</span></div>`;
+  }
+
+  function renderSettings() {
+    $("#profileName").value = state.profile.name || "";
+    $("#optSound").checked = !!state.settings.sound;
+    $("#optConfetti").checked = !!state.settings.confetti;
+    $all("#fontSeg [data-fs]").forEach((b) => b.setAttribute("aria-checked", String(Number(b.dataset.fs) === Number(state.settings.fs))));
+    $("#installCard").hidden = !installEvent;
+  }
+
+  function applyFont() {
+    document.documentElement.style.setProperty("--q-scale", String(state.settings.fs || 1));
+  }
+
+  async function shareResult() {
+    const r = state.last;
+    if (!r) return;
+    const text = `BilimPath ҰБТ: ${U.plans[r.mode].label.toLowerCase()} нәтижем — ${r.total}/${r.totalMax} балл (${comboName(r.combo)}).${r.pass ? " Шекті балдан өттім!" : ""}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: "BilimPath ҰБТ", text }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("Нәтиже көшірілді — достарыңа жібер!", "ok");
+    } catch (e) {
+      toast(text);
+    }
   }
 
   /* ---------- progress ---------- */
@@ -1029,6 +1616,9 @@
     $("#examDate").value = state.examDate || "";
     $("#targetScore").value = state.target;
     $("#dailyGoal").value = state.goal;
+    renderBadges();
+    renderHeatmap();
+    renderSettings();
   }
 
   function exportState() {
@@ -1056,7 +1646,7 @@
       try {
         const data = JSON.parse(String(reader.result));
         if (!data || typeof data !== "object" || !("stats" in data)) throw new Error("bad");
-        state = Object.assign(defaults(), data);
+        state = hydrate(data);
         save();
         applyTheme();
         P = null;
@@ -1074,7 +1664,10 @@
     const nav = e.target.closest("[data-nav]");
     if (nav) {
       e.preventDefault();
-      if (nav.dataset.nav === "practice" && view === "practice" && P) { P = null; renderPractice(); return; }
+      if (nav.dataset.nav === "practice" && P && (view === "practice" || !P.inst || P.mode === "daily")) {
+        P = null;
+        if (view === "practice") { renderPractice(); window.scrollTo(0, 0); return; }
+      }
       go(nav.dataset.nav, { focus: nav.dataset.focus });
       return;
     }
@@ -1100,19 +1693,32 @@
     else if (a === "weak") openPractice(act.dataset.subj, { topic: decodeURIComponent(act.dataset.topic) });
     else if (a === "p-mode") {
       const mode = act.dataset.mode;
-      P.mode = mode;
+      if (!SUBJ[P.subj] && !["mistakes", "stars"].includes(mode)) { P = null; renderPractice(); return; }
+      const keep = P;
+      P = newSession(keep.subj, mode, keep.topic);
+      P.ok = keep.ok; P.n = keep.n; P.streak = keep.streak;
       if (mode === "gen" && P.topic && !U.gens[P.subj].some((g) => g.topic === P.topic)) P.topic = null;
-      P.queue = mode === "mistakes" ? mistakeQueue(P.subj) : null;
-      if (mode !== "mistakes" && P.subj === "all") { P = null; renderPractice(); return; }
+      setupMode();
       nextPractice();
     } else if (a === "p-topic") {
       P.topic = act.dataset.topic ? decodeURIComponent(act.dataset.topic) : null;
       P.recent = [];
+      if (P.mode === "quiz") setupMode();
       nextPractice();
     } else if (a === "p-check") practiceCheck();
     else if (a === "p-next" || a === "p-skip") nextPractice();
     else if (a === "mistakes-all") openPractice("all", { mode: "mistakes" });
     else if (a === "mistakes-subj") openPractice(act.dataset.subj, { mode: "mistakes" });
+    else if (a === "stars-all") openPractice("all", { mode: "stars" });
+    else if (a === "star") toggleStar(act.dataset.qid);
+    else if (a === "daily") openDaily();
+    else if (a === "ob-skip") { state.profile.onboarded = true; save(); renderWelcome(); }
+    else if (a === "focus-start") { F.endAt = Date.now() + F.left * 1000; F.running = true; renderFocus(); renderFocusChip(); }
+    else if (a === "focus-pause") { F.left = focusLeft(); F.running = false; renderFocus(); renderFocusChip(); }
+    else if (a === "focus-reset") { F.running = false; F.left = F.total; renderFocus(); renderFocusChip(); }
+    else if (a === "focus-set") { F.total = Number(act.dataset.min) * 60; F.left = F.total; renderFocus(); }
+    else if (a === "kf") { kFilter = act.dataset.k; renderKonspekt(); }
+    else if (a === "share") shareResult();
     else if (a === "combo") { state.combo = act.dataset.combo; save(); renderMockSetup(); }
     else if (a === "mock-mode") { mockMode = act.dataset.mode; renderMockSetup(); }
     else if (a === "ex-sec") { state.exam.cur = [Number(act.dataset.sec), 0]; save(); renderExam(); }
@@ -1120,6 +1726,10 @@
     else if (a === "rev") { reviewFilter = act.dataset.f; renderResult(); }
     else if (a === "mock-new") { mockScreen = "setup"; renderMock(); window.scrollTo(0, 0); }
     else if (a === "last-review") { mockScreen = "result"; go("mock"); }
+  });
+
+  document.addEventListener("submit", (e) => {
+    if (e.target && e.target.id === "welcomeForm") { e.preventDefault(); saveWelcome(); }
   });
 
   $("#practiceBack").addEventListener("click", () => { P = null; renderPractice(); window.scrollTo(0, 0); });
@@ -1157,6 +1767,29 @@
     e.target.value = state.goal;
     save();
   });
+  $("#profileName").addEventListener("change", (e) => {
+    state.profile.name = e.target.value.trim().slice(0, 24);
+    state.profile.onboarded = true;
+    save();
+    toast(state.profile.name ? `Сәлем, ${state.profile.name}!` : "Аты өшірілді", "ok");
+  });
+  $("#optSound").addEventListener("change", (e) => { state.settings.sound = e.target.checked; save(); if (e.target.checked) fx("ok"); });
+  $("#optConfetti").addEventListener("change", (e) => { state.settings.confetti = e.target.checked; save(); if (e.target.checked) boom({ count: 70 }); });
+  $("#fontSeg").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-fs]");
+    if (!b) return;
+    state.settings.fs = Number(b.dataset.fs);
+    save();
+    applyFont();
+    renderSettings();
+  });
+  $("#installBtn").addEventListener("click", async () => {
+    if (!installEvent) return;
+    installEvent.prompt();
+    try { await installEvent.userChoice; } catch (e) { /* dismissed */ }
+    installEvent = null;
+    renderSettings();
+  });
   $("#exportBtn").addEventListener("click", exportState);
   $("#importFile").addEventListener("change", (e) => {
     const f = e.target.files && e.target.files[0];
@@ -1167,7 +1800,7 @@
   $("#resetNo").addEventListener("click", () => { $("#resetConfirm").hidden = true; });
   $("#resetYes").addEventListener("click", () => {
     const theme = state.theme;
-    state = defaults();
+    state = hydrate(null);
     state.theme = theme;
     save();
     P = null;
@@ -1206,10 +1839,27 @@
   /* ---------- init ---------- */
   $all("i[data-ic]").forEach((el) => { el.outerHTML = ic(el.dataset.ic); });
   applyTheme();
+  applyFont();
   try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme); } catch (e) { /* old browsers */ }
   if (U.problems.length && window.console) console.warn("UBT bank:", U.problems);
   if (state.exam && state.exam.endAt <= Date.now()) finishExam(true);
   const start = (location.hash || "").slice(1);
   go(VIEWS.includes(start) ? start : "home");
-  setInterval(() => { if (state.exam) { tickTimer(); updateChrome(); } }, 1000);
+  setInterval(() => {
+    if (state.exam) { tickTimer(); updateChrome(); }
+    focusTick();
+  }, 1000);
+
+  // Installable app: offline cache on the real site, install button where the browser offers it
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installEvent = e;
+    if (view === "progress") renderSettings();
+  });
+  try {
+    const topLevel = window.self === window.top;
+    if ("serviceWorker" in navigator && topLevel && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+      window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+    }
+  } catch (e) { /* sandboxed preview */ }
 })();

@@ -10,6 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0a84b4" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
 <body>
   <header class="topbar">
@@ -23,11 +27,14 @@
         <button type="button" data-nav="home"><i data-ic="home"></i>Басты</button>
         <button type="button" data-nav="practice"><i data-ic="pen"></i>Жаттығу</button>
         <button type="button" data-nav="mock"><i data-ic="timer"></i>Сынақ</button>
+        <button type="button" data-nav="konspekt"><i data-ic="notes"></i>Конспект</button>
         <button type="button" data-nav="mistakes"><i data-ic="bookmark"></i>Қателер <span class="count" id="navMistakes"></span></button>
         <button type="button" data-nav="progress"><i data-ic="chart"></i>Прогресс</button>
       </nav>
       <div class="top-actions">
+        <button type="button" class="chip chip-focus" id="focusChip" data-nav="home" hidden><i data-ic="timer"></i><span id="focusChipTime">25:00</span></button>
         <span class="chip chip-streak" id="streakChip" title="Қатарынан күн">0 күн</span>
+        <button type="button" class="level-chip" id="levelChip" data-nav="progress" title="Деңгей"></button>
         <button type="button" class="icon-btn" id="themeToggle" aria-label="Тақырыпты ауыстыру" title="Жарық / қараңғы"><i data-ic="moon"></i></button>
       </div>
     </div>
@@ -41,9 +48,10 @@
   <main class="wrap">
     <!-- HOME -->
     <section id="view-home" class="view active" aria-labelledby="homeTitle">
+      <div id="welcomeCard"></div>
       <div class="hero">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="dot"></span>ҰБТ · 120 тапсырма · 140 балл · 240 минут</p>
+          <p class="eyebrow" id="heroEyebrow"><span class="dot"></span>ҰБТ · 120 тапсырма · 140 балл · 240 минут</p>
           <h1 id="homeTitle">ҰБТ-ға нақты <span class="hl">форматта</span> дайындал</h1>
           <p class="lead">Қазақстан тарихы, оқу және математикалық сауаттылық, 11 бейіндік пән. Сұрақтар ҰБТ-дағыдай төрт түрде беріледі, ал толық сынақ 140 балдық жүйемен есептеледі.</p>
           <div class="hero-cta">
@@ -69,6 +77,12 @@
       </div>
 
       <div class="hero-stats" id="heroStats"></div>
+
+      <div class="grid-3">
+        <section class="daily-card" id="dailyCard" aria-label="Күн сұрақтары"></section>
+        <section class="panel level-card" id="levelCard" aria-label="Деңгей"></section>
+        <section class="panel focus-card" id="focusCard" aria-label="Фокус таймері"></section>
+      </div>
 
       <div class="grid-2">
         <section class="panel" aria-labelledby="formatTitle">
@@ -126,6 +140,7 @@
         </div>
         <div class="chips" id="practiceModes" role="group" aria-label="Режим"></div>
         <div class="chips chips-scroll" id="practiceTopics" role="group" aria-label="Тақырып"></div>
+        <div class="practice-session" id="practiceSession" hidden></div>
         <div id="practiceCard"></div>
       </div>
     </section>
@@ -185,6 +200,17 @@
       <div id="mockResult" hidden></div>
     </section>
 
+    <!-- KONSPEKT -->
+    <section id="view-konspekt" class="view" aria-labelledby="konspektTitle">
+      <div class="view-head">
+        <p class="eyebrow"><span class="dot"></span>Формулалар · даталар · ережелер</p>
+        <h1 id="konspektTitle" class="h1">Конспект</h1>
+        <p class="muted">ҰБТ-ға керек негізгі формулалар мен даталар бір жерде. Сынақ алдында қайталап шығуға ыңғайлы.</p>
+      </div>
+      <div class="chips chips-scroll" id="konspektFilter" role="group" aria-label="Пән"></div>
+      <div class="konspekt-grid" id="konspektGrid"></div>
+    </section>
+
     <!-- MISTAKES -->
     <section id="view-mistakes" class="view" aria-labelledby="mistakesTitle">
       <div class="view-head">
@@ -193,6 +219,7 @@
         <p class="muted">Қате жауап берген сұрақтар осында жиналады. Дұрыс шешсең, тізімнен шығады.</p>
       </div>
       <div id="mistakesBody"></div>
+      <div id="starsBody"></div>
     </section>
 
     <!-- PROGRESS -->
@@ -212,12 +239,45 @@
           <div id="subjectBars" class="bars"></div>
         </section>
       </div>
+      <section class="panel badges-panel" aria-labelledby="badgesTitle">
+        <div class="panel-head">
+          <h2 id="badgesTitle" class="h2"><i data-ic="trophy"></i>Жетістіктер</h2>
+          <span class="chip" id="badgesCount">0 / 0</span>
+        </div>
+        <div class="badge-grid" id="badgeGrid"></div>
+      </section>
+      <section class="panel heat-panel" aria-labelledby="heatTitle">
+        <div class="panel-head">
+          <h2 id="heatTitle" class="h2"><i data-ic="calendar"></i>Белсенділік</h2>
+          <span class="muted heat-sum" id="heatSum"></span>
+        </div>
+        <div class="heat-wrap" id="heatmap"></div>
+      </section>
       <section class="panel settings" aria-labelledby="settingsTitle">
         <h2 id="settingsTitle" class="h2"><i data-ic="sliders"></i>Баптаулар</h2>
-        <div class="form-grid">
+        <div class="form-grid form-grid-4">
+          <label class="field"><span>Атың</span><input type="text" id="profileName" maxlength="24" autocomplete="given-name" placeholder="Мысалы, Айдана" /></label>
           <label class="field"><span>ҰБТ күні</span><input type="date" id="examDate" /></label>
           <label class="field"><span>Мақсатты балл (50–140)</span><input type="number" id="targetScore" min="50" max="140" step="1" inputmode="numeric" /></label>
           <label class="field"><span>Күнделікті мақсат (сұрақ)</span><input type="number" id="dailyGoal" min="5" max="300" step="5" inputmode="numeric" /></label>
+        </div>
+        <div class="toggles">
+          <label class="toggle"><input type="checkbox" id="optSound" /><span class="tg-track"><span class="tg-thumb"></span></span><span class="tg-text"><b>Дыбыс</b><small>Дұрыс және қате жауапқа жұмсақ дыбыс</small></span></label>
+          <label class="toggle"><input type="checkbox" id="optConfetti" /><span class="tg-track"><span class="tg-thumb"></span></span><span class="tg-text"><b>Конфетти</b><small>Жетістік пен жаңа деңгейде</small></span></label>
+          <div class="seg-field">
+            <span class="seg-label">Сұрақ мәтінінің өлшемі</span>
+            <div class="seg" id="fontSeg" role="radiogroup" aria-label="Мәтін өлшемі">
+              <button type="button" role="radio" data-fs="0.92">A−</button>
+              <button type="button" role="radio" data-fs="1">A</button>
+              <button type="button" role="radio" data-fs="1.1">A+</button>
+              <button type="button" role="radio" data-fs="1.22">A++</button>
+            </div>
+          </div>
+        </div>
+        <div class="install-card" id="installCard" hidden>
+          <span class="empty-icon"><i data-ic="phone"></i></span>
+          <div><b>Телефонға орнату</b><small>Қолданба ретінде ашылады және интернетсіз де жұмыс істейді</small></div>
+          <button type="button" class="btn btn-primary btn-sm" id="installBtn"><i data-ic="download"></i>Орнату</button>
         </div>
         <div class="row wrap-row">
           <button type="button" class="btn btn-ghost" id="exportBtn"><i data-ic="download"></i>Прогресті сақтау (JSON)</button>
@@ -248,6 +308,7 @@
     <button type="button" data-nav="home"><span class="ti"><i data-ic="home"></i></span><span>Басты</span></button>
     <button type="button" data-nav="practice"><span class="ti"><i data-ic="pen"></i></span><span>Жаттығу</span></button>
     <button type="button" data-nav="mock"><span class="ti"><i data-ic="timer"></i></span><span>Сынақ</span></button>
+    <button type="button" data-nav="konspekt"><span class="ti"><i data-ic="notes"></i></span><span>Конспект</span></button>
     <button type="button" data-nav="mistakes"><span class="ti"><i data-ic="bookmark"></i><span class="tb-count" id="tabMistakes"></span></span><span>Қателер</span></button>
     <button type="button" data-nav="progress"><span class="ti"><i data-ic="chart"></i></span><span>Прогресс</span></button>
   </nav>
@@ -270,6 +331,8 @@
   <script src="js/bank/kazlang.js"></script>
   <script src="js/bank/kazlit.js"></script>
   <script src="js/generators.js"></script>
+  <script src="js/konspekt.js"></script>
+  <script src="js/fx.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

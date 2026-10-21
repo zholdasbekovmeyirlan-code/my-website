@@ -1,0 +1,17 @@
+{
+  "name": "BilimPath ҰБТ",
+  "short_name": "BilimPath",
+  "description": "ҰБТ-ға нақты форматта дайындық: 14 пән, толық сынақ, күн сұрақтары және конспект.",
+  "lang": "kk",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f6fb",
+  "theme_color": "#0a84b4",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
