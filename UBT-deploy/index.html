@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BilimPath ҰБТ</title>
+  <meta name="claude:viewport-fit-sides" content="cover" />
+  <meta name="description" content="BilimPath — ҰБТ-ға нақты форматта дайындық: Қазақстан тарихы, оқу және математикалық сауаттылық, 11 бейіндік пән, толық сынақ 140 балл." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="#home" class="logo" data-nav="home" aria-label="BilimPath басты бет">
+        <span class="logo-mark" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></span>
+        <span class="logo-text">Bilim<b>Path</b></span>
+        <span class="logo-badge">ҰБТ</span>
+      </a>
+      <nav class="nav" id="mainNav" aria-label="Бөлімдер">
+        <button type="button" data-nav="home">Басты</button>
+        <button type="button" data-nav="practice">Жаттығу</button>
+        <button type="button" data-nav="mock">Сынақ</button>
+        <button type="button" data-nav="mistakes">Қателер <span class="count" id="navMistakes"></span></button>
+        <button type="button" data-nav="progress">Прогресс</button>
+      </nav>
+      <div class="top-actions">
+        <span class="chip chip-streak" id="streakChip" title="Қатарынан күн">0 күн</span>
+        <button type="button" class="icon-btn" id="themeToggle" aria-label="Тақырыпты ауыстыру" title="Жарық / қараңғы">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="exam-banner" id="examBanner" hidden>
+    <span>Сынақ жалғасуда · <b id="examBannerTime">--:--</b></span>
+    <button type="button" class="btn btn-sm btn-primary" data-nav="mock">Жалғастыру</button>
+  </div>
+
+  <main class="wrap">
+    <!-- HOME -->
+    <section id="view-home" class="view active" aria-labelledby="homeTitle">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">ҰБТ · 5 пән · 120 тапсырма · 140 балл · 240 минут</p>
+          <h1 id="homeTitle">ҰБТ-ға нақты <span class="hl">форматта</span> дайындал</h1>
+          <p class="lead">Қазақстан тарихы, оқу және математикалық сауаттылық, 11 бейіндік пән. Сұрақтар ҰБТ-дағыдай төрт түрде беріледі, ал толық сынақ 140 балдық жүйемен есептеледі.</p>
+          <div class="hero-cta">
+            <button type="button" class="btn btn-primary btn-lg" data-nav="mock">Толық сынақ бастау</button>
+            <button type="button" class="btn btn-ghost btn-lg" data-nav="practice">Пән бойынша жаттығу</button>
+          </div>
+          <div class="hero-stats" id="heroStats"></div>
+        </div>
+        <aside class="ticket" aria-label="Менің мақсатым">
+          <div class="ticket-head">
+            <span class="ticket-label">ҰБТ-ға дейін</span>
+            <button type="button" class="link-btn" data-nav="progress" data-focus="examDate">Күнін өзгерту</button>
+          </div>
+          <div class="ticket-days" id="ticketDays">—</div>
+          <div class="ticket-sub" id="ticketSub">Емтихан күнін «Прогресс» бөлімінде қой</div>
+          <div class="gauge" id="gauge"></div>
+          <div class="ticket-foot" id="ticketFoot"></div>
+        </aside>
+      </div>
+
+      <div class="grid-2">
+        <section class="panel" aria-labelledby="formatTitle">
+          <h2 id="formatTitle" class="h2">ҰБТ құрылымы</h2>
+          <div class="table-wrap">
+            <table class="format-table">
+              <thead><tr><th>Пән</th><th class="num">Тапсырма</th><th class="num">Балл</th></tr></thead>
+              <tbody>
+                <tr><td>Қазақстан тарихы</td><td class="num">20</td><td class="num">20</td></tr>
+                <tr><td>Оқу сауаттылығы</td><td class="num">10</td><td class="num">10</td></tr>
+                <tr><td>Математикалық сауаттылық</td><td class="num">10</td><td class="num">10</td></tr>
+                <tr><td>1-бейіндік пән</td><td class="num">40</td><td class="num">50</td></tr>
+                <tr><td>2-бейіндік пән</td><td class="num">40</td><td class="num">50</td></tr>
+              </tbody>
+              <tfoot><tr><td>Барлығы · 240 минут</td><td class="num">120</td><td class="num">140</td></tr></tfoot>
+            </table>
+          </div>
+          <h3 class="h3">Бейіндік пәндегі 40 тапсырма</h3>
+          <ul class="type-list">
+            <li><span class="pill pill-s">Бір жауап</span> 25 тапсырма · 1 балдан</li>
+            <li><span class="pill pill-c">Контекст</span> 5 тапсырма · 1 балдан</li>
+            <li><span class="pill pill-m">Сәйкестендіру</span> 5 тапсырма · 2 балдан</li>
+            <li><span class="pill pill-x">Бірнеше жауап</span> 5 тапсырма · 2 балдан</li>
+          </ul>
+          <p class="note">Шекті балл (жалпы ереже): барлығы кемінде 50, Қазақстан тарихынан 5, екі сауаттылықтан 3-тен, әр бейіндік пәннен 5. Кейбір мамандықтарда шек жоғарырақ. ҰТО форматты жыл сайын жаңартады, ресми ақпаратты testcenter.kz сайтынан тексер.</p>
+        </section>
+
+        <section class="panel" aria-labelledby="todayTitle">
+          <h2 id="todayTitle" class="h2">Бүгінгі жұмыс</h2>
+          <div class="today" id="todayBox"></div>
+          <h3 class="h3">Әлсіз тақырыптар</h3>
+          <div id="weakTopics" class="weak-list"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- PRACTICE -->
+    <section id="view-practice" class="view" aria-labelledby="practiceTitle">
+      <div class="view-head">
+        <h1 id="practiceTitle" class="h1">Жаттығу</h1>
+        <p class="muted">Пәнді таңда. Әр жауаптан кейін түсіндірме шығады, қате жауаптар «Қателер» бөліміне түседі.</p>
+      </div>
+      <div id="subjectPicker">
+        <h2 class="h3">Міндетті пәндер</h2>
+        <div class="subject-grid" id="gridMandatory"></div>
+        <h2 class="h3">Бейіндік пәндер</h2>
+        <div class="subject-grid" id="gridProfile"></div>
+      </div>
+      <div id="practiceRun" hidden>
+        <div class="run-head">
+          <button type="button" class="link-btn" id="practiceBack">← Пәндер</button>
+          <h2 class="h2" id="practiceSubject"></h2>
+          <span class="chip" id="practiceScore">0 / 0</span>
+        </div>
+        <div class="chips" id="practiceModes" role="group" aria-label="Режим"></div>
+        <div class="chips chips-scroll" id="practiceTopics" role="group" aria-label="Тақырып"></div>
+        <div id="practiceCard"></div>
+      </div>
+    </section>
+
+    <!-- MOCK -->
+    <section id="view-mock" class="view" aria-labelledby="mockTitle">
+      <div id="mockSetup">
+        <div class="view-head">
+          <h1 id="mockTitle" class="h1">Сынақ ҰБТ</h1>
+          <p class="muted">Екі бейіндік пәнді таңда. Уақыт біткенде сынақ автоматты түрде аяқталады. Бетті жапсаң да, сынақ сақталады.</p>
+        </div>
+        <div class="grid-2">
+          <section class="panel">
+            <h2 class="h3">Бейіндік пәндер комбинациясы</h2>
+            <div class="combo-list" id="comboList" role="radiogroup" aria-label="Комбинация"></div>
+          </section>
+          <section class="panel">
+            <h2 class="h3">Сынақ түрі</h2>
+            <div class="mode-list" id="mockModes" role="radiogroup" aria-label="Сынақ түрі"></div>
+            <div class="mock-summary" id="mockSummary"></div>
+            <button type="button" class="btn btn-primary btn-lg btn-block" id="mockStart">Сынақты бастау</button>
+          </section>
+        </div>
+      </div>
+
+      <div id="mockRun" hidden>
+        <div class="exam-bar">
+          <div class="exam-timer" id="examTimer" aria-live="off">04:00:00</div>
+          <div class="exam-tabs chips-scroll" id="examTabs" role="tablist" aria-label="Пәндер"></div>
+          <button type="button" class="btn btn-sm btn-danger" id="examFinish">Аяқтау</button>
+        </div>
+        <div class="confirm" id="examConfirm" hidden>
+          <p id="examConfirmText"></p>
+          <div class="row">
+            <button type="button" class="btn btn-danger" id="examConfirmYes">Иә, аяқтау</button>
+            <button type="button" class="btn btn-ghost" id="examConfirmNo">Жалғастыру</button>
+          </div>
+        </div>
+        <div class="exam-layout">
+          <aside class="palette-wrap">
+            <div class="palette-title" id="paletteTitle"></div>
+            <div class="palette" id="examPalette"></div>
+            <div class="legend"><span class="lg lg-done"></span>Жауап берілді <span class="lg lg-flag"></span>Белгіленді</div>
+          </aside>
+          <div class="exam-main">
+            <div id="examCard"></div>
+            <div class="exam-nav">
+              <button type="button" class="btn btn-ghost" id="examPrev">← Алдыңғы</button>
+              <button type="button" class="btn btn-ghost" id="examFlag">Белгілеу</button>
+              <button type="button" class="btn btn-primary" id="examNext">Келесі →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="mockResult" hidden></div>
+    </section>
+
+    <!-- MISTAKES -->
+    <section id="view-mistakes" class="view" aria-labelledby="mistakesTitle">
+      <div class="view-head">
+        <h1 id="mistakesTitle" class="h1">Қателер банкі</h1>
+        <p class="muted">Қате жауап берген сұрақтар осында жиналады. Дұрыс шешсең, тізімнен шығады.</p>
+      </div>
+      <div id="mistakesBody"></div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section id="view-progress" class="view" aria-labelledby="progressTitle">
+      <div class="view-head">
+        <h1 id="progressTitle" class="h1">Прогресс</h1>
+      </div>
+      <div class="grid-2">
+        <section class="panel">
+          <h2 class="h3">Сынақ нәтижелері</h2>
+          <div id="historyChart" class="chart-box"></div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+        <section class="panel">
+          <h2 class="h3">Пәндер бойынша дәлдік</h2>
+          <div id="subjectBars" class="bars"></div>
+        </section>
+      </div>
+      <section class="panel settings" aria-labelledby="settingsTitle">
+        <h2 id="settingsTitle" class="h3">Баптаулар</h2>
+        <div class="form-grid">
+          <label class="field"><span>ҰБТ күні</span><input type="date" id="examDate" /></label>
+          <label class="field"><span>Мақсатты балл (50–140)</span><input type="number" id="targetScore" min="50" max="140" step="1" inputmode="numeric" /></label>
+          <label class="field"><span>Күнделікті мақсат (сұрақ)</span><input type="number" id="dailyGoal" min="5" max="300" step="5" inputmode="numeric" /></label>
+        </div>
+        <div class="row wrap-row">
+          <button type="button" class="btn btn-ghost" id="exportBtn">Прогресті сақтау (JSON)</button>
+          <label class="btn btn-ghost file-btn" for="importFile">Прогресті жүктеу</label>
+          <input type="file" id="importFile" accept="application/json,.json" hidden />
+          <button type="button" class="btn btn-ghost btn-danger-ghost" id="resetBtn">Барлығын өшіру</button>
+        </div>
+        <div class="confirm" id="resetConfirm" hidden>
+          <p>Барлық прогресс, қателер және сынақ тарихы өшеді. Сенімдісің бе?</p>
+          <div class="row">
+            <button type="button" class="btn btn-danger" id="resetYes">Иә, өшіру</button>
+            <button type="button" class="btn btn-ghost" id="resetNo">Жоқ</button>
+          </div>
+        </div>
+        <textarea id="exportBox" class="export-box" rows="4" readonly hidden></textarea>
+      </section>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar" aria-label="Бөлімдер">
+    <button type="button" data-nav="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7v9h-6v-6H9v6H3z"/></svg><span>Басты</span></button>
+    <button type="button" data-nav="practice"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg><span>Жаттығу</span></button>
+    <button type="button" data-nav="mock"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><span>Сынақ</span></button>
+    <button type="button" data-nav="mistakes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Қателер</span></button>
+    <button type="button" data-nav="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Прогресс</span></button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="js/bank-core.js"></script>
+  <script src="js/bank/history.js"></script>
+  <script src="js/bank/readlit.js"></script>
+  <script src="js/bank/mathlit.js"></script>
+  <script src="js/bank/math.js"></script>
+  <script src="js/bank/physics.js"></script>
+  <script src="js/bank/chemistry.js"></script>
+  <script src="js/bank/biology.js"></script>
+  <script src="js/bank/geography.js"></script>
+  <script src="js/bank/worldhistory.js"></script>
+  <script src="js/bank/law.js"></script>
+  <script src="js/bank/informatics.js"></script>
+  <script src="js/bank/english.js"></script>
+  <script src="js/bank/kazlang.js"></script>
+  <script src="js/bank/kazlit.js"></script>
+  <script src="js/generators.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
