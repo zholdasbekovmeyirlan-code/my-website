@@ -1,4 +1,4 @@
-/* BilimPath ҰБТ — subjects, exam format and the question-bank loader.
+/* UBT App — subjects, exam format and the question-bank loader.
  *
  * Сұрақ қосу (bank/*.js файлдарында):
  *   UBT.add("math", "Тақырып", [ ...сұрақтар ]);

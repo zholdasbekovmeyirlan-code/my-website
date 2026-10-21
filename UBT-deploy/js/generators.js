@@ -1,4 +1,4 @@
-/* BilimPath ҰБТ — randomized problem generators.
+/* UBT App — randomized problem generators.
  * Each generator returns { q, o: [right, wrong, wrong, wrong], e }; numbers are computed, so answers are always exact.
  */
 (() => {

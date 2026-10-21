@@ -1,11 +1,13 @@
-/* BilimPath ҰБТ — offline cache. Bump VERSION when files change. */
-const VERSION = "bilimpath-v3";
+/* UBT App — offline cache. Bump VERSION when files change. */
+const VERSION = "ubt-app-v4";
 const SHELL = [
   "./",
   "./index.html",
   "./css/style.css",
   "./manifest.webmanifest",
-  "./icons/icon.svg",
+  "./icons/logo-128.png",
+  "./icons/favicon-48.png",
+  "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./js/app.js",

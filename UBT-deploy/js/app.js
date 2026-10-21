@@ -1,4 +1,4 @@
-/* BilimPath ҰБТ — app logic */
+/* UBT App — app logic */
 (() => {
   "use strict";
   const U = window.UBT;
@@ -1560,9 +1560,9 @@
   async function shareResult() {
     const r = state.last;
     if (!r) return;
-    const text = `BilimPath ҰБТ: ${U.plans[r.mode].label.toLowerCase()} нәтижем — ${r.total}/${r.totalMax} балл (${comboName(r.combo)}).${r.pass ? " Шекті балдан өттім!" : ""}`;
+    const text = `UBT App: ${U.plans[r.mode].label.toLowerCase()} нәтижем — ${r.total}/${r.totalMax} балл (${comboName(r.combo)}).${r.pass ? " Шекті балдан өттім!" : ""}`;
     try {
-      if (navigator.share) { await navigator.share({ title: "BilimPath ҰБТ", text }); return; }
+      if (navigator.share) { await navigator.share({ title: "UBT App", text }); return; }
     } catch (e) { if (e && e.name === "AbortError") return; }
     try {
       await navigator.clipboard.writeText(text);
@@ -1630,7 +1630,7 @@
       const blob = new Blob([json], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `bilimpath-ubt-${dayKey()}.json`;
+      a.download = `ubt-app-${dayKey()}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1653,7 +1653,7 @@
         toast("Прогресс жүктелді");
         renderView();
       } catch (e) {
-        toast("Файл оқылмады: BilimPath-тен сақталған JSON файлын таңда");
+        toast("Файл оқылмады: UBT App-тан сақталған JSON файлын таңда");
       }
     };
     reader.readAsText(file);

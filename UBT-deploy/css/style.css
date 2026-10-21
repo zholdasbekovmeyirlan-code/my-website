@@ -1,4 +1,4 @@
-/* BilimPath ҰБТ — bright answer-sheet UI */
+/* UBT App — bright answer-sheet UI */
 /* Layout: sticky glass top bar + one centered 1160px column; phones get a floating bottom tab bar.
    Answer options are tactile test-sheet bubbles; every subject carries its own hue (--sc) and icon. */
 :root {
@@ -209,21 +209,12 @@ kbd {
 }
 
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); flex-shrink: 0; }
-.logo-mark { display: grid; grid-template-columns: repeat(2, 11px); gap: 3px; }
-.logo-mark i { width: 11px; height: 11px; border-radius: 50%; border: 1.8px solid var(--ink); }
-.logo-mark i.on { background: linear-gradient(135deg, var(--sky-hi), var(--sky-lo)); border-color: transparent; box-shadow: 0 2px 6px -1px var(--sky); }
+.logo-img { width: 38px; height: 38px; border-radius: 11px; display: block; flex-shrink: 0; box-shadow: 0 6px 16px -8px rgba(8, 80, 180, 0.7); transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.logo:hover .logo-img { transform: rotate(-6deg) scale(1.06); }
+.footer-brand { display: inline-flex; align-items: center; gap: 8px; }
+.footer-brand .logo-img { width: 28px; height: 28px; border-radius: 8px; box-shadow: none; }
 .logo-text { font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: -0.02em; }
 .logo-text b { font-weight: 700; color: var(--sky); }
-.logo-badge {
-  font-family: var(--display);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 3px 8px;
-  border-radius: 7px;
-  background: linear-gradient(135deg, var(--gold-hi), #f59e0b);
-  color: #3a2600;
-}
 
 .nav { display: flex; gap: 4px; margin-left: 10px; }
 .nav button {
@@ -1506,7 +1497,8 @@ code, .code { font-family: var(--mono); font-size: 0.9em; background: var(--shee
 .wl-copy p { margin: 6px 0 0; color: var(--ink-2); font-size: 15px; }
 .wl-icon { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; flex-shrink: 0; color: #3a2600; background: linear-gradient(135deg, var(--gold-hi), #f59e0b); box-shadow: 0 10px 22px -12px #f59e0b; }
 .wl-icon .ic { width: 24px; height: 24px; }
-.wl-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.wl-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.wl-form input, .wl-form select { min-width: 0; }
 .wl-actions { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
 .field select {
   width: 100%;

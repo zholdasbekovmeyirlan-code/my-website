@@ -1,4 +1,4 @@
-/* BilimPath ҰБТ — small delights: confetti burst and soft UI sounds (no assets, WebAudio only) */
+/* UBT App — small delights: confetti burst and soft UI sounds (no assets, WebAudio only) */
 (() => {
   const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
