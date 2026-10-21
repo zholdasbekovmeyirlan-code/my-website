@@ -9,6 +9,72 @@
   const SHORT = { history: "Тарих", readlit: "Оқу сауат.", mathlit: "Мат. сауат." };
   const FULL_MAX = { history: 20, readlit: 10, mathlit: 10, profile: 50 };
 
+  // Subject identity: accent hue + icon
+  const SUBJ_STYLE = {
+    history: ["#c2710c", "shanyrak"],
+    readlit: ["#0f8f86", "book"],
+    mathlit: ["#4f46e5", "calc"],
+    math: ["#2563eb", "sigma"],
+    physics: ["#7c3aed", "atom"],
+    chemistry: ["#059669", "flask"],
+    biology: ["#5b9a12", "leaf"],
+    geography: ["#0891b2", "globe"],
+    worldhistory: ["#e11d48", "columns"],
+    law: ["#5b6b82", "scales"],
+    informatics: ["#0369a1", "code"],
+    english: ["#dc2626", "en"],
+    kazlang: ["#0b84b3", "kaz"],
+    kazlit: ["#ea580c", "dombyra"],
+  };
+
+  const ICONS = {
+    home: '<path d="M3.5 10.5 12 4l8.5 6.5V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/>',
+    pen: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="m14 6 4 4"/>',
+    timer: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5M18.5 6.5 20 5"/>',
+    bookmark: '<path d="M6.5 3.5h11a1 1 0 0 1 1 1V21l-6.5-4.5L5.5 21V4.5a1 1 0 0 1 1-1z"/>',
+    chart: '<path d="M4.5 20V11M10 20V5M15.5 20v-7M21 20H3"/>',
+    moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
+    arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
+    check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    x: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+    flag: '<path d="M5.5 21V4M5.5 4h11L14 8.5l2.5 4.5h-11"/>',
+    stop: '<rect x="6" y="6" width="12" height="12" rx="2.5"/>',
+    skip: '<path d="M5 6.5 11.5 12 5 17.5zM12.5 6.5 19 12l-6.5 5.5z"/>',
+    bolt: '<path d="M13 2.5 4.5 13.5h6.5l-1 8 8.5-11h-6.5z"/>',
+    layers: '<path d="m12 3.5 9 4.5-9 4.5L3 8z"/><path d="m3 12.5 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',
+    grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/>',
+    target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',
+    sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    download: '<path d="M12 4v11M7 10.5l5 5 5-5M4.5 20h15"/>',
+    upload: '<path d="M12 16V5M7 9.5l5-5 5 5M4.5 20h15"/>',
+    trash: '<path d="M4.5 6.5h15M9.5 6.5v-2h5v2M6.5 6.5l1 13.5h9l1-13.5"/>',
+    fire: '<path d="M12 21c-3.9 0-6.5-2.7-6.5-6.3 0-3.2 2.2-5.3 3.6-7.4.4 2 1.4 3 2.4 3.6C11.6 7.6 13 5 15 3c.3 3.4 3.5 5.6 3.5 10.2C18.5 17.6 16 21 12 21z"/>',
+    trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.7 4.8M16 6h3.5c0 3-1.5 4.5-3.7 4.8M12 13v4M8.5 20.5h7"/>',
+    spark: '<path d="M12 3.5 13.8 10 20.5 12l-6.7 2L12 20.5 10.2 14 3.5 12l6.7-2z"/>',
+    refresh: '<path d="M20 11.5a8 8 0 1 1-2.4-5.7L20 8"/><path d="M20 3.5V8h-4.5"/>',
+    // subjects
+    shanyrak: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5V9M12 15v5.5M3.5 12H9M15 12h5.5M6 6l3.9 3.9M14.1 14.1 18 18M18 6l-3.9 3.9M9.9 14.1 6 18"/>',
+    book: '<path d="M3 5.5C5.5 4 8.5 4 12 6c3.5-2 6.5-2 9-.5V19c-2.5-1.5-5.5-1.5-9 .5-3.5-2-6.5-2-9-.5z"/><path d="M12 6v13.5"/>',
+    calc: '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8 7h8M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01M8.5 15h.01M12 15h.01M15.5 15h.01M8.5 18h.01M12 18h3.5"/>',
+    sigma: '<path d="M17.5 5H7l6 7-6 7h10.5"/>',
+    atom: '<circle cx="12" cy="12" r="1.5" fill="currentColor"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/>',
+    flask: '<path d="M9 3h6M10 3v6l-5.5 9.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/><path d="M7.3 15.5h9.4"/>',
+    leaf: '<path d="M19.5 4.5C10 4.5 4.5 9.5 4.5 16.5c0 1.2.2 2.2.5 3 .8.3 1.8.5 3 .5 7 0 11.5-5.5 11.5-15.5z"/><path d="M5 19.5 14 10.5"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/>',
+    columns: '<path d="M3 9.5 12 4l9 5.5M5.5 10.5v7M9.8 10.5v7M14.2 10.5v7M18.5 10.5v7M3 20.5h18"/>',
+    scales: '<path d="M12 4v16M8 20.5h8M5 7h14"/><path d="M4 13.5 7 7l3 6.5M14 13.5 17 7l3 6.5"/><path d="M4 13.5a3 3 0 0 0 6 0M14 13.5a3 3 0 0 0 6 0"/>',
+    code: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>',
+    en: '<path d="M4 4.5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9.5L5 20.5v-4H4a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><text x="12" y="13.4" text-anchor="middle" font-size="7.5" font-weight="800" fill="currentColor" stroke="none">EN</text>',
+    kaz: '<rect x="3" y="4" width="18" height="16" rx="4"/><text x="12" y="15.6" text-anchor="middle" font-size="9" font-weight="800" fill="currentColor" stroke="none">Әә</text>',
+    dombyra: '<path d="M12 2.5v9.5M10.5 3h3M10.5 6h3"/><path d="M12 11c-3 0-5 2.6-5 5.5S9.2 21.5 12 21.5s5-2 5-5S15 11 12 11z"/><circle cx="12" cy="17" r="1.3"/>',
+  };
+  const ic = (name, cls = "ic") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+  const scColor = (k) => (SUBJ_STYLE[k] ? SUBJ_STYLE[k][0] : "#5b6b82");
+  const scIcon = (k, cls = "") => `<span class="sc-icon${cls ? " " + cls : ""}" style="--sc:${scColor(k)}">${ic(SUBJ_STYLE[k] ? SUBJ_STYLE[k][1] : "book")}</span>`;
+
   const $ = (s, r = document) => r.querySelector(s);
   const $all = (s, r = document) => Array.from(r.querySelectorAll(s));
 
@@ -87,9 +153,11 @@
     if (/<p[\s>]/.test(text)) return text;
     return text.split(/\n\s*\n/).map((p) => `<p>${p.trim()}</p>`).join("");
   }
-  function toast(msg) {
+  function toast(msg, kind = "info") {
     const el = $("#toast");
-    el.textContent = msg;
+    el.className = "toast toast-" + kind;
+    el.innerHTML = ic(kind === "ok" ? "check" : kind === "warn" ? "timer" : "spark") + "<span></span>";
+    el.lastChild.textContent = msg;
     el.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { el.hidden = true; }, 2400);
@@ -105,6 +173,8 @@
   /* ---------- theme ---------- */
   function applyTheme() {
     if (state.theme) document.documentElement.setAttribute("data-theme", state.theme);
+    const btn = $("#themeToggle");
+    if (btn) btn.innerHTML = ic(effectiveTheme() === "dark" ? "sun" : "moon");
   }
   function effectiveTheme() {
     const a = document.documentElement.getAttribute("data-theme");
@@ -198,7 +268,7 @@
     const resp = o.resp;
     const meta = `<div class="q-meta">
       ${o.num ? `<span class="q-num">№${o.num}</span>` : ""}
-      <span class="q-topic">${SUBJ[inst.subj].name} · ${inst.topic}</span>
+      <span class="q-topic"><span class="q-dot" style="--sc:${scColor(inst.subj)}"></span>${SUBJ[inst.subj].name} · ${inst.topic}</span>
       <span class="pill pill-${inst.t}">${U.typeNames[inst.t]}</span>
       <span class="pill pill-pts">${maxPts(inst)} балл</span>
     </div>`;
@@ -230,13 +300,14 @@
       const opts = inst.opts.map((txt, i) => {
         const chosen = multi ? (resp || []).includes(i) : resp === i;
         let cls = "opt";
+        let mark = L[i];
         if (o.reveal) {
           const isRight = multi ? inst.ans.includes(i) : inst.ans === i;
-          if (isRight && chosen) cls += " right";
-          else if (isRight) cls += multi ? " missed" : " right";
-          else if (chosen) cls += " wrong";
+          if (isRight && chosen) { cls += " right"; mark = ic("check"); }
+          else if (isRight) { cls += multi ? " missed" : " right"; mark = ic("check"); }
+          else if (chosen) { cls += " wrong"; mark = ic("x"); }
         } else if (chosen) cls += " sel";
-        return `<button type="button" class="${cls}" data-opt="${i}" ${dis} aria-pressed="${chosen}"><span class="bubble">${L[i]}</span><span>${txt}</span></button>`;
+        return `<button type="button" class="${cls}" data-opt="${i}" ${dis} aria-pressed="${chosen}"><span class="bubble">${mark}</span><span class="opt-text">${txt}</span></button>`;
       }).join("");
       body = `<div class="opts${multi ? " multi" : ""}">${opts}</div>`;
     }
@@ -246,9 +317,11 @@
       const answered = isAnswered(inst, resp);
       const ok = g.pts === g.max;
       const verdict = !answered ? "Жауап берілмеді" : ok ? `Дұрыс · ${g.pts} балл` : g.pts > 0 ? `Жартылай дұрыс · ${g.pts} / ${g.max} балл` : `Қате · 0 / ${g.max} балл`;
-      explain = `<div class="explain ${ok ? "ok" : "bad"}"><b class="verdict">${verdict}</b><p>${answerText(inst)}.${inst.ex ? " " + inst.ex : ""}</p></div>`;
+      const half = !ok && g.pts > 0;
+      explain = `<div class="explain ${ok ? "ok" : half ? "half" : "bad"}"><span class="ex-icon">${ic(ok ? "check" : half ? "spark" : "x")}</span><div class="ex-body"><b class="verdict">${verdict}</b><p><b>${answerText(inst)}.</b>${inst.ex ? " " + inst.ex : ""}</p></div></div>`;
     }
-    return `<article class="q-card" data-qid="${inst.id}">${meta}${ctx}<p class="q-text">${inst.q}</p>${hint}${body}${o.actions || ""}${explain}</article>`;
+    const tone = o.reveal ? (grade(inst, resp).pts === maxPts(inst) ? " is-ok" : " is-bad") : "";
+    return `<article class="q-card${o.anim ? " anim" : ""}${tone}" data-qid="${inst.id}">${meta}${ctx}<p class="q-text">${inst.q}</p>${hint}${body}${o.actions || ""}${explain}</article>`;
   }
 
   /* ---------- progress bookkeeping ---------- */
@@ -310,7 +383,8 @@
   function updateChrome() {
     const n = Object.keys(state.mistakes).length;
     $("#navMistakes").textContent = n ? String(n) : "";
-    $("#streakChip").textContent = `${streakNow()} күн`;
+    $("#tabMistakes").textContent = n ? String(n > 99 ? "99+" : n) : "";
+    $("#streakChip").innerHTML = `${ic("fire")}${streakNow()} күн`;
     const banner = $("#examBanner");
     banner.hidden = !(state.exam && view !== "mock");
     if (state.exam) $("#examBannerTime").textContent = fmtClock(state.exam.endAt - Date.now());
@@ -343,6 +417,7 @@
       val = `<path class="g-val" d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${vx.toFixed(1)} ${vy.toFixed(1)}"/>`;
     }
     return `<svg viewBox="0 0 220 136" role="img" aria-label="Үздік балл ${value == null ? "жоқ" : value} / 140">
+      <defs><linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--sky-hi)"/><stop offset="0.7" style="stop-color:var(--sky)"/><stop offset="1" style="stop-color:var(--gold-hi)"/></linearGradient></defs>
       <path class="g-track" d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey}"/>
       ${val}
       ${tick(50 / 140, "g-tick")}
@@ -366,10 +441,12 @@
   function renderHome() {
     const totals = Object.values(state.stats).reduce((a, s) => ({ n: a.n + s.n, ok: a.ok + s.ok }), { n: 0, ok: 0 });
     const best = bestScore();
-    $("#heroStats").innerHTML = `
-      <div class="stat"><b>${totals.n}</b><span>шешілген сұрақ</span></div>
-      <div class="stat"><b>${totals.n ? pct(totals.ok, totals.n) + "%" : "—"}</b><span>дәлдік</span></div>
-      <div class="stat"><b>${state.history.length}</b><span>сынақ тапсырылды</span></div>`;
+    const stat = (icon, val, label, tone) => `<div class="stat stat-${tone}"><span class="stat-icon">${ic(icon)}</span><div><b>${val}</b><span>${label}</span></div></div>`;
+    $("#heroStats").innerHTML =
+      stat("check", totals.n, "шешілген сұрақ", "sky") +
+      stat("target", totals.n ? pct(totals.ok, totals.n) + "%" : "—", "дәлдік", "ok") +
+      stat("trophy", best == null ? "—" : best, "үздік балл", "gold") +
+      stat("fire", streakNow(), "күн қатарынан", "bad");
 
     const daysEl = $("#ticketDays"), subEl = $("#ticketSub");
     if (state.examDate) {
@@ -400,21 +477,21 @@
       <div class="ring"><svg viewBox="0 0 96 96" aria-hidden="true">
         <circle class="r-track" cx="48" cy="48" r="40"/>
         ${f > 0 ? `<circle class="r-val" cx="48" cy="48" r="40" stroke-dasharray="${(f * C).toFixed(1)} ${C.toFixed(1)}"/>` : ""}
-        <text class="r-num" x="48" y="52" text-anchor="middle">${done}</text>
+        <text class="r-num" x="48" y="53" text-anchor="middle">${done}</text>
         <text class="r-cap" x="48" y="66" text-anchor="middle">/ ${goal}</text>
       </svg></div>
       <div class="today-text">
         <p>${done >= goal ? "Бүгінгі мақсат орындалды. Жарайсың!" : `Бүгін ${done} сұрақ шештің. Мақсатқа дейін ${goal - done} сұрақ қалды.`}</p>
         <div class="row">
-          <button type="button" class="btn btn-primary btn-sm" data-nav="practice">Жаттығуға өту</button>
-          ${nMist ? `<button type="button" class="btn btn-ghost btn-sm" data-act="mistakes-all">Қателерді қайталау · ${nMist}</button>` : ""}
+          <button type="button" class="btn btn-primary btn-sm" data-nav="practice">${ic("pen")}Жаттығуға өту</button>
+          ${nMist ? `<button type="button" class="btn btn-soft btn-sm" data-act="mistakes-all">${ic("refresh")}Қателерді қайталау · ${nMist}</button>` : ""}
         </div>
       </div>`;
 
     const weak = weakTopics();
     $("#weakTopics").innerHTML = weak.length
-      ? weak.map((w) => `<button type="button" class="weak-item" data-act="weak" data-subj="${w.subj}" data-topic="${encodeURIComponent(w.topic)}"><span>${w.topic}</span><small>${SUBJ[w.subj].name} · ${w.n} жауап</small><b>${w.acc}%</b></button>`).join("")
-      : `<p class="empty">Әр тақырыптан кемінде 3 сұрақ шешкенде, дәлдігі 80%-дан төмен тақырыптар осында шығады.</p>`;
+      ? weak.map((w) => `<button type="button" class="weak-item" data-act="weak" data-subj="${w.subj}" data-topic="${encodeURIComponent(w.topic)}">${scIcon(w.subj, "sm")}<span class="wi-text"><span>${w.topic}</span><small>${SUBJ[w.subj].name} · ${w.n} жауап</small></span><b>${w.acc}%</b></button>`).join("")
+      : `<div class="empty"><span class="empty-icon">${ic("target")}</span><p>Әр тақырыптан кемінде 3 сұрақ шешкенде, дәлдігі 80%-дан төмен тақырыптар осында шығады.</p></div>`;
   }
 
   /* ---------- practice ---------- */
@@ -423,10 +500,11 @@
     const st = state.stats[k];
     const acc = st && st.n ? pct(st.ok, st.n) : null;
     const hasGen = U.gens[k].length > 0;
-    return `<button type="button" class="subject-card" data-act="open-subj" data-subj="${k}">
-      <div class="sc-top"><span class="sc-name">${s.name}</span><span class="sc-code">${s.code}</span></div>
-      <div class="sc-meta"><span>${bankSize(k)} сұрақ</span>${hasGen ? `<span class="sc-gen">+ шексіз есеп</span>` : ""}<span>${acc == null ? "әлі шешілмеген" : `дәлдік ${acc}%`}</span></div>
-      <div class="meter"><i style="width:${acc || 0}%"></i></div>
+    return `<button type="button" class="subject-card" style="--sc:${scColor(k)}" data-act="open-subj" data-subj="${k}">
+      <span class="sc-top">${scIcon(k)}<span class="sc-go">${ic("arrow")}</span></span>
+      <span class="sc-name">${s.name}</span>
+      <span class="sc-meta"><span>${bankSize(k)} сұрақ</span>${hasGen ? `<span class="sc-gen">${ic("bolt")}шексіз есеп</span>` : ""}</span>
+      <span class="sc-foot"><span class="meter"><i style="width:${acc || 0}%"></i></span><span class="sc-acc">${acc == null ? "жаңа" : acc + "%"}</span></span>
     </button>`;
   }
 
@@ -440,7 +518,7 @@
   }
 
   function openPractice(subj, opts = {}) {
-    P = { subj, topic: opts.topic || null, mode: opts.mode || "all", n: 0, ok: 0, pts: 0, max: 0, recent: [], inst: null, resp: null, checked: false, queue: null };
+    P = { subj, topic: opts.topic || null, mode: opts.mode || "all", n: 0, ok: 0, pts: 0, max: 0, streak: 0, recent: [], inst: null, resp: null, checked: false, queue: null };
     if (P.mode === "mistakes") P.queue = mistakeQueue(subj);
     if (view !== "practice") go("practice");
     nextPractice();
@@ -514,17 +592,19 @@
   function renderPracticeRun() {
     $("#subjectPicker").hidden = true;
     $("#practiceRun").hidden = false;
-    $("#practiceSubject").textContent = P.subj === "all" ? "Барлық қателер" : SUBJ[P.subj].name;
-    $("#practiceScore").textContent = `${P.ok} / ${P.n} дұрыс`;
+    $("#practiceSubject").innerHTML = P.subj === "all"
+      ? `<span class="sc-icon" style="--sc:#cc3b3b">${ic("bookmark")}</span><h2 class="h2">Барлық қателер</h2>`
+      : `${scIcon(P.subj)}<h2 class="h2">${SUBJ[P.subj].name}</h2>`;
+    $("#practiceScore").innerHTML = `<span class="stat-chip ok" title="Дұрыс жауап">${ic("check")}${P.ok}</span><span class="stat-chip" title="Барлық жауап">${P.n} жауап</span>${P.streak >= 2 ? `<span class="stat-chip fire" title="Қатарынан дұрыс">${ic("fire")}${P.streak}</span>` : ""}`;
 
     const nMist = Object.values(state.mistakes).filter((m) => P.subj === "all" || m.subj === P.subj).length;
     const modes = [];
     if (P.subj !== "all") {
-      modes.push(["all", "Барлығы"], ["new", "Жаңа сұрақтар"]);
-      if (U.gens[P.subj].length) modes.push(["gen", "Шексіз есептер"]);
+      modes.push(["all", "Барлығы", "grid"], ["new", "Жаңа сұрақтар", "spark"]);
+      if (U.gens[P.subj].length) modes.push(["gen", "Шексіз есептер", "bolt"]);
     }
-    if (nMist || P.mode === "mistakes") modes.push(["mistakes", `Қателер · ${nMist}`]);
-    $("#practiceModes").innerHTML = modes.map(([k, label]) => `<button type="button" class="chip-btn${P.mode === k ? " active" : ""}" data-act="p-mode" data-mode="${k}">${label}</button>`).join("");
+    if (nMist || P.mode === "mistakes") modes.push(["mistakes", `Қателер · ${nMist}`, "bookmark"]);
+    $("#practiceModes").innerHTML = modes.map(([k, label, icon]) => `<button type="button" class="chip-btn chip-mode${P.mode === k ? " active" : ""}" data-act="p-mode" data-mode="${k}">${ic(icon)}${label}</button>`).join("");
 
     const topics = P.mode === "mistakes" ? [] : practiceTopics();
     const topicsEl = $("#practiceTopics");
@@ -535,8 +615,8 @@
     const card = $("#practiceCard");
     if (!P.inst) {
       card.innerHTML = P.mode === "mistakes"
-        ? `<div class="empty-state"><p>Қателер тізімі бос. Барлығын дұрыс шештің!</p><button type="button" class="btn btn-primary" data-act="p-mode" data-mode="all"${P.subj === "all" ? " hidden" : ""}>Жаттығуды жалғастыру</button></div>`
-        : `<div class="empty-state"><p>Бұл тақырыпта сұрақ жоқ.</p></div>`;
+        ? `<div class="empty-state"><span class="empty-icon ok">${ic("trophy")}</span><p>Қателер тізімі бос. Барлығын дұрыс шештің!</p><button type="button" class="btn btn-primary" data-act="p-mode" data-mode="all"${P.subj === "all" ? " hidden" : ""}>${ic("pen")}Жаттығуды жалғастыру</button></div>`
+        : `<div class="empty-state"><span class="empty-icon">${ic("book")}</span><p>Бұл тақырыпта сұрақ жоқ.</p></div>`;
       return;
     }
     const inst = P.inst;
@@ -544,14 +624,14 @@
     let actions;
     if (!P.checked) {
       actions = `<div class="q-actions">
-        ${needsCheck ? `<button type="button" class="btn btn-primary" data-act="p-check" ${isAnswered(inst, P.resp) ? "" : "disabled"}>Тексеру</button>` : ""}
-        <button type="button" class="btn btn-ghost" data-act="p-skip">Өткізу</button>
-        <span class="spacer"></span><span class="kbd-hint">1–${inst.opts.length} · Enter</span>
+        ${needsCheck ? `<button type="button" class="btn btn-primary" data-act="p-check" ${isAnswered(inst, P.resp) ? "" : "disabled"}>${ic("check")}Тексеру</button>` : ""}
+        <button type="button" class="btn btn-ghost" data-act="p-skip">Өткізу${ic("skip")}</button>
+        <span class="spacer"></span><span class="kbd-hint"><kbd>1</kbd>–<kbd>${inst.opts.length}</kbd> <kbd>Enter</kbd></span>
       </div>`;
     } else {
-      actions = `<div class="q-actions"><button type="button" class="btn btn-primary" data-act="p-next">Келесі →</button><span class="spacer"></span><span class="kbd-hint">Enter</span></div>`;
+      actions = `<div class="q-actions"><button type="button" class="btn btn-primary" data-act="p-next">Келесі сұрақ${ic("arrow")}</button><span class="spacer"></span><span class="kbd-hint"><kbd>Enter</kbd></span></div>`;
     }
-    card.innerHTML = questionHTML(inst, { resp: P.resp, reveal: P.checked, locked: P.checked, actions });
+    card.innerHTML = questionHTML(inst, { resp: P.resp, reveal: P.checked, locked: P.checked, actions, anim: P.checked });
   }
 
   function practiceCheck() {
@@ -561,12 +641,19 @@
     P.n++;
     P.pts += g.pts;
     P.max += g.max;
-    if (g.pts === g.max) P.ok++;
+    if (g.pts === g.max) { P.ok++; P.streak++; } else P.streak = 0;
     const cleared = recordAnswer(P.inst, g.pts, g.max);
     save();
-    if (cleared) toast("Бұл сұрақ қателер тізімінен шықты");
+    if (cleared) toast("Бұл сұрақ қателер тізімінен шықты", "ok");
+    else if (P.streak > 0 && P.streak % 5 === 0) toast(`Қатарынан ${P.streak} дұрыс жауап!`, "ok");
     renderPracticeRun();
     updateChrome();
+    // keep the explanation and the next button in view on small screens
+    const next = $("#practiceCard [data-act='p-next']");
+    if (next) {
+      const r = next.getBoundingClientRect();
+      if (r.bottom > window.innerHeight - 100) window.scrollBy({ top: r.bottom - window.innerHeight + 130, behavior: "smooth" });
+    }
   }
 
   function practiceClick(el) {
@@ -668,20 +755,25 @@
     $("#comboList").innerHTML = U.combos.map((c) => {
       const key = c.join("-");
       return `<button type="button" class="radio-card" role="radio" aria-checked="${key === state.combo}" data-act="combo" data-combo="${key}">
+        <span class="rc-icons">${scIcon(c[0], "sm")}${scIcon(c[1], "sm")}</span>
         <span class="rc-body"><span>${comboName(key)}</span><small>Сұрақ банкі: ${bankSize(c[0])} + ${bankSize(c[1])}</small></span>
+        <span class="rc-mark">${ic("check")}</span>
       </button>`;
     }).join("");
     $("#mockModes").innerHTML = ["full", "mini"].map((m) => {
       const st = planStats(m);
       return `<button type="button" class="radio-card" role="radio" aria-checked="${m === mockMode}" data-act="mock-mode" data-mode="${m}">
+        <span class="rc-tile">${ic(m === "full" ? "timer" : "bolt")}</span>
         <span class="rc-body"><span>${U.plans[m].label}</span><small>${st.tasks} тапсырма · ${st.pts} балл · ${st.minutes} минут</small></span>
+        <span class="rc-mark">${ic("check")}</span>
       </button>`;
     }).join("");
     const st = planStats(mockMode);
     const [p1, p2] = state.combo.split("-");
     const names = ["Қазақстан тарихы", "Оқу сауаттылығы", "Математикалық сауаттылық", SUBJ[p1].name, SUBJ[p2].name];
-    $("#mockSummary").innerHTML = `<table><tbody>${st.rows.map((r, i) => `<tr><td>${names[i]}</td><td class="num">${r[1]} · ${r[2]} б.</td></tr>`).join("")}
-      <tr><td><b>Барлығы · ${st.minutes} мин</b></td><td class="num"><b>${st.tasks} · ${st.pts} б.</b></td></tr></tbody></table>`;
+    const keys = ["history", "readlit", "mathlit", p1, p2];
+    $("#mockSummary").innerHTML = `<table><tbody>${st.rows.map((r, i) => `<tr><td><span class="q-dot" style="--sc:${scColor(keys[i])}"></span>${names[i]}</td><td class="num">${r[1]} · ${r[2]} б.</td></tr>`).join("")}
+      <tr class="sum"><td>Барлығы · ${st.minutes} мин</td><td class="num">${st.tasks} · ${st.pts} б.</td></tr></tbody></table>`;
   }
 
   function startExam() {
@@ -706,8 +798,9 @@
     const ex = state.exam;
     const [si, qi] = ex.cur;
     const sec = ex.sections[si];
-    $("#examTabs").innerHTML = ex.sections.map((s, i) => `<button type="button" class="exam-tab${i === si ? " active" : ""}" role="tab" aria-selected="${i === si}" data-act="ex-sec" data-sec="${i}">${SHORT[s.subj] || SUBJ[s.subj].name}<small>${answeredIn(i)}/${s.items.length}</small></button>`).join("");
-    $("#paletteTitle").textContent = `${SUBJ[sec.subj].name} · ${answeredIn(si)}/${sec.items.length}`;
+    $("#examTabs").innerHTML = ex.sections.map((s, i) => `<button type="button" class="exam-tab${i === si ? " active" : ""}" role="tab" aria-selected="${i === si}" data-act="ex-sec" data-sec="${i}"><span class="q-dot" style="--sc:${scColor(s.subj)}"></span>${SHORT[s.subj] || SUBJ[s.subj].name}<small>${answeredIn(i)}/${s.items.length}</small></button>`).join("");
+    const doneN = answeredIn(si);
+    $("#paletteTitle").innerHTML = `${scIcon(sec.subj, "sm")}<span><b>${SUBJ[sec.subj].name}</b><small>${doneN} / ${sec.items.length} жауап</small></span>`;
     $("#examPalette").innerHTML = sec.items.map((inst, j) => {
       let c = "pal";
       if (isAnswered(inst, examResp(si, j))) c += " done";
@@ -719,11 +812,11 @@
     $("#examCard").innerHTML = inst ? questionHTML(inst, { num: qi + 1, resp: examResp(si, qi), reveal: false, locked: false }) : "";
     $("#examPrev").disabled = si === 0 && qi === 0;
     const lastQ = si === ex.sections.length - 1 && qi === sec.items.length - 1;
-    $("#examNext").textContent = lastQ ? "Аяқтау" : "Келесі →";
+    $("#examNext").innerHTML = lastQ ? `${ic("check")}<span>Аяқтау</span>` : `<span>Келесі</span>${ic("arrow")}`;
     const flagBtn = $("#examFlag");
     const flagged = !!ex.flags[si + "-" + qi];
     flagBtn.classList.toggle("on", flagged);
-    flagBtn.textContent = flagged ? "Белгіні алу" : "Белгілеу";
+    flagBtn.innerHTML = `${ic("flag")}<span>${flagged ? "Белгіні алу" : "Белгілеу"}</span>`;
     tickTimer();
   }
 
@@ -799,25 +892,25 @@
     $("#examConfirm").hidden = true;
     if (view === "mock") { renderMock(); window.scrollTo(0, 0); }
     updateChrome();
-    if (auto) toast("Уақыт бітті — сынақ аяқталды");
+    if (auto) toast("Уақыт бітті — сынақ аяқталды", "warn");
   }
 
   function renderResult() {
     const r = state.last;
     const fails = r.parts.filter((p) => p.pts < p.min).map((p) => SUBJ[p.subj].name);
     let status;
-    if (r.pass) status = `<span class="status ok">Шекті балдан өттің</span>`;
-    else if (r.total < r.totalMin) status = `<span class="status bad">Шекті балға жетпеді: жалпы балл шекті мәннен (${r.totalMin}) төмен</span>`;
-    else status = `<span class="status bad">Шекті балға жетпеді: ${fails.join(", ")}</span>`;
+    if (r.pass) status = `<span class="status ok">${ic("check")}Шекті балдан өттің</span>`;
+    else if (r.total < r.totalMin) status = `<span class="status bad">${ic("x")}Шекті балға жетпеді: жалпы балл шекті мәннен (${r.totalMin}) төмен</span>`;
+    else status = `<span class="status bad">${ic("x")}Шекті балға жетпеді: ${fails.join(", ")}</span>`;
     const scale = r.mode === "full" ? "" : ` · 140 шкаласында ≈ ${Math.round((r.total / r.totalMax) * 140)}`;
     const gap = r.mode === "full" ? (r.total >= state.target ? "Мақсатқа жеттің!" : `Мақсатқа дейін ${state.target - r.total} балл`) : "";
 
     const parts = r.parts.map((p) => {
       const w = p.max ? (p.pts / p.max) * 100 : 0;
       const th = p.max ? (p.min / p.max) * 100 : 0;
-      return `<div class="part">
-        <div class="part-name">${SUBJ[p.subj].name}<small>шек: ${p.min}</small></div>
-        <div class="part-bar"><i class="${p.pts < p.min ? "fail" : ""}" style="width:${w}%"></i><em style="left:${th}%"></em></div>
+      return `<div class="part" style="--sc:${scColor(p.subj)}">
+        <div class="part-name">${scIcon(p.subj, "sm")}<span>${SUBJ[p.subj].name}<small>шек: ${p.min}</small></span></div>
+        <div class="part-bar"><i class="${p.pts < p.min ? "fail" : ""}" style="width:${w}%"></i><em style="left:${th}%" title="Шекті балл"></em></div>
         <div class="part-pts">${p.pts}/${p.max}</div>
       </div>`;
     }).join("");
@@ -831,26 +924,38 @@
 
     $("#mockResult").innerHTML = `
       <div class="result-hero">
-        <div class="score-big">${r.total}<small> / ${r.totalMax}</small></div>
-        <div>
+        ${scoreRing(r.total, r.totalMax)}
+        <div class="result-copy">
           ${status}
+          <h1 class="h1">${r.pass ? "Жарайсың!" : "Тағы да жаттығайық"}</h1>
           <p>${U.plans[r.mode].label} · ${comboName(r.combo)} · ${r.mins} минут${scale}${gap ? " · " + gap : ""}</p>
-          <div class="row wrap-row" style="margin-top:12px">
-            <button type="button" class="btn btn-primary" data-act="mock-new">Жаңа сынақ</button>
-            ${wrong.length ? `<button type="button" class="btn btn-ghost" data-act="mistakes-all">Қателерді жаттықтыру</button>` : ""}
+          <div class="row wrap-row">
+            <button type="button" class="btn btn-primary" data-act="mock-new">${ic("refresh")}Жаңа сынақ</button>
+            ${wrong.length ? `<button type="button" class="btn btn-soft" data-act="mistakes-all">${ic("bookmark")}Қателерді жаттықтыру</button>` : ""}
           </div>
         </div>
       </div>
-      <section class="panel"><h2 class="h3">Пәндер бойынша</h2><div class="part-list">${parts}</div></section>
+      <section class="panel"><h2 class="h2">${ic("chart")}Пәндер бойынша</h2><div class="part-list">${parts}</div></section>
       <div class="review-head">
-        <h2 class="h2">Талдау</h2>
+        <h2 class="h2">${ic("layers")}Талдау</h2>
         <div class="chips" style="margin:0">
-          <button type="button" class="chip-btn${reviewFilter === "wrong" ? " active" : ""}" data-act="rev" data-f="wrong">Қателер<small>${wrong.length}</small></button>
-          <button type="button" class="chip-btn${reviewFilter === "blank" ? " active" : ""}" data-act="rev" data-f="blank">Жауапсыз<small>${blank.length}</small></button>
-          <button type="button" class="chip-btn${reviewFilter === "all" ? " active" : ""}" data-act="rev" data-f="all">Барлығы<small>${flat.length}</small></button>
+          <button type="button" class="chip-btn chip-mode${reviewFilter === "wrong" ? " active" : ""}" data-act="rev" data-f="wrong">${ic("x")}Қателер<small>${wrong.length}</small></button>
+          <button type="button" class="chip-btn chip-mode${reviewFilter === "blank" ? " active" : ""}" data-act="rev" data-f="blank">${ic("spark")}Жауапсыз<small>${blank.length}</small></button>
+          <button type="button" class="chip-btn chip-mode${reviewFilter === "all" ? " active" : ""}" data-act="rev" data-f="all">${ic("grid")}Барлығы<small>${flat.length}</small></button>
         </div>
       </div>
-      <div class="review-list">${shown.length ? shown.map((x) => questionHTML(x.inst, { num: x.num, resp: x.resp, reveal: true, locked: true })).join("") : `<p class="empty">Бұл тізім бос.</p>`}</div>`;
+      <div class="review-list">${shown.length ? shown.map((x) => questionHTML(x.inst, { num: x.num, resp: x.resp, reveal: true, locked: true })).join("") : `<div class="empty"><span class="empty-icon ok">${ic("check")}</span><p>Бұл тізім бос.</p></div>`}</div>`;
+  }
+
+  function scoreRing(total, max) {
+    const R = 58, C = 2 * Math.PI * R, f = max ? Math.min(1, total / max) : 0;
+    return `<div class="score-ring"><svg viewBox="0 0 140 140" role="img" aria-label="${total} / ${max} балл">
+      <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--sky-hi)"/><stop offset="0.65" style="stop-color:var(--sky)"/><stop offset="1" style="stop-color:var(--gold-hi)"/></linearGradient></defs>
+      <circle class="sr-track" cx="70" cy="70" r="${R}"/>
+      ${f > 0 ? `<circle class="sr-val" cx="70" cy="70" r="${R}" stroke-dasharray="${(f * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 70 70)"/>` : ""}
+      <text class="sr-num" x="70" y="76" text-anchor="middle">${total}</text>
+      <text class="sr-cap" x="70" y="98" text-anchor="middle">/ ${max} балл</text>
+    </svg></div>`;
   }
 
   function tickTimer() {
@@ -860,7 +965,7 @@
     const t = $("#examTimer");
     if (t && view === "mock") {
       t.textContent = fmtClock(left);
-      t.classList.toggle("low", left < 10 * 60000);
+      $("#examTimerBox").classList.toggle("low", left < 10 * 60000);
     }
     const b = $("#examBannerTime");
     if (b) b.textContent = fmtClock(left);
@@ -871,13 +976,13 @@
     const list = Object.values(state.mistakes);
     const body = $("#mistakesBody");
     if (!list.length) {
-      body.innerHTML = `<div class="empty-state"><p>Қателер жоқ. Жаттығу немесе сынақ кезінде қате жауап берген сұрақтар осында жиналады.</p><button type="button" class="btn btn-primary" data-nav="practice">Жаттығуды бастау</button></div>`;
+      body.innerHTML = `<div class="empty-state"><span class="empty-icon ok">${ic("trophy")}</span><h2 class="h2">Қателер жоқ</h2><p>Жаттығу немесе сынақ кезінде қате жауап берген сұрақтар осында жиналады.</p><button type="button" class="btn btn-primary" data-nav="practice">${ic("pen")}Жаттығуды бастау</button></div>`;
       return;
     }
     const by = {};
     list.forEach((m) => { by[m.subj] = (by[m.subj] || 0) + 1; });
-    const cards = Object.keys(SUBJ).filter((k) => by[k]).map((k) => `<button type="button" class="mistake-card" data-act="mistakes-subj" data-subj="${k}"><b>${by[k]}</b><span>${SUBJ[k].name}</span><small>Қайта шешу →</small></button>`).join("");
-    body.innerHTML = `<div class="mistake-grid">${cards}</div><button type="button" class="btn btn-primary btn-lg" data-act="mistakes-all">Барлығын қайта шешу · ${list.length}</button>`;
+    const cards = Object.keys(SUBJ).filter((k) => by[k]).map((k) => `<button type="button" class="mistake-card" style="--sc:${scColor(k)}" data-act="mistakes-subj" data-subj="${k}"><span class="mc-top">${scIcon(k)}<b>${by[k]}</b></span><span class="mc-name">${SUBJ[k].name}</span><small>Қайта шешу ${ic("arrow")}</small></button>`).join("");
+    body.innerHTML = `<div class="mistakes-cta"><div><b>${list.length}</b><span>сұрақ қайталауды күтіп тұр</span></div><button type="button" class="btn btn-primary btn-lg" data-act="mistakes-all">${ic("refresh")}Барлығын қайта шешу</button></div><div class="mistake-grid">${cards}</div>`;
   }
 
   /* ---------- progress ---------- */
@@ -906,16 +1011,19 @@
   function renderProgress() {
     const hist = state.history.slice(-12);
     $("#historyChart").innerHTML = hist.length
-      ? chartSVG(hist) + `<div class="legend"><span class="lg" style="background:var(--sky);border-color:var(--sky)"></span>балл (140 шкаласында) <span class="lg" style="background:var(--gold);border-color:var(--gold)"></span>мақсат ${state.target} <span class="lg" style="background:var(--bad);border-color:var(--bad)"></span>шек 50</div>`
-      : `<div class="empty-state"><p>Әлі сынақ тапсырылған жоқ. Бірінші толық сынақтан кейін балл динамикасы осында шығады.</p><button type="button" class="btn btn-primary" data-nav="mock">Сынаққа өту</button></div>`;
-    $("#historyList").innerHTML = state.history.slice(-8).reverse().map((h) => `<div class="history-item"><div>${comboName(h.combo)}<small>${fmtDate(h.at)} · ${U.plans[h.mode].label} · ${h.mins} мин</small></div><b>${h.total}/${h.max}</b></div>`).join("") +
-      (state.last ? `<button type="button" class="link-btn" data-act="last-review" style="margin-top:8px">Соңғы сынақтың талдауын ашу →</button>` : "");
+      ? chartSVG(hist) + `<div class="legend"><span class="lg lg-line"></span>балл (140 шкаласында) <span class="lg lg-tgt"></span>мақсат ${state.target} <span class="lg lg-thr"></span>шек 50</div>`
+      : `<div class="empty-state"><span class="empty-icon">${ic("chart")}</span><p>Әлі сынақ тапсырылған жоқ. Бірінші сынақтан кейін балл динамикасы осында шығады.</p><button type="button" class="btn btn-primary" data-nav="mock">${ic("play")}Сынаққа өту</button></div>`;
+    $("#historyList").innerHTML = state.history.slice(-8).reverse().map((h) => {
+      const [a, b] = h.combo.split("-");
+      return `<div class="history-item"><span class="rc-icons">${scIcon(a, "sm")}${scIcon(b, "sm")}</span><div>${comboName(h.combo)}<small>${fmtDate(h.at)} · ${U.plans[h.mode].label} · ${h.mins} мин</small></div><b class="${h.pass ? "pass" : "fail"}">${h.total}<small>/${h.max}</small></b></div>`;
+    }).join("") +
+      (state.last ? `<button type="button" class="btn btn-soft btn-sm" data-act="last-review">${ic("layers")}Соңғы сынақтың талдауы</button>` : "");
 
     $("#subjectBars").innerHTML = Object.keys(SUBJ).map((k) => {
       const s = state.stats[k];
       const acc = s && s.n ? pct(s.ok, s.n) : null;
       const cls = acc == null ? "" : acc >= 75 ? "" : acc >= 50 ? "mid" : "low";
-      return `<div class="bar-row"><span>${SUBJ[k].name}</span><div class="bar"><i class="${cls}" style="width:${acc || 0}%"></i></div><b>${acc == null ? "—" : acc + "%"}<small>${s && s.n ? " · " + s.n : ""}</small></b></div>`;
+      return `<div class="bar-row"><span class="br-name">${scIcon(k, "xs")}<span>${SUBJ[k].name}</span></span><div class="bar"><i class="${cls}" style="width:${acc || 0}%"></i></div><b>${acc == null ? "—" : acc + "%"}<small>${s && s.n ? " · " + s.n : ""}</small></b></div>`;
     }).join("");
 
     $("#examDate").value = state.examDate || "";
@@ -1096,7 +1204,9 @@
   });
 
   /* ---------- init ---------- */
+  $all("i[data-ic]").forEach((el) => { el.outerHTML = ic(el.dataset.ic); });
   applyTheme();
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme); } catch (e) { /* old browsers */ }
   if (U.problems.length && window.console) console.warn("UBT bank:", U.problems);
   if (state.exam && state.exam.endAt <= Date.now()) finishExam(true);
   const start = (location.hash || "").slice(1);
