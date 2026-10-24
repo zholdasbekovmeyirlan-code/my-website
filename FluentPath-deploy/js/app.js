@@ -3,8 +3,8 @@
   const DATA = window.FP_DATA;
   const SRS = window.FP_SRS;
   const STORAGE_KEY = "fluentpath_v2";
-  const LANGS = ["kk", "ru", "es", "zh"];
-  const LOCALES = { kk: "kk-KZ", ru: "ru-RU", es: "es-ES", zh: "zh-CN" };
+  const LANGS = ["kk", "ru"];
+  const LOCALES = { kk: "kk-KZ", ru: "ru-RU" };
   const GOALS = [10, 20, 30, 50];
 
   const defaultState = () => ({
