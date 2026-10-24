@@ -138,6 +138,19 @@
     } catch {
       /* storage full or blocked — keep working in memory */
     }
+    window.FP_CLOUD?.onLocalChange();
+  }
+
+  // Cloud sync hands back a merged save; keep this device's settings and redraw.
+  function replaceState(next) {
+    state = normalizeState(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* ignore */
+    }
+    updateChrome();
+    renderView(currentView);
   }
 
   // Local calendar day (YYYY-MM-DD). toISOString() would switch days at 05:00 in Kazakhstan.
@@ -154,11 +167,21 @@
   }
 
   // A streak survives until the end of the day after the last active day.
+  // Streak freezes (earned every 7 days, max 2) cover missed days automatically.
   function refreshStreak() {
-    if (state.lastActive && state.streak && dayDiff(state.lastActive, localDay()) > 1) {
+    if (!state.lastActive || !state.streak) return;
+    const missed = dayDiff(state.lastActive, localDay()) - 1;
+    if (missed <= 0) return;
+    if ((state.freezes || 0) >= missed) {
+      state.freezes -= missed;
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      state.lastActive = localDay(y);
+      toast(fmt(t("freeze_used"), { n: missed }));
+    } else {
       state.streak = 0;
-      saveState();
     }
+    saveState();
   }
 
   function todayXp() {
@@ -169,12 +192,16 @@
     return todayXp() >= state.goalXp;
   }
 
-  function markActivity(xp = 5) {
+  function markActivity(xp = 5, opts = {}) {
     const today = localDay();
     if (state.lastActive !== today) {
       const diff = state.lastActive ? dayDiff(state.lastActive, today) : null;
       state.streak = diff === 1 ? (state.streak || 0) + 1 : 1;
       state.lastActive = today;
+      if (state.streak % 7 === 0 && (state.freezes || 0) < 2) {
+        state.freezes = (state.freezes || 0) + 1;
+        setTimeout(() => toast(t("freeze_earned")), 2800);
+      }
     }
     if (!state.streak) state.streak = 1;
     state.bestStreak = Math.max(state.bestStreak || 0, state.streak);
@@ -191,6 +218,7 @@
     }
     saveState();
     updateChrome();
+    if (!opts.noQuest) window.FP_QUESTS?.onXp(xp);
   }
 
   // XP for tools that can be re-submitted (speaking, writing, reading…) is paid once per item per day.
@@ -347,13 +375,18 @@
     );
   }
 
-  function speakText(text, { rate = 1 } = {}) {
+  function speakText(text, { rate = 1, pitch = 1, onend = null } = {}) {
     if (!window.speechSynthesis || !text) return false;
     listenPlayingAll = false;
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-GB";
     u.rate = rate;
+    u.pitch = pitch;
+    if (onend) {
+      u.onend = onend;
+      u.onerror = onend;
+    }
     const voice = pickEnglishVoice();
     if (voice) u.voice = voice;
     speechSynthesis.speak(u);
@@ -411,6 +444,7 @@
     $("#mainNav")?.classList.remove("open");
     $("#burger")?.setAttribute("aria-expanded", "false");
     const changed = currentView !== name;
+    if (changed && (currentView === "mock" || currentView === "unt")) window.FP_EXAMS?.leave(currentView);
     currentView = name;
     if (opts.push !== false && location.hash !== `#${name}`) {
       try {
@@ -437,6 +471,10 @@
     if (name === "phrases") initPhrases();
     if (name === "practice") renderPractice();
     if (name === "chat") window.FP_AIUI?.render();
+    if (name === "stories") window.FP_STORIES?.render();
+    if (name === "mock") window.FP_EXAMS?.renderMock();
+    if (name === "unt") window.FP_EXAMS?.renderUnt();
+    if (name === "account" || name === "league" || name === "class") window.FP_CLOUD_UI?.render(name);
     if (name !== "speaking" && speakPhase === "talk") {
       clearSpeakTimer();
       stopSpeakRec();
@@ -1214,6 +1252,7 @@
     set("#pcWriting", fmt(t("pc_tasks"), { n: (DATA.writing || []).length }));
     set("#pcPhrases", fmt(t("pc_phrases"), { n: (DATA.phrases || []).length }));
     set("#pcVocab", fmt(t("pc_words"), { n: DATA.vocab.length }));
+    set("#pcStories", fmt(t("pc_stories"), { n: (DATA.stories || []).length }));
   }
 
   /* Focus pomodoro */
@@ -1451,6 +1490,7 @@
     el.classList.remove("hidden");
     el.textContent = `${t("result_score")}: ${score} / ${listenTrack.questions.length}`;
     awardOnce(`listen:${listenTrack.id}`, score * 6 + 8);
+    window.FP_QUESTS?.bump("listen");
     playSfx(score === listenTrack.questions.length ? "done" : "ok");
     if (score === listenTrack.questions.length) burstConfetti();
   }
@@ -1459,12 +1499,15 @@
   function initReadingList() {
     $("#readingPick").classList.remove("hidden");
     $("#readingActive").classList.add("hidden");
+    const done = state.readDone || {};
     $("#readingPick").innerHTML = DATA.readings
       .map(
         (r) =>
           `<button type="button" data-id="${r.id}">
-            <strong>📖 ${escapeHtml(r.title)}</strong>
-            <span class="muted"> · ${r.level}</span>
+            <span><strong>📖 ${escapeHtml(r.title)}</strong></span>
+            <span class="track-meta">${r.level} · ${fmt(t("read_questions"), { n: r.questions.length })}${
+              done[r.id] != null ? ` · <b class="done-chip">✓ ${done[r.id]}/${r.questions.length}</b>` : ""
+            }</span>
           </button>`
       )
       .join("");
@@ -1504,6 +1547,10 @@
       el.classList.remove("hidden");
       el.textContent = `${t("result_score")}: ${score} / ${r.questions.length}`;
       awardOnce(`read:${r.id}`, score * 5 + 5);
+      if (!state.readDone) state.readDone = {};
+      state.readDone[r.id] = Math.max(state.readDone[r.id] || 0, score);
+      saveState();
+      window.FP_QUESTS?.bump("read");
       playSfx(score === r.questions.length ? "done" : "ok");
       if (score === r.questions.length) burstConfetti();
     };
@@ -1654,6 +1701,8 @@
       b.classList.toggle("hidden", due === 0);
     });
     $all(".js-due").forEach((el) => (el.textContent = String(due)));
+    $all(".js-freeze").forEach((el) => (el.textContent = String(state.freezes || 0)));
+    window.FP_QUESTS?.render();
     course()?.updateSide();
     renderGoalChips();
   }
@@ -1950,6 +1999,7 @@
       return state;
     },
     save: saveState,
+    replaceState,
     t,
     toast,
     confirm: askConfirm,
@@ -1995,6 +2045,7 @@
     applyI18n();
     updateFocusClock();
     showView(first, { push: false });
+    window.FP_CLOUD_UI?.init();
   }
 
   document.addEventListener("DOMContentLoaded", init);

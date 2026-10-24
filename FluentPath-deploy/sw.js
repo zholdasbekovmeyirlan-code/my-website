@@ -1,14 +1,16 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "6";
+const VERSION = "7";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
+const META_CACHE = "fluentpath-meta"; // small settings the page leaves for push (interface language)
 const ASSETS = [
   "./",
   "index.html",
   `css/style.css?v=${VERSION}`,
   `js/data.js?v=${VERSION}`,
   `js/course-data.js?v=${VERSION}`,
+  `js/content-extra.js?v=${VERSION}`,
   `js/i18n.js?v=${VERSION}`,
   `js/srs.js?v=${VERSION}`,
   `js/ai-prompts.js?v=${VERSION}`,
@@ -16,6 +18,11 @@ const ASSETS = [
   `js/app.js?v=${VERSION}`,
   `js/course.js?v=${VERSION}`,
   `js/ai-ui.js?v=${VERSION}`,
+  `js/quests.js?v=${VERSION}`,
+  `js/stories.js?v=${VERSION}`,
+  `js/exams.js?v=${VERSION}`,
+  `js/cloud.js?v=${VERSION}`,
+  `js/cloud-ui.js?v=${VERSION}`,
   "manifest.webmanifest",
   "icons/icon.svg",
   "icons/icon-192.png",
@@ -36,7 +43,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== FONT_CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => ![CACHE, FONT_CACHE, META_CACHE].includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -61,6 +68,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.origin !== self.location.origin) return;
+  // Functions (site config, AI) are always live, never cached.
+  if (url.pathname.startsWith("/.netlify/")) return;
 
   // Pages: network first so updates arrive, cached shell when offline.
   if (req.mode === "navigate") {
@@ -89,5 +98,49 @@ self.addEventListener("fetch", (event) => {
           return res;
         })
     )
+  );
+});
+
+/* Daily reminder: the server sends an empty push, the text lives here. */
+const REMINDER = {
+  kk: { title: "FluentPath 🔥", body: "Бүгін әлі сабақ жасаған жоқсың — streak-ті сақтауға 5 минут жетеді!" },
+  ru: { title: "FluentPath 🔥", body: "Сегодня ещё не было занятия — 5 минут, и серия сохранится!" },
+};
+
+async function reminderText() {
+  try {
+    const hit = await (await caches.open(META_CACHE)).match("lang");
+    const lang = hit ? await hit.text() : "kk";
+    return REMINDER[lang] || REMINDER.kk;
+  } catch {
+    return REMINDER.kk;
+  }
+}
+
+self.addEventListener("push", (event) => {
+  event.waitUntil(
+    reminderText().then((r) =>
+      self.registration.showNotification(r.title, {
+        body: r.body,
+        icon: "icons/icon-192.png",
+        badge: "icons/icon-192.png",
+        tag: "daily-reminder",
+        renotify: false,
+      })
+    )
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => new URL(c.url).origin === self.location.origin);
+      if (open) {
+        open.navigate("./#learn").catch(() => {});
+        return open.focus();
+      }
+      return self.clients.openWindow("./#learn");
+    })
   );
 });

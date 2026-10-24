@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
   <div class="bg-scene" aria-hidden="true">
@@ -48,6 +48,7 @@
         <option value="kk">🇰🇿 KK</option>
         <option value="ru">🇷🇺 RU</option>
       </select>
+      <button type="button" class="icon-btn account-btn cloud-only hidden" id="accountBtn" data-nav="account" aria-label="Account">👤</button>
       <button type="button" class="icon-btn" id="themeToggle" data-i18n-title="btn_theme" title="Тема" aria-label="Theme">☀️</button>
       <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="mainNav">☰</button>
     </div>
@@ -78,6 +79,7 @@
 
         <div class="hero-stage reveal delay-1">
           <div class="cont-card glass" id="homeContinue"></div>
+          <div class="quests-card glass js-quests"></div>
           <div class="hero-card glass">
             <div class="wotd">
               <div class="wotd-top">
@@ -146,6 +148,7 @@
           </div>
           <div class="path-strip">
             <span>🔥 <b class="js-streak">0</b></span>
+            <span class="freeze-chip" data-i18n-title="freeze_t" title="Streak freeze">🧊 <b class="js-freeze">0</b></span>
             <span>⚡ <b class="js-xp-today">0</b> / <b class="js-goal">20</b> XP</span>
             <button type="button" data-nav="review">🧠 <b class="js-due">0</b></button>
           </div>
@@ -164,12 +167,14 @@
               </div>
               <div>
                 <h3 data-i18n="side_today">Бүгін</h3>
-                <p class="goal-num"><strong id="dailyDone">0</strong> / <span id="dailyGoal">20</span> XP · 🔥 <strong id="sideStreak">0</strong></p>
+                <p class="goal-num"><strong id="dailyDone">0</strong> / <span id="dailyGoal">20</span> XP · 🔥 <strong id="sideStreak">0</strong> · <span data-i18n-title="freeze_t" title="Streak freeze">🧊 <strong class="js-freeze">0</strong></span></p>
               </div>
             </div>
             <div class="progress-bar slim"><div class="progress-fill" id="dailyFill" style="width:0%"></div></div>
             <div class="week" id="sideWeek"></div>
           </div>
+
+          <div class="side-card glass quests-card js-quests"></div>
 
           <div class="side-card glass due-card">
             <div class="side-row">
@@ -322,6 +327,10 @@
           <span class="pc-ico">🤖</span><strong data-i18n="nav_chat">AI серік</strong>
           <span class="pc-desc" data-i18n="pc_chat_d">Кафеде, әуежайда, сұхбатта сөйлесіп көр</span><em data-i18n="pc_ai_badge">AI · Gemini</em>
         </button>
+        <button type="button" class="pc-card" data-nav="stories" style="--c:#f97316">
+          <span class="pc-ico">🎭</span><strong data-i18n="nav_stories">Оқиғалар</strong>
+          <span class="pc-desc" data-i18n="pc_stories_d">Қысқа диалогты тыңда, түсінгеніңді тексер</span><em id="pcStories"></em>
+        </button>
         <button type="button" class="pc-card" data-nav="speaking" style="--c:#fb7185">
           <span class="pc-ico">🎤</span><strong data-i18n="nav_speaking">Сөйлеу</strong>
           <span class="pc-desc" data-i18n="pc_speak_d">Тақырып бойынша 2 минут сөйле, AI бағалайды</span><em id="pcSpeaking"></em>
@@ -345,6 +354,17 @@
         <button type="button" class="pc-card" data-nav="phrases" style="--c:#2dd4bf">
           <span class="pc-ico">💬</span><strong data-i18n="nav_phrases">Фразалар</strong>
           <span class="pc-desc" data-i18n="pc_phrase_d">Эссе мен сөйлеуге дайын тіркестер</span><em id="pcPhrases"></em>
+        </button>
+      </div>
+      <h2 class="section-title practice-sub" data-i18n="practice_exams">Емтиханға дайындық</h2>
+      <div class="practice-grid">
+        <button type="button" class="pc-card" data-nav="mock" style="--c:#a78bfa">
+          <span class="pc-ico">🎓</span><strong data-i18n="nav_mock">IELTS mock</strong>
+          <span class="pc-desc" data-i18n="pc_mock_d">4 бөлім, уақытпен — band болжамы</span><em data-i18n="pc_mock_n">L · R · W · S</em>
+        </button>
+        <button type="button" class="pc-card" data-nav="unt" style="--c:#38bdf8">
+          <span class="pc-ico">🇰🇿</span><strong data-i18n="nav_unt">ҰБТ ағылшын</strong>
+          <span class="pc-desc" data-i18n="pc_unt_d">40 сұрақ, 50 балл, 60 минут</span><em data-i18n="pc_unt_n">ҰБТ форматы</em>
         </button>
         <button type="button" class="pc-card" data-nav="quiz" style="--c:#f472b6">
           <span class="pc-ico">✅</span><strong data-i18n="nav_quiz">Тест</strong>
@@ -515,6 +535,59 @@
       </div>
     </section>
 
+    <!-- STORIES -->
+    <section id="view-stories" class="view">
+      <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
+        <h1 data-i18n="st_title">Диалог-оқиғалар</h1>
+        <p data-i18n="st_sub">Қысқа әңгімені тыңда, сұраққа жауап бер.</p>
+      </div>
+      <div class="story-grid" id="storyList"></div>
+      <div class="story-player hidden" id="storyPlayer"></div>
+    </section>
+
+    <!-- IELTS MOCK TEST -->
+    <section id="view-mock" class="view">
+      <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
+      </div>
+      <div class="exam-main" id="mockMain"></div>
+    </section>
+
+    <!-- UNT ENGLISH TEST -->
+    <section id="view-unt" class="view">
+      <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
+      </div>
+      <div class="exam-main" id="untMain"></div>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section id="view-account" class="view">
+      <div class="page-head">
+        <h1 data-i18n="nav_account">Аккаунт</h1>
+      </div>
+      <div class="cloud-main" id="accountMain"></div>
+    </section>
+
+    <!-- WEEKLY LEAGUE -->
+    <section id="view-league" class="view">
+      <div class="page-head">
+        <h1 data-i18n="lg_title">🏆 Апталық лига</h1>
+        <p data-i18n="lg_sub">Осы аптада ең көп XP жинағандар</p>
+      </div>
+      <div class="cloud-main" id="leagueMain"></div>
+    </section>
+
+    <!-- CLASS / TEACHER MODE -->
+    <section id="view-class" class="view">
+      <div class="page-head">
+        <h1 data-i18n="cl_title">👥 Сынып</h1>
+        <p data-i18n="cl_sub">Мұғалім тапсырма береді, оқушылардың прогресін көреді</p>
+      </div>
+      <div class="cloud-main" id="classMain"></div>
+    </section>
+
     <!-- PROGRESS -->
     <section id="view-progress" class="view">
       <div class="page-head">
@@ -642,7 +715,13 @@
         <button type="button" data-nav="listening">🎧 <span data-i18n="nav_listening">Тыңдау</span></button>
         <button type="button" data-nav="reading">📖 <span data-i18n="nav_reading">Оқу</span></button>
         <button type="button" data-nav="grammar">🧩 <span data-i18n="nav_grammar">Грамматика</span></button>
+        <button type="button" data-nav="stories">🎭 <span data-i18n="nav_stories">Оқиғалар</span></button>
+        <button type="button" data-nav="mock">🎓 <span data-i18n="nav_mock">IELTS mock</span></button>
+        <button type="button" data-nav="unt">🇰🇿 <span data-i18n="nav_unt">ҰБТ ағылшын</span></button>
         <button type="button" data-nav="quiz">✅ <span data-i18n="nav_quiz">Тест</span></button>
+        <button type="button" class="cloud-only hidden" data-nav="league">🏆 <span data-i18n="nav_league">Лига</span></button>
+        <button type="button" class="cloud-only hidden" data-nav="class">👥 <span data-i18n="nav_class">Сынып</span></button>
+        <button type="button" class="cloud-only hidden" data-nav="account">👤 <span data-i18n="nav_account">Аккаунт</span></button>
       </div>
       <button type="button" class="btn-3d btn-3d-block install-btn hidden" data-i18n="install_btn">📲 Телефонға орнату</button>
       <button type="button" class="btn btn-ghost btn-sm more-close" id="moreClose" data-i18n="nav_close">Жабу</button>
@@ -714,14 +793,20 @@
   <div class="viz-tip hidden" id="vizTip" role="tooltip"></div>
   <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
-  <script src="js/data.js?v=6"></script>
-  <script src="js/course-data.js?v=6"></script>
-  <script src="js/i18n.js?v=6"></script>
-  <script src="js/srs.js?v=6"></script>
-  <script src="js/ai-prompts.js?v=6"></script>
-  <script src="js/ai.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
-  <script src="js/course.js?v=6"></script>
-  <script src="js/ai-ui.js?v=6"></script>
+  <script src="js/data.js?v=7"></script>
+  <script src="js/course-data.js?v=7"></script>
+  <script src="js/content-extra.js?v=7"></script>
+  <script src="js/i18n.js?v=7"></script>
+  <script src="js/srs.js?v=7"></script>
+  <script src="js/ai-prompts.js?v=7"></script>
+  <script src="js/ai.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
+  <script src="js/course.js?v=7"></script>
+  <script src="js/ai-ui.js?v=7"></script>
+  <script src="js/quests.js?v=7"></script>
+  <script src="js/stories.js?v=7"></script>
+  <script src="js/exams.js?v=7"></script>
+  <script src="js/cloud.js?v=7"></script>
+  <script src="js/cloud-ui.js?v=7"></script>
 </body>
 </html>

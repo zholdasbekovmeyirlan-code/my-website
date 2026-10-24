@@ -408,6 +408,14 @@
 
   /* ---------- Exercise generation ---------- */
   const canListen = () => FP().hasTTS() && Date.now() > (S().listenOffUntil || 0);
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const canSpeak = () => !!SpeechRec && Date.now() > (S().speakOffUntil || 0);
+
+  // Pronunciation: say a word (lessons) or a short sentence (unit reviews) into the microphone.
+  function exSpeak(w, sentence = false) {
+    const text = sentence && tokenize(w.example).length <= 7 ? w.example : w.en;
+    return { type: "speak", word: w, wordIds: [w.id], text, requeue: false };
+  }
 
   function meaningTokens(kk) {
     return String(kk)
@@ -605,6 +613,7 @@
     shuffle(words)
       .slice(0, 5)
       .forEach((w) => items.push(firstOf(shuffle(harder), w)));
+    if (canSpeak()) items.splice(items.length - 2, 0, exSpeak(pick(words)));
     return items;
   }
 
@@ -616,6 +625,7 @@
     const sample = shuffle(words).slice(0, 10);
     const items = sample.map((w) => firstOf(shuffle(types), w));
     if (words.length >= 4) items.splice(3, 0, exMatch(shuffle(words).slice(0, 8)));
+    if (canSpeak()) items.splice(6, 0, exSpeak(pick(words), true));
     return items;
   }
 
@@ -798,9 +808,9 @@
     if (mode === "check") {
       check.textContent = t("c_check");
       check.disabled = !L.step.ready;
-      const listenEx = LISTEN_TYPES.has(L.step.ex.type);
-      skip.classList.toggle("hidden", !listenEx);
-      skip.textContent = t("c_cant_listen");
+      const type = L.step.ex.type;
+      skip.classList.toggle("hidden", !LISTEN_TYPES.has(type) && type !== "speak");
+      skip.textContent = t(type === "speak" ? "c_cant_speak" : "c_cant_listen");
     } else {
       check.textContent = t("c_continue");
       check.disabled = false;
@@ -829,14 +839,20 @@
     }
   }
 
-  function onSkipListening() {
+  // "I can't listen / speak now": switch those exercises off for an hour and swap them for reading ones.
+  function onSkip() {
     if (!L) return;
-    S().listenOffUntil = Date.now() + 60 * 60000;
+    turnOff(L.step.ex.type === "speak" ? "speak" : "listen");
+  }
+
+  function turnOff(kind) {
+    if (!L) return;
+    const off = kind === "speak" ? (ex) => ex.type === "speak" : (ex) => LISTEN_TYPES.has(ex.type);
+    S()[kind === "speak" ? "speakOffUntil" : "listenOffUntil"] = Date.now() + 60 * 60000;
     FP().save();
-    FP().toast(t("c_listen_off"));
-    // Swap the current and queued listening exercises for reading ones.
+    FP().toast(t(kind === "speak" ? "c_speak_off" : "c_listen_off"));
     const swap = (ex) => {
-      if (!LISTEN_TYPES.has(ex.type)) return ex;
+      if (!off(ex)) return ex;
       const alt = ex.word ? exChoice(ex.word, "choose_en") : ex;
       return { ...alt, retry: ex.retry, tries: ex.tries, requeue: ex.requeue };
     };
@@ -919,6 +935,10 @@
         .join("")}</div>
     </div>`,
     tip: (ex) => `<div class="tip-card">${ex.lesson.body}</div>`,
+    speak: (ex) => `<div class="prompt-word speak-prompt">${speakBtn(ex.text, "big")}<span>${esc(ex.text)}</span></div>
+      ${ex.word ? `<p class="speak-kk">${esc(ex.word.kk)}</p>` : ""}
+      <button type="button" class="mic-big" id="micBtn" aria-label="Microphone">🎙</button>
+      <p class="mic-hint" id="micHint">${esc(t("c_mic_tap"))}</p>`,
   };
 
   function renderExercise(ex) {
@@ -968,6 +988,7 @@
 
     if (ex.type === "build" || ex.type === "build_kk") bindBuild(ex, stage);
     if (ex.type === "match") bindMatch(ex, stage);
+    if (ex.type === "speak") bindSpeak(ex, stage);
   }
 
   function bindBuild(ex, stage) {
@@ -1047,6 +1068,78 @@
     );
   }
 
+  function bindSpeak(ex, stage) {
+    const btn = $("#micBtn", stage);
+    const hint = $("#micHint", stage);
+    btn.addEventListener("click", () => {
+      if (!L || L.step.checked) return;
+      if (L.step.rec) {
+        try {
+          L.step.rec.stop();
+        } catch {
+          /* already stopped */
+        }
+        return;
+      }
+      FP().stopSpeech();
+      const rec = new SpeechRec();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      rec.continuous = false;
+      rec.maxAlternatives = 5;
+      let heard = false;
+      L.step.rec = rec;
+      btn.classList.add("is-rec");
+      hint.textContent = t("c_mic_listening");
+      rec.onresult = (e) => {
+        const alts = [];
+        for (const r of e.results) for (let i = 0; i < r.length; i++) alts.push(r[i].transcript);
+        if (!alts.length || !L || L.step.ex !== ex) return;
+        heard = true;
+        L.step.heard = alts;
+        setReady(true);
+        doCheck();
+      };
+      rec.onerror = (e) => {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture") {
+          L.step.rec = null;
+          turnOff("speak");
+        }
+      };
+      rec.onend = () => {
+        btn.classList.remove("is-rec");
+        if (L && L.step.ex === ex) {
+          L.step.rec = null;
+          if (!heard) hint.textContent = t("c_mic_nothing");
+        }
+      };
+      try {
+        rec.start();
+      } catch {
+        L.step.rec = null;
+        btn.classList.remove("is-rec");
+      }
+    });
+  }
+
+  // Speech recognition is imperfect, so accept a close match (≥ 75% similar) among its alternatives.
+  function gradeSpeak(ex) {
+    const target = norm(ex.text);
+    let best = 0;
+    let bestText = "";
+    (L.step.heard || []).forEach((h) => {
+      const n = norm(h);
+      const sim = 1 - lev(n, target) / Math.max(n.length, target.length, 1);
+      if (sim > best) {
+        best = sim;
+        bestText = h;
+      }
+    });
+    const ok = best >= 0.75;
+    if (ok) window.FP_QUESTS?.bump("speak");
+    return { ok, answer: ex.text, note: fmt(t("c_heard"), { w: bestText || "—" }) };
+  }
+
   function norm(s) {
     return String(s)
       .toLowerCase()
@@ -1099,6 +1192,7 @@
     build: (ex) => gradeBuild(ex),
     build_kk: (ex) => gradeBuild(ex),
     match: () => ({ ok: (L.step.slips || 0) <= 1, answer: "", note: "" }),
+    speak: (ex) => gradeSpeak(ex),
   };
 
   function gradeTyped(ex, stage) {
@@ -1222,6 +1316,12 @@
       }
       if (perfect) s.perfectLessons = (s.perfectLessons || 0) + 1;
       s.lessonsDone = (s.lessonsDone || 0) + 1;
+      const Q = window.FP_QUESTS;
+      if (Q) {
+        if (L.node) Q.bump("lesson");
+        if (perfect && L.node) Q.bump("perfect");
+        if (L.kind === "srs" || L.kind === "weak") Q.bump("review", Object.keys(L.results).length);
+      }
     }
     FP().save();
     const goalBefore = FP().goalReached();
@@ -1403,7 +1503,7 @@
   /* ---------- Wiring ---------- */
   function bind() {
     $("#lessonCheck")?.addEventListener("click", onPrimary);
-    $("#lessonSkip")?.addEventListener("click", onSkipListening);
+    $("#lessonSkip")?.addEventListener("click", onSkip);
     $("#lessonClose")?.addEventListener("click", askClose);
     $("#lessonSound")?.addEventListener("click", () => {
       S().sound = S().sound === false;

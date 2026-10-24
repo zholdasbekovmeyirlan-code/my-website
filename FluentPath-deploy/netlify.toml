@@ -7,6 +7,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Daily streak reminder at 19:00 Kazakhstan time (14:00 UTC). Needs the Supabase + VAPID variables (see README).
+[functions.reminders]
+  schedule = "0 14 * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
