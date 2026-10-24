@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="kk" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="FluentPath — IELTS Academic сөздік, грамматика, тест және reading. 600+ academic vocabulary." />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="FluentPath — ағылшын тілін қазақша үйрену: A1-ден B2-ге дейінгі сабақ жолы, ақылды қайталау, IELTS дайындық. Тегін, offline жұмыс істейді." />
   <meta name="theme-color" content="#070b16" />
-  <title>FluentPath — IELTS Academic English</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FluentPath" />
+  <title>FluentPath — ағылшын тілін қазақша үйрен</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
   <div class="bg-scene" aria-hidden="true">
@@ -25,34 +31,27 @@
     <a href="#home" class="logo" data-nav="home">
       <span class="logo-mark">FP</span>
       <span class="logo-text">Fluent<span>Path</span></span>
-      <span class="logo-badge">IELTS</span>
     </a>
-    <nav class="nav" id="mainNav">
-      <button type="button" data-nav="home" data-i18n="nav_home">Басты</button>
-      <button type="button" data-nav="learn" data-i18n="nav_learn">Үйрену</button>
-      <button type="button" data-nav="vocab" data-i18n="nav_vocab">Сөздік</button>
-      <button type="button" data-nav="grammar" data-i18n="nav_grammar">Грамматика</button>
-      <button type="button" data-nav="quiz" data-i18n="nav_quiz">Тест</button>
-      <button type="button" data-nav="listening" data-i18n="nav_listening">Listening</button>
-      <button type="button" data-nav="speaking" data-i18n="nav_speaking">Speaking</button>
-      <button type="button" data-nav="writing" data-i18n="nav_writing">Writing</button>
-      <button type="button" data-nav="phrases" data-i18n="nav_phrases">Phrases</button>
-      <button type="button" data-nav="reading" data-i18n="nav_reading">Reading</button>
-      <button type="button" data-nav="progress" data-i18n="nav_progress">Прогресс</button>
+    <nav class="nav" id="mainNav" aria-label="Main">
+      <button type="button" data-nav="home"><span data-i18n="nav_home">Басты</span></button>
+      <button type="button" data-nav="learn"><span data-i18n="nav_learn">Сабақтар</span></button>
+      <button type="button" data-nav="review"><span data-i18n="nav_review">Қайталау</span><span class="due-badge hidden">0</span></button>
+      <button type="button" data-nav="vocab"><span data-i18n="nav_vocab">Сөздік</span></button>
+      <button type="button" data-nav="practice"><span data-i18n="nav_practice">Жаттығулар</span></button>
+      <button type="button" data-nav="quiz"><span data-i18n="nav_quiz">Тест</span></button>
+      <button type="button" data-nav="progress"><span data-i18n="nav_progress">Прогресс</span></button>
     </nav>
     <div class="top-actions">
-      <div class="xp-chip" title="XP">
-        <span>⚡</span> <strong id="xpChip">0</strong> XP
-      </div>
+      <div class="chip chip-streak" data-i18n-title="streak_label" title="Streak">🔥 <strong id="streakChip">0</strong></div>
+      <div class="chip chip-xp" title="XP">⚡ <strong id="xpChip">0</strong></div>
       <select id="langSelect" class="lang-select" aria-label="Language">
         <option value="kk">🇰🇿 KK</option>
         <option value="ru">🇷🇺 RU</option>
         <option value="es">🇪🇸 ES</option>
         <option value="zh">🇨🇳 中文</option>
       </select>
-      <button type="button" class="icon-btn" id="themeToggle" data-i18n-title="btn_theme" title="Тема" aria-label="Theme">◐</button>
-      <button type="button" class="btn btn-sm btn-primary glow" data-nav="quiz" data-i18n="btn_quiz">Тест →</button>
-      <button type="button" class="burger" id="burger" aria-label="Menu">☰</button>
+      <button type="button" class="icon-btn" id="themeToggle" data-i18n-title="btn_theme" title="Тема" aria-label="Theme">☀️</button>
+      <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="mainNav">☰</button>
     </div>
   </header>
 
@@ -63,97 +62,108 @@
         <div class="hero-copy reveal">
           <div class="eyebrow-row">
             <span class="live-dot"></span>
-            <p class="eyebrow" data-i18n="hero_eyebrow">Алматы · IELTS Academic · 600+ сөз · Offline</p>
+            <p class="eyebrow" data-i18n="hero_eyebrow">Қазақша түсіндірме · Тегін · Offline</p>
           </div>
           <h1>
-            <span data-i18n="hero_title_1">Ағылшынға дайындық</span><br />
-            <span class="grad-text" data-i18n="hero_title_2">қызықты әрі нәтижелі</span>
+            <span data-i18n="hero_title_1">Ағылшын тілін</span><br />
+            <span class="grad-text" data-i18n="hero_title_2">қазақша үйрен</span>
           </h1>
-          <p class="lead" data-i18n="hero_lead">
-            Academic vocabulary, listening, грамматика және тест — бір платформада.
-          </p>
+          <p class="lead" data-i18n="hero_lead">Қысқа сабақтар, ақылды қайталау және IELTS-ке дайындық — бәрі бір жерде.</p>
           <div class="hero-cta">
-            <button type="button" class="btn btn-primary btn-lg glow pulse-soft" data-nav="learn" data-i18n="btn_start">
-              🚀 Қазір бастау
-            </button>
-            <button type="button" class="btn btn-glass btn-lg" data-nav="vocab" data-i18n="btn_vocab">
-              📚 IELTS сөздік
-            </button>
+            <button type="button" class="btn-3d btn-3d-lg" data-nav="learn" data-i18n="btn_start">🚀 Сабақты бастау</button>
+            <button type="button" class="btn btn-glass btn-lg" data-nav="quiz" data-i18n="btn_level_test">🎯 Деңгейді анықтау</button>
           </div>
           <div class="trust-row">
-            <div class="trust-item"><strong id="statWords">600+</strong><span data-i18n="stat_words">academic сөз</span></div>
-            <div class="trust-item"><strong id="statLessons">12</strong><span data-i18n="stat_grammar">грамматика</span></div>
+            <div class="trust-item"><strong id="statWords">877</strong><span data-i18n="stat_words">сөз</span></div>
+            <div class="trust-item"><strong id="statLessons">150</strong><span data-i18n="stat_lessons">сабақ</span></div>
             <div class="trust-item"><strong id="statStreak">0</strong><span data-i18n="stat_streak">күн streak</span></div>
-            <div class="trust-item"><strong>4</strong><span data-i18n="stat_modes">тест режимі</span></div>
+            <div class="trust-item"><strong>A1→B2</strong><span data-i18n="stat_levels">деңгей</span></div>
           </div>
+          <button type="button" class="btn btn-ghost btn-sm install-btn hidden" data-i18n="install_btn">📲 Телефонға орнату</button>
         </div>
 
         <div class="hero-stage reveal delay-1">
-          <div class="floating-card card-band">
-            <span data-i18n="target_band">Target</span>
-            <strong>Band 6.5–7.5</strong>
-          </div>
+          <div class="cont-card glass" id="homeContinue"></div>
           <div class="hero-card glass">
             <div class="wotd">
               <div class="wotd-top">
-                <span class="pill pulse" data-i18n="wotd">✨ Word of the day</span>
-                <span class="pill soft" id="wotdLevel">B2 · Academic</span>
+                <span class="pill" data-i18n="wotd">✨ Күн сөзі</span>
+                <span class="pill soft" id="wotdLevel">B2</span>
               </div>
-              <h2 id="wotdWord">crucial</h2>
+              <div class="wotd-word">
+                <h2 id="wotdWord">crucial</h2>
+                <button type="button" class="say" id="wotdSay" aria-label="Play">🔊</button>
+              </div>
               <p class="ipa" id="wotdIpa">/ˈkruːʃl/</p>
               <p class="meaning" id="wotdMeaning">шешуші, өте маңызды</p>
               <p class="example" id="wotdExample">“Vocabulary is crucial for a higher IELTS band.”</p>
               <div class="wotd-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="wotdSave" data-i18n="btn_save_word">★ Сөздікке</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="wotdSave" data-i18n="btn_save_word">★ Қайталауға қосу</button>
                 <button type="button" class="btn btn-ghost btn-sm" data-nav="vocab" data-i18n="btn_all_words">Барлық сөз</button>
               </div>
             </div>
-          </div>
-          <div class="floating-card card-streak">
-            <span data-i18n="streak_label">🔥 Streak</span>
-            <strong id="heroStreak">0 күн</strong>
           </div>
         </div>
       </div>
 
       <div class="marquee" aria-hidden="true">
         <div class="marquee-track">
-          <span>analyse</span><span>significant</span><span>environment</span><span>evaluate</span>
-          <span>perspective</span><span>crucial</span><span>nevertheless</span><span>infrastructure</span>
-          <span>hypothesis</span><span>comprehensive</span><span>fluctuate</span><span>evidence</span>
-          <span>analyse</span><span>significant</span><span>environment</span><span>evaluate</span>
-          <span>perspective</span><span>crucial</span><span>nevertheless</span><span>infrastructure</span>
+          <span>hello</span><span>family</span><span>delicious</span><span>weather</span>
+          <span>perspective</span><span>crucial</span><span>nevertheless</span><span>journey</span>
+          <span>hypothesis</span><span>comprehensive</span><span>friendly</span><span>evidence</span>
+          <span>hello</span><span>family</span><span>delicious</span><span>weather</span>
+          <span>perspective</span><span>crucial</span><span>nevertheless</span><span>journey</span>
         </div>
       </div>
 
       <div class="section">
         <div class="section-head reveal">
+          <h2 class="section-title" data-i18n="path_title">Оқу жолы: A1 → B2</h2>
+          <p class="section-sub" data-i18n="path_sub">Нөлден бастап IELTS деңгейіне дейін. Білсең — тест тапсырып, алға секір.</p>
+        </div>
+        <div class="level-grid" id="homeLevels"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head reveal">
           <h2 class="section-title" data-i18n="why_title">Неге FluentPath?</h2>
-          <p class="section-sub" data-i18n="why_sub">Бір бетте «әдемі» емес — үйренгің келетін орта</p>
+          <p class="section-sub" data-i18n="why_sub">Қазақ тілді оқушыға арнап жасалған</p>
         </div>
         <div class="feature-grid">
-          <article class="feature reveal" data-nav="vocab">
-            <div class="feature-icon">📚</div>
-            <h3 data-i18n="feat_vocab_t">600+ IELTS сөз</h3>
-            <p data-i18n="feat_vocab_p">Academic vocabulary — flashcard + іздеу.</p>
+          <article class="feature reveal" data-nav="learn">
+            <div class="feature-icon">🗺️</div>
+            <h3 data-i18n="feat_path_t">Қадамдық сабақ жолы</h3>
+            <p data-i18n="feat_path_p">3–5 минуттық сабақтар: тыңда, таңда, жаз, сөйлем құра.</p>
             <span class="feature-link" data-i18n="feat_open">Ашу →</span>
           </article>
-          <article class="feature reveal delay-1" data-nav="listening">
+          <article class="feature reveal delay-1" data-nav="review">
+            <div class="feature-icon">🧠</div>
+            <h3 data-i18n="feat_srs_t">Ақылды қайталау</h3>
+            <p data-i18n="feat_srs_p">Сөзді ұмыта бастаған кезде дәл уақытында қайта сұрайды.</p>
+            <span class="feature-link" data-i18n="feat_open">Ашу →</span>
+          </article>
+          <article class="feature reveal delay-2" data-nav="grammar">
+            <div class="feature-icon">🇰🇿</div>
+            <h3 data-i18n="feat_kk_t">Қазақша түсіндірме</h3>
+            <p data-i18n="feat_kk_p">Әр ереже мен әр қатенің себебі ана тіліңде.</p>
+            <span class="feature-link" data-i18n="feat_open">Ашу →</span>
+          </article>
+          <article class="feature reveal" data-nav="listening">
             <div class="feature-icon">🎧</div>
-            <h3 data-i18n="feat_listen_t">Listening</h3>
-            <p data-i18n="feat_listen_p">Аудио + сұрақ. IELTS Listening стилі.</p>
+            <h3 data-i18n="feat_listen_t">Listening &amp; Speaking</h3>
+            <p data-i18n="feat_listen_p">15 аудио трек, IELTS cue card, сөйлеу таймері.</p>
             <span class="feature-link" data-i18n="feat_open">Ашу →</span>
           </article>
-          <article class="feature reveal delay-2" data-nav="quiz">
-            <div class="feature-icon">🎯</div>
-            <h3 data-i18n="feat_quiz_t">Интерактив тест</h3>
-            <p data-i18n="feat_quiz_p">Placement, vocab, grammar — XP.</p>
+          <article class="feature reveal delay-1" data-nav="writing">
+            <div class="feature-icon">✍️</div>
+            <h3 data-i18n="feat_write_t">IELTS Writing</h3>
+            <p data-i18n="feat_write_p">Task 1/2 тапсырмалары, таймер, сөз саны, кеңестер.</p>
             <span class="feature-link" data-i18n="feat_open">Ашу →</span>
           </article>
-          <article class="feature reveal delay-3" data-nav="grammar">
-            <div class="feature-icon">🧩</div>
-            <h3 data-i18n="feat_grammar_t">Грамматика</h3>
-            <p data-i18n="feat_grammar_p">12 сабақ + жаттығу.</p>
+          <article class="feature reveal delay-2" data-nav="progress">
+            <div class="feature-icon">📲</div>
+            <h3 data-i18n="feat_pwa_t">Телефонда, интернетсіз</h3>
+            <p data-i18n="feat_pwa_p">Қосымша ретінде орнат. Жарнама жоқ, шектеу жоқ.</p>
             <span class="feature-link" data-i18n="feat_open">Ашу →</span>
           </article>
         </div>
@@ -164,137 +174,139 @@
           <h2 data-i18n="cta_title">3 минутта деңгейіңді біл</h2>
           <p data-i18n="cta_sub">15 сұрақ · A1–B2 · нәтиже бірден</p>
         </div>
-        <button type="button" class="btn btn-primary btn-lg glow" data-nav="quiz" data-i18n="btn_level_test">Деңгей тесті</button>
-      </div>
-
-      <div class="section">
-        <div class="section-head">
-          <h2 class="section-title" data-i18n="path_title">Оқу жолы</h2>
-        </div>
-        <ol class="path">
-          <li class="reveal"><span class="path-num">01</span><div><strong>A1–A2 Foundation</strong><p>Негізгі сөз + simple tenses</p></div></li>
-          <li class="reveal delay-1"><span class="path-num">02</span><div><strong>B1 Builder</strong><p>Opinion, linking words, 800+ сөз</p></div></li>
-          <li class="reveal delay-2"><span class="path-num">03</span><div><strong>B2 Academic</strong><p>IELTS vocabulary, essays, reading</p></div></li>
-          <li class="reveal delay-3"><span class="path-num">04</span><div><strong>Exam mode</strong><p>Test simulation + weak-word review</p></div></li>
-        </ol>
+        <button type="button" class="btn-3d btn-3d-lg" data-nav="quiz" data-i18n="btn_level_test">🎯 Деңгейді анықтау</button>
       </div>
     </section>
 
-    <!-- LEARN -->
+    <!-- LEARN: lesson path -->
     <section id="view-learn" class="view">
+      <div class="path-layout">
+        <div class="path-col">
+          <div class="page-head">
+            <p class="eyebrow" data-i18n="learn_eyebrow">Сабақ жолы</p>
+            <h1 data-i18n="learn_title">Сабақтар</h1>
+            <p data-i18n="learn_sub">Түйінді бас та, сабақты баста. Әр сабақ — 3–5 минут.</p>
+          </div>
+          <div class="path-strip">
+            <span>🔥 <b class="js-streak">0</b></span>
+            <span>⚡ <b class="js-xp-today">0</b> / <b class="js-goal">20</b> XP</span>
+            <button type="button" data-nav="review">🧠 <b class="js-due">0</b></button>
+          </div>
+          <div class="path-main" id="pathMain"></div>
+        </div>
+
+        <aside class="path-side">
+          <div class="side-card glass streak-card">
+            <div class="side-row">
+              <span class="side-ico">🔥</span>
+              <div><strong id="sideStreak">0</strong> <span data-i18n="side_streak">күн қатарынан</span></div>
+            </div>
+            <div class="week" id="sideWeek"></div>
+          </div>
+
+          <div class="side-card glass goal-card" id="goalCard">
+            <div class="side-row">
+              <div class="ring-wrap">
+                <svg viewBox="0 0 36 36" class="ring" aria-hidden="true">
+                  <path class="ring-bg" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+                  <path class="ring-fg" id="dailyRing" stroke-dasharray="0,100" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+                </svg>
+                <div class="ring-label">⚡</div>
+              </div>
+              <div>
+                <h3 data-i18n="daily_goal">Күнделікті мақсат</h3>
+                <p class="goal-num"><strong id="dailyDone">0</strong> / <span id="dailyGoal">20</span> XP</p>
+              </div>
+            </div>
+            <div class="progress-bar slim"><div class="progress-fill" id="dailyFill" style="width:0%"></div></div>
+            <div class="goal-chips" role="group" aria-label="Daily goal">
+              <button type="button" class="chip-btn" data-goal="10">10</button>
+              <button type="button" class="chip-btn" data-goal="20">20</button>
+              <button type="button" class="chip-btn" data-goal="30">30</button>
+              <button type="button" class="chip-btn" data-goal="50">50</button>
+            </div>
+          </div>
+
+          <div class="side-card glass due-card">
+            <div class="side-row">
+              <span class="side-ico">🧠</span>
+              <div><strong id="sideDue">0</strong> <span data-i18n="side_due">сөз қайталауға дайын</span></div>
+            </div>
+            <button type="button" class="btn-3d btn-3d-sm btn-3d-block" id="sideDueBtn" data-i18n="c_rev_start">Қайталауды бастау</button>
+          </div>
+
+          <div class="side-card glass course-card">
+            <div class="side-row between">
+              <h3 data-i18n="side_course">Курс прогресі</h3>
+              <strong id="sideCourse">0 / 0</strong>
+            </div>
+            <div class="progress-bar slim"><div class="progress-fill" id="sideCourseFill" style="width:0%"></div></div>
+          </div>
+
+          <div class="side-card glass focus-box">
+            <div class="side-row between">
+              <h3 data-i18n="focus_title">Focus timer</h3>
+              <strong id="focusClock" class="focus-clock">25:00</strong>
+            </div>
+            <div class="focus-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="focusStart" data-i18n="focus_start">Старт 25м</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="focusPause" data-i18n="focus_pause">Пауза</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="focusReset" data-i18n="focus_reset">Reset</button>
+            </div>
+            <p class="muted small" data-i18n="focus_hint">Pomodoro: 25 мин оқу · телефонды бір жаққа</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- REVIEW: spaced repetition -->
+    <section id="view-review" class="view">
       <div class="page-head">
-        <div>
-          <p class="eyebrow" data-i18n="learn_eyebrow">Today’s path</p>
-          <h1 data-i18n="learn_title">Бүгінгі жоспар</h1>
-          <p data-i18n="learn_sub">15–25 минут · streak және XP</p>
-        </div>
-        <div class="ring-wrap" title="Күнделікті мақсат">
-          <svg viewBox="0 0 36 36" class="ring">
-            <path class="ring-bg" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
-            <path class="ring-fg" id="dailyRing" stroke-dasharray="0,100" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
-          </svg>
-          <div class="ring-label"><strong id="dailyDone">0</strong>/<span id="dailyGoal">3</span></div>
-        </div>
+        <p class="eyebrow" data-i18n="c_rev_eyebrow">Spaced repetition</p>
+        <h1 data-i18n="c_rev_title">Ақылды қайталау</h1>
+        <p data-i18n="c_rev_sub">Ұмыта бастаған сөздерді дәл уақытында қайталайсың.</p>
       </div>
-      <div class="plan-grid">
-        <button type="button" class="plan-card" data-nav="vocab">
-          <span class="plan-time">8 min</span>
-          <h3 data-i18n="plan_vocab">20 IELTS сөз</h3>
-          <p>Flashcards · academic</p>
-          <span class="plan-go" data-i18n="plan_go">Бастау →</span>
-        </button>
-        <button type="button" class="plan-card" data-nav="listening">
-          <span class="plan-time">8 min</span>
-          <h3 data-i18n="plan_listen">Listening</h3>
-          <p>Audio + questions</p>
-          <span class="plan-go" data-i18n="plan_go">Бастау →</span>
-        </button>
-        <button type="button" class="plan-card" data-nav="quiz">
-          <span class="plan-time">5 min</span>
-          <h3 data-i18n="plan_quiz">Quick quiz</h3>
-          <p>10 Q · +XP</p>
-          <span class="plan-go" data-i18n="plan_go">Бастау →</span>
-        </button>
-        <button type="button" class="plan-card" data-nav="grammar">
-          <span class="plan-time">7 min</span>
-          <h3 data-i18n="plan_grammar">1 грамматика</h3>
-          <p>Lesson + practice</p>
-          <span class="plan-go" data-i18n="plan_go">Бастау →</span>
-        </button>
-      </div>
-      <div class="daily-box glass">
-        <div class="daily-top">
-          <h3 data-i18n="daily_goal">Күнделікті мақсат</h3>
-          <span class="xp-inline"><span id="xpLabel">0</span> XP</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" id="dailyFill" style="width:0%"></div></div>
-        <p class="muted" data-i18n="daily_hint">3 тапсырма = күшті streak 🔥</p>
-      </div>
-      <div class="focus-box glass">
-        <div class="daily-top">
-          <h3 data-i18n="focus_title">Focus timer</h3>
-          <strong id="focusClock">25:00</strong>
-        </div>
-        <div class="focus-actions">
-          <button type="button" class="btn btn-primary btn-sm" id="focusStart" data-i18n="focus_start">Старт 25м</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="focusPause" data-i18n="focus_pause">Пауза</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="focusReset" data-i18n="focus_reset">Reset</button>
-        </div>
-        <p class="muted" data-i18n="focus_hint">Pomodoro: 25 мин оқу · телефоны бір жаққа</p>
-      </div>
+      <div id="reviewMain" class="review-main"></div>
     </section>
 
     <!-- VOCAB -->
     <section id="view-vocab" class="view">
       <div class="page-head row">
         <div>
-          <p class="eyebrow" data-i18n="vocab_eyebrow">IELTS Academic Vault</p>
+          <p class="eyebrow" data-i18n="vocab_eyebrow">Сөз қоры</p>
           <h1 data-i18n="vocab_title">Сөздік</h1>
-          <p id="vocabStats" data-i18n="vocab_sub">600+ сөз · іздеу · flashcard</p>
+          <p id="vocabStats"></p>
         </div>
       </div>
 
       <div class="vocab-toolbar glass">
         <input type="search" id="vocabSearch" placeholder="Іздеу: analyse, environment..." data-i18n-placeholder="search_ph" autocomplete="off" />
-        <select id="vocabLevel">
+        <select id="vocabLevel" aria-label="Level">
           <option value="all" data-i18n="level_all">Барлық деңгей</option>
           <option value="A1">A1</option>
           <option value="A2">A2</option>
           <option value="B1">B1</option>
-          <option value="B2" selected>B2 Academic</option>
+          <option value="B2">B2</option>
         </select>
-        <select id="vocabTopic">
-          <option value="all" data-i18n="topic_all">Барлық тақырып</option>
-          <option value="academic">IELTS Academic</option>
-          <option value="education">Education</option>
-          <option value="environment">Environment</option>
-          <option value="technology">Technology</option>
-          <option value="economy">Economy</option>
-          <option value="society">Society</option>
-          <option value="health">Health</option>
-          <option value="work">Work</option>
-          <option value="media">Media</option>
-          <option value="science">Science</option>
-          <option value="daily">Daily</option>
-          <option value="travel">Travel</option>
-          <option value="culture">Culture</option>
-        </select>
+        <select id="vocabTopic" aria-label="Topic"></select>
       </div>
       <div class="vocab-modes">
         <button type="button" class="chip-btn active" id="modeAll" data-i18n="mode_all">Барлығы</button>
-        <button type="button" class="chip-btn" id="modeWeak" data-i18n="mode_weak">🔴 Әлсіз сөздер</button>
+        <button type="button" class="chip-btn" id="modeWeak" data-i18n="mode_weak">🔴 Үйренудегі</button>
         <button type="button" class="chip-btn" id="modeKnown" data-i18n="mode_known">✓ Білемін</button>
         <span class="muted keys-hint" data-i18n="keys_hint">Перне: Space = аудару · ← әлсіз · → білемін</span>
       </div>
 
       <div class="topic-chips" id="topicChips"></div>
 
-      <div class="flash-wrap">
-        <div class="flash-card glass" id="flashCard" tabindex="0" role="button" aria-label="Карточка">
+      <div class="flash-wrap" id="flashWrap">
+        <p class="flash-empty glass" id="flashEmpty"></p>
+        <div class="flash-card glass" id="flashCard" tabindex="0" role="button" aria-label="Flashcard">
           <div class="flash-inner">
             <div class="flash-front">
               <span class="flash-meta" id="flashMeta">B2 · academic</span>
               <p class="flash-word" id="flashWord">analyse</p>
+              <button type="button" class="say" id="flashSay" aria-label="Play">🔊</button>
               <p class="flash-hint" data-i18n="flash_hint">Басып аударманы көр ✨</p>
             </div>
             <div class="flash-back">
@@ -324,27 +336,71 @@
             <tbody></tbody>
           </table>
         </div>
+        <p class="muted small" id="listMore"></p>
+      </div>
+    </section>
+
+    <!-- PRACTICE HUB -->
+    <section id="view-practice" class="view">
+      <div class="page-head">
+        <p class="eyebrow" data-i18n="practice_eyebrow">IELTS дағдылары</p>
+        <h1 data-i18n="practice_title">Жаттығулар</h1>
+        <p data-i18n="practice_sub">Грамматика, тыңдау, оқу, сөйлеу және жазу — бөлек жаттық.</p>
+      </div>
+      <div class="practice-grid">
+        <button type="button" class="pc-card" data-nav="grammar" style="--c:#a78bfa">
+          <span class="pc-ico">🧩</span><strong data-i18n="nav_grammar">Грамматика</strong>
+          <span class="pc-desc" data-i18n="pc_grammar_d">Қазақша ереже + жаттығу</span><em id="pcGrammar"></em>
+        </button>
+        <button type="button" class="pc-card" data-nav="listening" style="--c:#22d3ee">
+          <span class="pc-ico">🎧</span><strong data-i18n="nav_listening">Listening</strong>
+          <span class="pc-desc" data-i18n="pc_listen_d">Сөйлем-сөйлеммен тыңда, сұраққа жауап бер</span><em id="pcListening"></em>
+        </button>
+        <button type="button" class="pc-card" data-nav="reading" style="--c:#34d399">
+          <span class="pc-ico">📖</span><strong data-i18n="nav_reading">Reading</strong>
+          <span class="pc-desc" data-i18n="pc_read_d">Мәтін оқып, түсінгеніңді тексер</span><em id="pcReading"></em>
+        </button>
+        <button type="button" class="pc-card" data-nav="speaking" style="--c:#fb7185">
+          <span class="pc-ico">🎤</span><strong data-i18n="nav_speaking">Speaking</strong>
+          <span class="pc-desc" data-i18n="pc_speak_d">IELTS cue card + дайындық таймері</span><em id="pcSpeaking"></em>
+        </button>
+        <button type="button" class="pc-card" data-nav="writing" style="--c:#fbbf24">
+          <span class="pc-ico">✍️</span><strong data-i18n="nav_writing">Writing</strong>
+          <span class="pc-desc" data-i18n="pc_write_d">Task 1/2 · таймер · сөз саны</span><em id="pcWriting"></em>
+        </button>
+        <button type="button" class="pc-card" data-nav="phrases" style="--c:#7c9bff">
+          <span class="pc-ico">💬</span><strong data-i18n="nav_phrases">Фразалар</strong>
+          <span class="pc-desc" data-i18n="pc_phrase_d">Эссе мен сөйлеуге дайын тіркестер</span><em id="pcPhrases"></em>
+        </button>
+        <button type="button" class="pc-card" data-nav="quiz" style="--c:#f472b6">
+          <span class="pc-ico">✅</span><strong data-i18n="nav_quiz">Тест</strong>
+          <span class="pc-desc" data-i18n="pc_quiz_d">Деңгей тесті, сөздік, грамматика</span><em data-i18n="pc_quiz_n">4 режим</em>
+        </button>
+        <button type="button" class="pc-card" data-nav="vocab" style="--c:#2dd4bf">
+          <span class="pc-ico">🃏</span><strong data-i18n="pc_flash">Flashcards</strong>
+          <span class="pc-desc" data-i18n="pc_flash_d">Сөздікті карточкамен жатта</span><em id="pcVocab"></em>
+        </button>
       </div>
     </section>
 
     <!-- GRAMMAR -->
     <section id="view-grammar" class="view">
       <div class="page-head">
-        <p class="eyebrow" data-i18n="grammar_eyebrow">Clear rules</p>
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
+        <p class="eyebrow" data-i18n="grammar_eyebrow">Ережелер</p>
         <h1 data-i18n="grammar_title">Грамматика</h1>
         <p data-i18n="grammar_sub">Қысқа сабақ + жаттығу</p>
       </div>
       <div class="split">
         <aside class="lesson-list" id="lessonList"></aside>
-        <article class="lesson-body glass" id="lessonBody">
-          <p class="muted">Сол жақтан сабақ таңдаңыз</p>
-        </article>
+        <article class="lesson-body glass" id="lessonBody"></article>
       </div>
     </section>
 
     <!-- QUIZ -->
     <section id="view-quiz" class="view">
       <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
         <p class="eyebrow" data-i18n="quiz_eyebrow">Challenge mode</p>
         <h1 data-i18n="quiz_title">Тест</h1>
         <p data-i18n="quiz_sub">Деңгейіңді тексер — XP ұтып ал</p>
@@ -353,23 +409,23 @@
         <div class="quiz-modes">
           <button type="button" class="mode-card" data-quiz="placement">
             <span class="mode-emoji">🎯</span>
-            <h3>Деңгей тесті</h3>
-            <p>15 сұрақ · A1–B2</p>
+            <h3 data-i18n="quiz_place">Деңгей тесті</h3>
+            <p data-i18n="quiz_place_p">15 сұрақ · A1–B2</p>
           </button>
           <button type="button" class="mode-card" data-quiz="vocab">
             <span class="mode-emoji">📚</span>
-            <h3>Vocabulary</h3>
-            <p>10 сұрақ · IELTS сөз</p>
+            <h3 data-i18n="quiz_vocab">Vocabulary</h3>
+            <p data-i18n="quiz_vocab_p">10 сұрақ · IELTS сөз</p>
           </button>
           <button type="button" class="mode-card" data-quiz="grammar">
             <span class="mode-emoji">🧩</span>
-            <h3>Grammar</h3>
-            <p>10 сұрақ · форма</p>
+            <h3 data-i18n="quiz_gram">Grammar</h3>
+            <p data-i18n="quiz_gram_p">10 сұрақ · форма</p>
           </button>
           <button type="button" class="mode-card" data-quiz="mixed">
             <span class="mode-emoji">⚡</span>
-            <h3>Mixed</h3>
-            <p>12 сұрақ · аралас</p>
+            <h3 data-i18n="quiz_mixed">Mixed</h3>
+            <p data-i18n="quiz_mixed_p">12 сұрақ · аралас</p>
           </button>
         </div>
       </div>
@@ -381,24 +437,23 @@
         <h2 id="quizQuestion">Question</h2>
         <div class="options" id="quizOptions"></div>
         <p class="explain hidden" id="quizExplain"></p>
-        <button type="button" class="btn btn-primary hidden" id="quizNext">Келесі</button>
+        <button type="button" class="btn btn-primary hidden" id="quizNext" data-i18n="quiz_next">Келесі</button>
       </div>
       <div id="quizResult" class="quiz-result glass hidden">
-        <div class="confetti" id="confetti" aria-hidden="true"></div>
         <h2 data-i18n="quiz_result">Нәтиже</h2>
         <p class="score-big" id="quizScore">0%</p>
         <p id="quizLevelHint"></p>
         <div class="hero-cta">
           <button type="button" class="btn btn-primary" id="quizRetry" data-i18n="quiz_retry">Қайта</button>
-          <button type="button" class="btn btn-ghost" data-nav="progress" data-i18n="nav_progress">Прогресс</button>
+          <button type="button" class="btn btn-ghost" data-nav="learn" data-i18n="c_continue_lesson">Сабақты жалғастыру</button>
         </div>
       </div>
     </section>
 
-
     <!-- SPEAKING -->
     <section id="view-speaking" class="view">
       <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
         <p class="eyebrow" data-i18n="speak_eyebrow">IELTS Speaking</p>
         <h1 data-i18n="speak_title">Speaking</h1>
         <p data-i18n="speak_sub">Cue card + prep timer + speak timer</p>
@@ -414,6 +469,7 @@
     <!-- WRITING -->
     <section id="view-writing" class="view">
       <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
         <p class="eyebrow" data-i18n="write_eyebrow">IELTS Writing</p>
         <h1 data-i18n="write_title">Writing</h1>
         <p data-i18n="write_sub">Prompt + timer + word count + tips</p>
@@ -429,6 +485,7 @@
     <!-- PHRASES -->
     <section id="view-phrases" class="view">
       <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
         <p class="eyebrow" data-i18n="phrase_eyebrow">Band boosters</p>
         <h1 data-i18n="phrase_title">Useful phrases</h1>
         <p data-i18n="phrase_sub">Essay & speaking ready-made chunks</p>
@@ -439,6 +496,7 @@
     <!-- LISTENING -->
     <section id="view-listening" class="view">
       <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
         <p class="eyebrow" data-i18n="listen_eyebrow">IELTS Listening</p>
         <h1 data-i18n="listen_title">Listening</h1>
         <p data-i18n="listen_sub">Тыңда · түсініктеме · сұраққа жауап</p>
@@ -459,7 +517,7 @@
             <button type="button" class="btn btn-primary" id="listenPlay" data-i18n="listen_play">▶ Ойнату</button>
             <button type="button" class="btn btn-ghost" id="listenPause" data-i18n="listen_pause">⏸ Тоқтату</button>
             <button type="button" class="btn btn-ghost" id="listenStop" data-i18n="listen_stop">⏹ Тоқта</button>
-            <button type="button" class="btn btn-secondary" id="listenReplaySent">↻ Sentence</button>
+            <button type="button" class="btn btn-secondary" id="listenReplaySent" data-i18n="listen_replay">↻ Сөйлемді қайталау</button>
           </div>
           <div class="speed-row">
             <button type="button" class="chip-btn" data-rate="0.8" data-i18n="listen_slow">0.8×</button>
@@ -467,7 +525,7 @@
             <button type="button" class="chip-btn" data-rate="1.2" data-i18n="listen_fast">1.2×</button>
             <button type="button" class="btn btn-secondary btn-sm" id="listenToggleText" data-i18n="listen_show">Мәтінді көрсету</button>
           </div>
-          <p class="muted" id="listenSentInfo">Sentence 0 / 0</p>
+          <p class="muted" id="listenSentInfo"></p>
           <div class="progress-bar slim listen-bar"><div class="progress-fill" id="listenFill" style="width:0%"></div></div>
           <p class="current-sent glass hidden" id="listenCurrentSent"></p>
           <article class="transcript hidden" id="listenTranscript"></article>
@@ -481,6 +539,7 @@
     <!-- READING -->
     <section id="view-reading" class="view">
       <div class="page-head">
+        <button type="button" class="back-link" data-nav="practice" data-i18n="back_practice">← Жаттығулар</button>
         <p class="eyebrow" data-i18n="reading_eyebrow">Comprehension</p>
         <h1 data-i18n="reading_title">Reading</h1>
         <p data-i18n="reading_sub">Мәтін + сұрақтар</p>
@@ -504,10 +563,42 @@
       </div>
       <div class="stats-grid">
         <div class="stat-card glass"><span data-i18n="progress_xp">XP</span><strong id="pXp">0</strong></div>
-        <div class="stat-card glass"><span data-i18n="progress_streak">Streak</span><strong id="pStreak">0</strong></div>
-        <div class="stat-card glass"><span data-i18n="progress_known">Білетін сөз</span><strong id="pKnown">0</strong></div>
+        <div class="stat-card glass"><span data-i18n="progress_streak">Streak</span><strong id="pStreak">0</strong><em id="pBest"></em></div>
+        <div class="stat-card glass"><span data-i18n="progress_known">Үйренген сөз</span><strong id="pKnown">0</strong></div>
         <div class="stat-card glass"><span data-i18n="progress_avg">Тест орташа</span><strong id="pQuiz">—</strong></div>
       </div>
+
+      <div class="progress-grid">
+        <div class="glass prog-card">
+          <div class="side-row between">
+            <h2 class="card-title" data-i18n="progress_course">Курс</h2>
+            <strong class="big-num" id="pCourse">0%</strong>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="pCourseFill" style="width:0%"></div></div>
+          <p class="muted small" id="pCourseMeta"></p>
+          <h3 class="card-sub" data-i18n="daily_goal">Күнделікті мақсат</h3>
+          <div class="goal-chips" role="group" aria-label="Daily goal">
+            <button type="button" class="chip-btn" data-goal="10" data-i18n="goal_10">10 · жеңіл</button>
+            <button type="button" class="chip-btn" data-goal="20" data-i18n="goal_20">20 · қалыпты</button>
+            <button type="button" class="chip-btn" data-goal="30" data-i18n="goal_30">30 · байсалды</button>
+            <button type="button" class="chip-btn" data-goal="50" data-i18n="goal_50">50 · қарқынды</button>
+          </div>
+        </div>
+        <div class="glass prog-card">
+          <div class="side-row between">
+            <h2 class="card-title" data-i18n="week_title">Соңғы 7 күн</h2>
+            <span class="muted small" id="weekTotal"></span>
+          </div>
+          <div id="weekChart"></div>
+          <p class="chart-legend"><i class="legend-line"></i><span id="weekGoal"></span></p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title" data-i18n="ach_title">Жетістіктер</h2>
+        <div class="ach-grid" id="achGrid"></div>
+      </div>
+
       <div class="section">
         <h2 class="section-title" data-i18n="progress_history">Соңғы тесттер</h2>
         <ul class="history" id="quizHistory"></ul>
@@ -520,6 +611,7 @@
             <span data-i18n="import_btn">⬆ Import</span>
             <input type="file" id="importProgress" accept="application/json,.json" hidden />
           </label>
+          <button type="button" class="btn btn-ghost btn-sm install-btn hidden" data-i18n="install_btn">📲 Телефонға орнату</button>
           <button type="button" class="btn btn-danger btn-sm" id="resetProgress" data-i18n="progress_reset">Прогресті тазалау</button>
         </div>
         <p class="muted" data-i18n="export_hint">Басқа компьютерге прогрессіңді көшіру үшін</p>
@@ -531,30 +623,30 @@
     <div class="footer-inner">
       <div>
         <strong>FluentPath</strong>
-        <p class="muted" data-i18n="footer_tag">IELTS · Listening · 4 UI тілі · Offline</p>
+        <p class="muted" data-i18n="footer_tag">Ағылшын тілі · қазақша · offline</p>
       </div>
       <div class="footer-cta">
-        <button type="button" class="btn btn-primary btn-sm" data-nav="learn" data-i18n="footer_cta">Үйренуді жалғастыру</button>
+        <button type="button" class="btn-3d btn-3d-sm" data-nav="learn" data-i18n="footer_cta">Үйренуді жалғастыру</button>
       </div>
     </div>
   </footer>
 
-  <!-- Bottom dock: easy switch (not one endless page) -->
+  <!-- Bottom dock (mobile) -->
   <nav class="dock" id="dock" aria-label="Main">
     <button type="button" class="dock-item active" data-nav="home">
       <span class="dock-ico">🏠</span><span class="dock-txt" data-i18n="nav_home">Басты</span>
     </button>
     <button type="button" class="dock-item" data-nav="learn">
-      <span class="dock-ico">🎯</span><span class="dock-txt" data-i18n="nav_learn">Үйрену</span>
+      <span class="dock-ico">🗺️</span><span class="dock-txt" data-i18n="nav_learn">Сабақтар</span>
+    </button>
+    <button type="button" class="dock-item" data-nav="review">
+      <span class="dock-ico">🧠<span class="due-badge hidden">0</span></span><span class="dock-txt" data-i18n="nav_review">Қайталау</span>
+    </button>
+    <button type="button" class="dock-item" data-nav="practice">
+      <span class="dock-ico">🎯</span><span class="dock-txt" data-i18n="nav_practice_short">Жаттығу</span>
     </button>
     <button type="button" class="dock-item" data-nav="vocab">
       <span class="dock-ico">📚</span><span class="dock-txt" data-i18n="nav_vocab">Сөздік</span>
-    </button>
-    <button type="button" class="dock-item" data-nav="listening">
-      <span class="dock-ico">🎧</span><span class="dock-txt" data-i18n="nav_listening">Listen</span>
-    </button>
-    <button type="button" class="dock-item" data-nav="quiz">
-      <span class="dock-ico">✅</span><span class="dock-txt" data-i18n="nav_quiz">Тест</span>
     </button>
     <button type="button" class="dock-item" id="dockMoreBtn" data-dock-more>
       <span class="dock-ico">⋯</span><span class="dock-txt" data-i18n="nav_more">Тағы</span>
@@ -567,22 +659,44 @@
       <div class="more-handle"></div>
       <p class="more-title" data-i18n="nav_more">Тағы</p>
       <div class="more-grid">
-        <button type="button" data-nav="grammar" data-i18n="nav_grammar">Грамматика</button>
-        <button type="button" data-nav="speaking" data-i18n="nav_speaking">Speaking</button>
-        <button type="button" data-nav="writing" data-i18n="nav_writing">Writing</button>
-        <button type="button" data-nav="phrases" data-i18n="nav_phrases">Phrases</button>
-        <button type="button" data-nav="reading" data-i18n="nav_reading">Reading</button>
-        <button type="button" data-nav="progress" data-i18n="nav_progress">Прогресс</button>
+        <button type="button" data-nav="quiz">✅ <span data-i18n="nav_quiz">Тест</span></button>
+        <button type="button" data-nav="grammar">🧩 <span data-i18n="nav_grammar">Грамматика</span></button>
+        <button type="button" data-nav="listening">🎧 <span data-i18n="nav_listening">Listening</span></button>
+        <button type="button" data-nav="reading">📖 <span data-i18n="nav_reading">Reading</span></button>
+        <button type="button" data-nav="speaking">🎤 <span data-i18n="nav_speaking">Speaking</span></button>
+        <button type="button" data-nav="writing">✍️ <span data-i18n="nav_writing">Writing</span></button>
+        <button type="button" data-nav="phrases">💬 <span data-i18n="nav_phrases">Фразалар</span></button>
+        <button type="button" data-nav="progress">📈 <span data-i18n="nav_progress">Прогресс</span></button>
       </div>
+      <button type="button" class="btn-3d btn-3d-block install-btn hidden" data-i18n="install_btn">📲 Телефонға орнату</button>
       <button type="button" class="btn btn-ghost btn-sm more-close" id="moreClose" data-i18n="nav_close">Жабу</button>
+    </div>
+  </div>
+
+  <!-- Lesson player -->
+  <div class="lesson hidden" id="lesson" role="dialog" aria-modal="true" aria-label="Lesson">
+    <div class="lesson-top">
+      <button type="button" class="lesson-x" id="lessonClose" aria-label="Close">✕</button>
+      <div class="lesson-bar"><div class="lesson-bar-fill" id="lessonBar"></div></div>
+      <span class="lesson-hearts hidden" id="lessonHearts"></span>
+      <span class="lesson-combo" id="lessonCombo"></span>
+      <button type="button" class="lesson-sound" id="lessonSound" aria-label="Sound">🔊</button>
+    </div>
+    <div class="lesson-stage" id="lessonStage"></div>
+    <div class="lesson-foot" id="lessonFoot">
+      <div class="lesson-foot-inner">
+        <div class="lesson-feedback" id="lessonFeedback" aria-live="polite"></div>
+        <div class="lesson-foot-btns">
+          <button type="button" class="btn-3d btn-3d-ghost hidden" id="lessonSkip">Қазір тыңдай алмаймын</button>
+          <button type="button" class="btn-3d" id="lessonCheck" disabled>Тексеру</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Study music (YouTube embed) -->
   <div class="music-widget" id="musicWidget">
-    <button type="button" class="music-toggle" id="musicToggle" title="Music" aria-label="Music">
-      🎵
-    </button>
+    <button type="button" class="music-toggle" id="musicToggle" title="Music" aria-label="Music">🎵</button>
     <div class="music-panel glass hidden" id="musicPanel">
       <div class="music-head">
         <strong>Study music</strong>
@@ -594,7 +708,7 @@
           id="musicFrame"
           title="Justin Bieber Confident"
           src="https://www.youtube.com/embed/47YClVMlthI?enablejsapi=1&rel=0&autoplay=1"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
           loading="lazy"
         ></iframe>
@@ -605,15 +719,19 @@
         <button type="button" class="chip-btn" data-yt="jfKfPfyJRdk">Lofi</button>
         <button type="button" class="chip-btn" data-yt="DWcJFNfaw9c">Piano</button>
       </div>
-      <a class="music-open" id="musicOpenTab" href="https://www.youtube.com/watch?v=47YClVMlthI" target="_blank" rel="noopener">YouTube-та ашу ↗</a>
+      <a class="music-open" id="musicOpenTab" href="https://www.youtube.com/watch?v=47YClVMlthI" target="_blank" rel="noopener">YouTube ↗</a>
     </div>
   </div>
 
-  <div class="toast hidden" id="toast"></div>
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+  <div class="viz-tip hidden" id="vizTip" role="tooltip"></div>
   <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
-  <script src="js/data.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/data.js?v=3"></script>
+  <script src="js/course-data.js?v=3"></script>
+  <script src="js/i18n.js?v=3"></script>
+  <script src="js/srs.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
+  <script src="js/course.js?v=3"></script>
 </body>
 </html>

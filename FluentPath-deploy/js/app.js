@@ -1,24 +1,39 @@
 /* FluentPath — premium app logic */
 (() => {
   const DATA = window.FP_DATA;
+  const SRS = window.FP_SRS;
   const STORAGE_KEY = "fluentpath_v2";
+  const LANGS = ["kk", "ru", "es", "zh"];
+  const LOCALES = { kk: "kk-KZ", ru: "ru-RU", es: "es-ES", zh: "zh-CN" };
+  const GOALS = [10, 20, 30, 50];
 
   const defaultState = () => ({
     xp: 0,
     streak: 0,
+    bestStreak: 0,
     lastActive: null,
-    dailyDone: 0,
-    dailyDate: null,
+    xpLog: {},
+    goalXp: 20,
+    goalHitDate: null,
     known: {},
     learning: {},
     lessonDone: {},
     quizHistory: [],
     drafts: {},
+    path: {},
+    srs: {},
+    awarded: { date: null, keys: {} },
+    lessonsDone: 0,
+    perfectLessons: 0,
+    listenOffUntil: 0,
+    sound: true,
+    srsMigrated: false,
     theme: "dark",
     lang: "kk",
   });
 
   let state = loadState();
+  let currentView = "home";
   let vocabQueue = [];
   let vocabIndex = 0;
   let flashFlipped = false;
@@ -43,6 +58,8 @@
   let focusRunning = false;
   let currentSpeak = null;
   let currentWrite = null;
+  let installPrompt = null;
+  let audioCtx = null;
 
   function t(key) {
     const pack = (window.FP_I18N && window.FP_I18N[state.lang]) || {};
@@ -50,9 +67,21 @@
     return pack[key] || fallback[key] || key;
   }
 
+  function fmt(s, vars = {}) {
+    return String(s).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ""));
+  }
+
+  const locale = () => LOCALES[state.lang] || "kk-KZ";
+
+  // Own weekday names: some browsers ship without Kazakh locale data.
+  function weekday(d, style = "short") {
+    const names = t(style === "long" ? "wd_long" : "wd_short").split(",");
+    return names[d.getDay()] || d.toLocaleDateString(locale(), { weekday: style });
+  }
+  const course = () => window.FP_COURSE;
+
   function applyI18n() {
-    document.documentElement.lang =
-      state.lang === "zh" ? "zh" : state.lang === "es" ? "es" : state.lang === "ru" ? "ru" : "kk";
+    document.documentElement.lang = state.lang;
     $all("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       if (key) el.textContent = t(key);
@@ -63,75 +92,115 @@
     });
     $all("[data-i18n-title]").forEach((el) => {
       const key = el.getAttribute("data-i18n-title");
-      if (key) el.setAttribute("title", t(key));
+      if (key) {
+        el.setAttribute("title", t(key));
+        el.setAttribute("aria-label", t(key));
+      }
     });
     const sel = $("#langSelect");
     if (sel) sel.value = state.lang;
-    // refresh dynamic bits
+    fillTopicSelect();
+    initWotd();
     updateChrome();
-    if ($("#view-vocab")?.classList.contains("active")) initVocab();
-    if ($("#view-listening")?.classList.contains("active")) {
-      if (listenTrack) openListening(listenTrack.id, true);
-      else initListeningList();
+    if (currentView === "listening" && listenTrack && !$("#listeningActive").classList.contains("hidden")) {
+      openListening(listenTrack.id, true);
+    } else {
+      renderView(currentView);
     }
-    if ($("#view-speaking")?.classList.contains("active")) initSpeaking();
-    if ($("#view-writing")?.classList.contains("active")) initWriting();
-    if ($("#view-phrases")?.classList.contains("active")) initPhrases();
   }
 
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("fluentpath_v1");
       if (!raw) return defaultState();
-      return { ...defaultState(), ...JSON.parse(raw) };
+      return normalizeState(JSON.parse(raw));
     } catch {
       return defaultState();
     }
   }
 
+  function normalizeState(data) {
+    const base = defaultState();
+    const s = { ...base, ...(data && typeof data === "object" ? data : {}) };
+    ["known", "learning", "lessonDone", "drafts", "path", "srs", "xpLog"].forEach((k) => {
+      if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k])) s[k] = {};
+    });
+    if (!Array.isArray(s.quizHistory)) s.quizHistory = [];
+    if (!s.awarded || typeof s.awarded !== "object") s.awarded = base.awarded;
+    if (!GOALS.includes(s.goalXp)) s.goalXp = base.goalXp;
+    if (!LANGS.includes(s.lang)) s.lang = "kk";
+    return s;
+  }
+
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage full or blocked — keep working in memory */
+    }
   }
 
-  function todayStr() {
-    return new Date().toISOString().slice(0, 10);
+  // Local calendar day (YYYY-MM-DD). toISOString() would switch days at 05:00 in Kazakhstan.
+  function localDay(d = new Date()) {
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
   }
 
-  function refreshDaily() {
-    const t = todayStr();
-    if (state.dailyDate !== t) {
-      if (state.lastActive) {
-        const prev = new Date(state.lastActive);
-        const now = new Date(t);
-        const diff = Math.round((now - prev) / 86400000);
-        if (diff === 1) state.streak += 1;
-        else if (diff > 1) state.streak = 0;
-      }
-      state.dailyDate = t;
-      state.dailyDone = 0;
+  function dayDiff(a, b) {
+    const [y1, m1, d1] = a.split("-").map(Number);
+    const [y2, m2, d2] = b.split("-").map(Number);
+    return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+  }
+
+  // A streak survives until the end of the day after the last active day.
+  function refreshStreak() {
+    if (state.lastActive && state.streak && dayDiff(state.lastActive, localDay()) > 1) {
+      state.streak = 0;
       saveState();
     }
   }
 
+  function todayXp() {
+    return (state.xpLog || {})[localDay()] || 0;
+  }
+
+  function goalReached() {
+    return todayXp() >= state.goalXp;
+  }
+
   function markActivity(xp = 5) {
-    refreshDaily();
+    const today = localDay();
+    if (state.lastActive !== today) {
+      const diff = state.lastActive ? dayDiff(state.lastActive, today) : null;
+      state.streak = diff === 1 ? (state.streak || 0) + 1 : 1;
+      state.lastActive = today;
+    }
+    if (!state.streak) state.streak = 1;
+    state.bestStreak = Math.max(state.bestStreak || 0, state.streak);
     state.xp += xp;
-    state.lastActive = todayStr();
-    if (state.streak === 0) state.streak = 1;
+    state.xpLog[today] = (state.xpLog[today] || 0) + xp;
+    const keys = Object.keys(state.xpLog).sort();
+    keys.slice(0, Math.max(0, keys.length - 90)).forEach((k) => delete state.xpLog[k]);
+    if (state.xpLog[today] >= state.goalXp && state.goalHitDate !== today) {
+      state.goalHitDate = today;
+      if (!course()?.isLessonOpen()) {
+        toast(t("goal_done"));
+        burstConfetti();
+      }
+    }
     saveState();
     updateChrome();
   }
 
-  function completeDailyTask() {
-    refreshDaily();
-    if (state.dailyDone < 3) {
-      state.dailyDone += 1;
-      state.xp += 10;
-      saveState();
-      toast(`${t("toast_task")} · ${state.dailyDone}/3 · +10 XP`);
-      if (state.dailyDone >= 3) burstConfetti();
-    }
-    updateChrome();
+  // XP for tools that can be re-submitted (speaking, writing, reading…) is paid once per item per day.
+  function awardOnce(key, xp) {
+    const today = localDay();
+    if (!state.awarded || state.awarded.date !== today) state.awarded = { date: today, keys: {} };
+    if (state.awarded.keys[key]) return false;
+    state.awarded.keys[key] = true;
+    markActivity(xp);
+    return true;
   }
 
   function toast(msg) {
@@ -139,7 +208,7 @@
     el.textContent = msg;
     el.classList.remove("hidden");
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.add("hidden"), 2400);
+    toast._t = setTimeout(() => el.classList.add("hidden"), 2600);
   }
 
   function $(sel) {
@@ -160,7 +229,7 @@
   /* Confetti */
   function burstConfetti() {
     const c = $("#fxCanvas");
-    if (!c) return;
+    if (!c || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = c.getContext("2d");
     c.width = window.innerWidth;
     c.height = window.innerHeight;
@@ -171,10 +240,8 @@
       vy: Math.random() * -9 - 3,
       g: 0.18 + Math.random() * 0.08,
       s: 4 + Math.random() * 6,
-      color: ["#7c9bff", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24"][
-        (Math.random() * 5) | 0
-      ],
-      life: 70 + (Math.random() * 30) | 0,
+      color: ["#7c9bff", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24"][(Math.random() * 5) | 0],
+      life: (70 + Math.random() * 30) | 0,
     }));
     let frame = 0;
     function tick() {
@@ -198,7 +265,91 @@
     tick();
   }
 
-  const DOCK_MAIN = new Set(["home", "learn", "vocab", "listening", "quiz"]);
+  /* Sound effects (generated, no audio files) */
+  function playSfx(kind) {
+    if (state.sound === false) return;
+    const notes = {
+      ok: [[660, 0], [880, 0.09]],
+      bad: [[220, 0], [165, 0.12]],
+      done: [[523, 0], [659, 0.1], [784, 0.2], [1047, 0.32]],
+      tap: [[520, 0]],
+    }[kind];
+    if (!notes) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      notes.forEach(([freq, at]) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = kind === "bad" ? "triangle" : "sine";
+        osc.frequency.value = freq;
+        const t0 = audioCtx.currentTime + at;
+        const peak = kind === "tap" ? 0.05 : 0.16;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + (kind === "tap" ? 0.08 : 0.2));
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.22);
+      });
+    } catch {
+      /* audio not available */
+    }
+  }
+
+  /* Text to speech */
+  function pickEnglishVoice() {
+    if (!window.speechSynthesis) return null;
+    const voices = speechSynthesis.getVoices() || [];
+    return (
+      voices.find((v) => /en(-|_)GB/i.test(v.lang)) ||
+      voices.find((v) => /en(-|_)US/i.test(v.lang)) ||
+      voices.find((v) => /^en/i.test(v.lang)) ||
+      null
+    );
+  }
+
+  function speakText(text, { rate = 1 } = {}) {
+    if (!window.speechSynthesis || !text) return false;
+    listenPlayingAll = false;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-GB";
+    u.rate = rate;
+    const voice = pickEnglishVoice();
+    if (voice) u.voice = voice;
+    speechSynthesis.speak(u);
+    return true;
+  }
+
+  function stopSpeech() {
+    if (window.speechSynthesis) speechSynthesis.cancel();
+  }
+
+  /* Hover / tap tooltips for charts */
+  function bindTips(root) {
+    const tip = $("#vizTip");
+    if (!tip || !root) return;
+    root.querySelectorAll("[data-tip]").forEach((el) => {
+      const show = () => {
+        tip.textContent = el.dataset.tip;
+        tip.classList.remove("hidden");
+        const r = el.getBoundingClientRect();
+        const w = tip.offsetWidth;
+        const x = Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
+        tip.style.left = `${x}px`;
+        tip.style.top = `${Math.max(8, r.top - tip.offsetHeight - 8)}px`;
+      };
+      const hide = () => tip.classList.add("hidden");
+      el.addEventListener("mouseenter", show);
+      el.addEventListener("mouseleave", hide);
+      el.addEventListener("click", show);
+      el.setAttribute("tabindex", "0");
+      el.addEventListener("focus", show);
+      el.addEventListener("blur", hide);
+    });
+  }
+
+  const DOCK_MAIN = new Set(["home", "learn", "review", "vocab", "practice"]);
 
   function closeMoreSheet() {
     $("#moreSheet")?.classList.add("hidden");
@@ -209,77 +360,95 @@
   }
 
   /* Navigation */
-  function showView(name) {
+  function showView(name, opts = {}) {
+    if (!document.getElementById(`view-${name}`)) name = "home";
     $all(".view").forEach((v) => v.classList.remove("active"));
-    const view = document.getElementById(`view-${name}`);
-    if (view) view.classList.add("active");
-    $all(".nav button").forEach((b) => {
-      b.classList.toggle("active", b.dataset.nav === name);
-    });
-    // bottom dock active state
-    $all(".dock-item[data-nav]").forEach((b) => {
-      b.classList.toggle("active", b.dataset.nav === name);
-    });
-    const moreBtn = $("#dockMoreBtn");
-    if (moreBtn) {
-      moreBtn.classList.toggle("active", !DOCK_MAIN.has(name));
-    }
+    document.getElementById(`view-${name}`).classList.add("active");
+    $all(".nav button").forEach((b) => b.classList.toggle("active", b.dataset.nav === name));
+    $all(".dock-item[data-nav]").forEach((b) => b.classList.toggle("active", b.dataset.nav === name));
+    $("#dockMoreBtn")?.classList.toggle("active", !DOCK_MAIN.has(name));
     closeMoreSheet();
     $("#mainNav")?.classList.remove("open");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    $("#burger")?.setAttribute("aria-expanded", "false");
+    const changed = currentView !== name;
+    currentView = name;
+    if (opts.push !== false && location.hash !== `#${name}`) {
+      try {
+        history.pushState({ view: name }, "", `#${name}`);
+      } catch {
+        /* file:// may block history */
+      }
+    }
+    if (changed || opts.scroll) window.scrollTo({ top: 0 });
+    stopListening();
+    if (name === "listening") initListeningList();
+    renderView(name);
+  }
 
+  function renderView(name) {
+    if (name === "home") course()?.renderHome();
+    if (name === "learn") course()?.renderPath();
+    if (name === "review") course()?.renderReview();
     if (name === "vocab") initVocab();
     if (name === "grammar") initGrammar();
     if (name === "reading") initReadingList();
-    if (name === "listening") {
-      stopListening();
-      initListeningList();
-    }
     if (name === "speaking") initSpeaking();
     if (name === "writing") initWriting();
     if (name === "phrases") initPhrases();
+    if (name === "practice") renderPractice();
     if (name === "progress") renderProgress();
-    if (name === "learn" || name === "home") updateChrome();
-    if (name === "quiz") resetQuizUI();
-    if (name !== "listening") stopListening();
+    if (name === "quiz" && !quiz) resetQuizUI();
+  }
+
+  function viewFromHash() {
+    const name = (location.hash || "").replace(/^#/, "");
+    return document.getElementById(`view-${name}`) ? name : "home";
   }
 
   function applyTheme() {
-    document.documentElement.setAttribute(
-      "data-theme",
-      state.theme === "light" ? "light" : "dark"
-    );
+    const theme = state.theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+    const meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "light" ? "#eef2ff" : "#070b16");
+    const btn = $("#themeToggle");
+    if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
   }
 
   /* Word of day */
   function initWotd() {
-    const day = new Date().getDate();
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((Date.now() - start) / 86400000);
     const pool = DATA.wordOfDayPool || [];
-    const item = pool[day % pool.length] || {
-      word: "crucial",
-      ipa: "",
-      meaning: "",
-      example: "",
-    };
+    const item = pool[dayOfYear % pool.length] || { word: "crucial", ipa: "", meaning: "", example: "" };
+    const found = DATA.vocab.find((w) => w.en.toLowerCase() === item.word.toLowerCase());
     $("#wotdWord").textContent = item.word;
     $("#wotdIpa").textContent = item.ipa;
     $("#wotdMeaning").textContent = item.meaning;
-    $("#wotdExample").textContent = item.example;
+    $("#wotdExample").textContent = `“${item.example}”`;
+    $("#wotdLevel").textContent = found ? `${found.level} · ${t(`topic_${found.topic}`)}` : "B2";
+    $("#wotdSay").onclick = () => speakText(item.word);
     $("#wotdSave").onclick = () => {
-      const found = DATA.vocab.find(
-        (w) => w.en.toLowerCase() === item.word.toLowerCase()
-      );
       if (found) {
+        SRS.grade(state.srs, found.id, false);
         state.learning[found.id] = true;
         delete state.known[found.id];
       }
-      markActivity(3);
-      toast(`“${item.word}” ${t("toast_saved")} ✨`);
+      awardOnce("wotd", 3);
       saveState();
+      updateChrome();
+      toast(`“${item.word}” ${t("toast_saved")} ✨`);
     };
   }
 
   /* Vocab */
+  function wordStatus(w) {
+    const card = state.srs[w.id];
+    if (card) return card.b >= 4 ? "known" : "learning";
+    if (state.known[w.id]) return "known";
+    if (state.learning[w.id]) return "learning";
+    return "new";
+  }
+
   function filteredVocab() {
     const level = $("#vocabLevel")?.value || "all";
     const topic = $("#vocabTopic")?.value || "all";
@@ -287,8 +456,9 @@
     return DATA.vocab.filter((w) => {
       if (level !== "all" && w.level !== level) return false;
       if (topic !== "all" && w.topic !== topic) return false;
-      if (vocabMode === "weak" && !state.learning[w.id]) return false;
-      if (vocabMode === "known" && !state.known[w.id]) return false;
+      const st = wordStatus(w);
+      if (vocabMode === "weak" && st !== "learning") return false;
+      if (vocabMode === "known" && st !== "known") return false;
       if (q) {
         const hay = `${w.en} ${w.kk} ${w.topic} ${w.example}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -299,12 +469,10 @@
 
   function setVocabMode(mode) {
     vocabMode = mode;
-    $all(".vocab-modes .chip-btn").forEach((b) => b.classList.remove("active"));
-    if (mode === "all") $("#modeAll")?.classList.add("active");
-    if (mode === "weak") $("#modeWeak")?.classList.add("active");
-    if (mode === "known") $("#modeKnown")?.classList.add("active");
+    $("#modeAll")?.classList.toggle("active", mode === "all");
+    $("#modeWeak")?.classList.toggle("active", mode === "weak");
+    $("#modeKnown")?.classList.toggle("active", mode === "known");
     initVocab();
-    if (mode === "weak" && !filteredVocab().length) toast(t("empty_weak"));
   }
 
   function shuffle(arr) {
@@ -316,17 +484,36 @@
     return a;
   }
 
+  function topicLabel(id) {
+    const key = `topic_${id}`;
+    const label = t(key);
+    if (label !== key) return label;
+    return (DATA.topics.find((x) => x.id === id) || {}).label || id;
+  }
+
+  function fillTopicSelect() {
+    const sel = $("#vocabTopic");
+    if (!sel) return;
+    const current = sel.value || "all";
+    sel.innerHTML =
+      `<option value="all">${escapeHtml(t("topic_all"))}</option>` +
+      DATA.topics
+        .filter((x) => x.id !== "all")
+        .map((x) => `<option value="${x.id}">${escapeHtml(topicLabel(x.id))}</option>`)
+        .join("");
+    sel.value = current;
+  }
+
   function buildTopicChips() {
     const box = $("#topicChips");
     if (!box) return;
-    const topics = DATA.topics || [{ id: "all", label: "Барлығы" }];
     const current = $("#vocabTopic")?.value || "all";
-    box.innerHTML = topics
+    box.innerHTML = DATA.topics
       .map(
-        (t) =>
-          `<button type="button" data-topic="${t.id}" class="${
-            t.id === current ? "active" : ""
-          }">${escapeHtml(t.label)}</button>`
+        (x) =>
+          `<button type="button" data-topic="${x.id}" class="${x.id === current ? "active" : ""}">${escapeHtml(
+            x.id === "all" ? t("mode_all") : topicLabel(x.id)
+          )}</button>`
       )
       .join("");
     box.querySelectorAll("button").forEach((btn) => {
@@ -340,23 +527,29 @@
   function initVocab() {
     buildTopicChips();
     const list = filteredVocab();
-    vocabQueue = shuffle(list.length ? list : DATA.vocab);
+    vocabQueue = shuffle(list);
     vocabIndex = 0;
     flashFlipped = false;
     $("#flashCard")?.classList.remove("flipped");
     renderFlash();
-    renderVocabTable();
-    const n = list.length;
+    renderVocabTable(list);
     if ($("#vocabStats")) {
-      $("#vocabStats").textContent = `${DATA.vocab.length} · ${n}`;
+      $("#vocabStats").textContent = fmt(t("vocab_count"), { n: list.length, total: DATA.vocab.length });
     }
-    if ($("#listCount")) $("#listCount").textContent = String(n);
+    if ($("#listCount")) $("#listCount").textContent = String(list.length);
   }
 
   function renderFlash() {
     const w = vocabQueue[vocabIndex];
-    if (!w) return;
-    $("#flashMeta").textContent = `${w.level} · ${w.topic}`;
+    const empty = !w;
+    $("#flashWrap")?.classList.toggle("is-empty", empty);
+    if (empty) {
+      $("#flashEmpty").textContent =
+        vocabMode === "weak" ? t("empty_weak") : vocabMode === "known" ? t("empty_known") : t("empty_search");
+      $("#flashCount").textContent = "0 / 0";
+      return;
+    }
+    $("#flashMeta").textContent = `${w.level} · ${topicLabel(w.topic)}`;
     $("#flashWord").textContent = w.en;
     $("#flashTr").textContent = w.kk;
     $("#flashEx").textContent = w.example;
@@ -364,36 +557,53 @@
   }
 
   function nextFlash() {
+    if (!vocabQueue.length) return;
     flashFlipped = false;
     $("#flashCard").classList.remove("flipped");
     vocabIndex = (vocabIndex + 1) % vocabQueue.length;
     renderFlash();
   }
 
-  function renderVocabTable() {
+  function gradeFlash(ok) {
+    const w = vocabQueue[vocabIndex];
+    if (!w) return;
+    SRS.grade(state.srs, w.id, ok);
+    if (ok) {
+      state.known[w.id] = true;
+      delete state.learning[w.id];
+      toast(`✓ ${w.en}`);
+    } else {
+      state.learning[w.id] = true;
+      delete state.known[w.id];
+    }
+    saveState();
+    markActivity(ok ? 2 : 1);
+    nextFlash();
+    renderVocabTable(filteredVocab());
+  }
+
+  function renderVocabTable(list) {
     const tbody = $("#vocabTable tbody");
     if (!tbody) return;
-    const rows = filteredVocab().slice(0, 200);
+    const rows = list.slice(0, 200);
     tbody.innerHTML = rows
       .map((w) => {
-        let status = "new";
-        let label = t("status_new");
-        if (state.known[w.id]) {
-          status = "known";
-          label = t("status_known");
-        } else if (state.learning[w.id]) {
-          status = "learning";
-          label = t("status_learning");
-        }
+        const status = wordStatus(w);
         return `<tr>
-          <td><strong>${escapeHtml(w.en)}</strong></td>
+          <td><button type="button" class="say small" data-say="${escapeHtml(w.en)}" aria-label="Play">🔊</button><strong>${escapeHtml(
+            w.en
+          )}</strong></td>
           <td>${escapeHtml(w.kk)}</td>
           <td>${w.level}</td>
-          <td>${escapeHtml(w.topic)}</td>
-          <td><span class="badge badge-${status}">${label}</span></td>
+          <td>${escapeHtml(topicLabel(w.topic))}</td>
+          <td><span class="badge badge-${status}">${t(`status_${status}`)}</span></td>
         </tr>`;
       })
       .join("");
+    tbody.querySelectorAll("[data-say]").forEach((b) => (b.onclick = () => speakText(b.dataset.say)));
+    if ($("#listMore")) {
+      $("#listMore").textContent = list.length > rows.length ? fmt(t("list_more"), { n: rows.length, total: list.length }) : "";
+    }
   }
 
   /* Grammar */
@@ -402,9 +612,9 @@
     list.innerHTML = DATA.lessons
       .map(
         (l, i) =>
-          `<button type="button" data-i="${i}">${
-            state.lessonDone[l.id] ? "✓ " : ""
-          }${escapeHtml(l.title)} <span class="muted">· ${l.level}</span></button>`
+          `<button type="button" data-i="${i}"><span class="lesson-check">${
+            state.lessonDone[l.id] ? "✓" : ""
+          }</span>${escapeHtml(l.title)} <span class="muted">· ${l.level}</span></button>`
       )
       .join("");
     list.querySelectorAll("button").forEach((btn) => {
@@ -415,9 +625,7 @@
 
   function openLesson(i) {
     const l = DATA.lessons[i];
-    $all("#lessonList button").forEach((b, idx) =>
-      b.classList.toggle("active", idx === i)
-    );
+    $all("#lessonList button").forEach((b, idx) => b.classList.toggle("active", idx === i));
     const body = $("#lessonBody");
     const p = l.practice;
     body.innerHTML = `
@@ -427,12 +635,7 @@
         <p><strong>${escapeHtml(p.q)}</strong></p>
         <div class="options" id="lessonOptions">
           ${p.options
-            .map(
-              (o, idx) =>
-                `<button type="button" class="option" data-i="${idx}">${escapeHtml(
-                  o
-                )}</button>`
-            )
+            .map((o, idx) => `<button type="button" class="option" data-i="${idx}">${escapeHtml(o)}</button>`)
             .join("")}
         </div>
         <p class="explain hidden" id="lessonExplain"></p>
@@ -450,18 +653,22 @@
         const exp = $("#lessonExplain");
         exp.textContent = (correct ? t("correct") + " " : t("wrong") + " ") + p.explain;
         exp.classList.remove("hidden");
-        if (correct && !state.lessonDone[l.id]) {
+        playSfx(correct ? "ok" : "bad");
+        if (correct) {
+          // Update the list in place — re-rendering here used to wipe the feedback.
           state.lessonDone[l.id] = true;
-          markActivity(15);
-          completeDailyTask();
-          initGrammar();
-          openLesson(i);
-        } else if (correct) markActivity(5);
+          const mark = $(`#lessonList button[data-i="${i}"] .lesson-check`);
+          if (mark) mark.textContent = "✓";
+          awardOnce(`gram:${l.id}`, 15);
+          saveState();
+        }
       };
     });
   }
 
   /* Quiz */
+  const QUIZ_NAMES = { placement: "quiz_place", vocab: "quiz_vocab", grammar: "quiz_gram", mixed: "quiz_mixed" };
+
   function resetQuizUI() {
     $("#quizSetup").classList.remove("hidden");
     $("#quizPlay").classList.add("hidden");
@@ -475,16 +682,9 @@
     else if (mode === "vocab") bank = DATA.quizBanks.vocab;
     else if (mode === "grammar") bank = DATA.quizBanks.grammar;
     else {
-      bank = shuffle([
-        ...DATA.quizBanks.vocab,
-        ...DATA.quizBanks.grammar,
-        ...DATA.quizBanks.placement.slice(0, 5),
-      ]);
+      bank = shuffle([...DATA.quizBanks.vocab, ...DATA.quizBanks.grammar, ...DATA.quizBanks.placement.slice(0, 5)]);
     }
-    const questions = shuffle(bank).slice(
-      0,
-      mode === "placement" ? 15 : mode === "mixed" ? 12 : 10
-    );
+    const questions = shuffle(bank).slice(0, mode === "placement" ? 15 : mode === "mixed" ? 12 : 10);
     quiz = { mode, questions, i: 0, score: 0, answered: false };
     $("#quizSetup").classList.add("hidden");
     $("#quizResult").classList.add("hidden");
@@ -502,12 +702,7 @@
     $("#quizNext").classList.add("hidden");
     const box = $("#quizOptions");
     box.innerHTML = item.options
-      .map(
-        (o, idx) =>
-          `<button type="button" class="option" data-i="${idx}">${escapeHtml(
-            o
-          )}</button>`
-      )
+      .map((o, idx) => `<button type="button" class="option" data-i="${idx}">${escapeHtml(o)}</button>`)
       .join("");
     box.querySelectorAll(".option").forEach((btn) => {
       btn.onclick = () => answerQuiz(+btn.dataset.i);
@@ -520,6 +715,7 @@
     const item = quiz.questions[quiz.i];
     const correct = choice === item.a;
     if (correct) quiz.score += 1;
+    playSfx(correct ? "ok" : "bad");
     $all("#quizOptions .option").forEach((b) => {
       b.disabled = true;
       if (+b.dataset.i === item.a) b.classList.add("correct");
@@ -527,12 +723,9 @@
     });
     const exp = $("#quizExplain");
     exp.textContent = item.exp || "";
-    exp.classList.remove("hidden");
+    exp.classList.toggle("hidden", !item.exp);
     $("#quizNext").classList.remove("hidden");
-    $("#quizNext").textContent =
-      quiz.i + 1 >= quiz.questions.length
-        ? t("quiz_result") + " 🎉"
-        : t("quiz_next");
+    $("#quizNext").textContent = quiz.i + 1 >= quiz.questions.length ? t("quiz_result") + " 🎉" : t("quiz_next");
   }
 
   function nextQuiz() {
@@ -550,28 +743,18 @@
     $("#quizPlay").classList.add("hidden");
     $("#quizResult").classList.remove("hidden");
     $("#quizScore").textContent = `${pct}%`;
-    let hint = `${quiz.score} / ${total} дұрыс. `;
+    let key;
     if (quiz.mode === "placement") {
-      if (pct >= 85) hint += "Деңгей: B2-ге жақын 💪";
-      else if (pct >= 70) hint += "Деңгей: B1";
-      else if (pct >= 50) hint += "Деңгей: A2";
-      else hint += "Деңгей: A1 — academic сөзден баста!";
-    } else if (pct >= 80) hint += "Керемет! IELTS vocabulary сенікі.";
-    else if (pct >= 60) hint += "Жақсы — weak сөздерді қайтала.";
-    else hint += "Сөздік + грамматикаға орал.";
-    $("#quizLevelHint").textContent = hint;
+      key = pct >= 85 ? "quiz_lvl_b2" : pct >= 70 ? "quiz_lvl_b1" : pct >= 50 ? "quiz_lvl_a2" : "quiz_lvl_a1";
+    } else key = pct >= 80 ? "quiz_hint_great" : pct >= 60 ? "quiz_hint_good" : "quiz_hint_low";
+    $("#quizLevelHint").textContent = `${fmt(t("quiz_correct_of"), { n: quiz.score, total })} ${t(key)}`;
 
-    state.quizHistory.unshift({
-      mode: quiz.mode,
-      score: pct,
-      date: todayStr(),
-      detail: `${quiz.score}/${total}`,
-    });
+    state.quizHistory.unshift({ mode: quiz.mode, score: pct, date: localDay(), detail: `${quiz.score}/${total}` });
     state.quizHistory = state.quizHistory.slice(0, 20);
     markActivity(Math.max(10, Math.round(pct / 4)));
-    completeDailyTask();
     saveState();
     if (pct >= 70) burstConfetti();
+    quiz = null;
   }
 
   /* Speaking */
@@ -592,7 +775,7 @@
     list.innerHTML = items
       .map(
         (s) =>
-          `<button type="button" data-id="${s.id}"><strong>${escapeHtml(
+          `<button type="button" data-id="${s.id}" class="${currentSpeak && currentSpeak.id === s.id ? "active" : ""}"><strong>${escapeHtml(
             s.part
           )}</strong><br/><span class="muted">${escapeHtml(s.title)}</span></button>`
       )
@@ -604,6 +787,7 @@
         openSpeak(b.dataset.id);
       };
     });
+    if (currentSpeak) openSpeak(currentSpeak.id);
   }
 
   function openSpeak(id) {
@@ -616,7 +800,7 @@
     panel.innerHTML = `
       <span class="pill">${escapeHtml(s.part)}</span>
       <h2>${escapeHtml(s.title)}</h2>
-      <p class="muted" data-dyn="speak_tip">${escapeHtml(t("speak_tip"))}</p>
+      <p class="muted">${escapeHtml(t("speak_tip"))}</p>
       <ul class="cue-list">
         ${s.cue.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
       </ul>
@@ -626,20 +810,12 @@
           <span>${escapeHtml(t("speak_talk"))}: ${s.speak}s</span>
         </div>
         <div class="timer-display" id="speakClock">${fmtTime(s.prep)}</div>
-        <p class="muted" id="speakPhaseLabel">—</p>
+        <p class="muted center" id="speakPhaseLabel">—</p>
         <div class="focus-actions">
-          <button type="button" class="btn btn-secondary btn-sm" id="speakPrepBtn">${escapeHtml(
-            t("speak_start_prep")
-          )}</button>
-          <button type="button" class="btn btn-primary btn-sm" id="speakTalkBtn">${escapeHtml(
-            t("speak_start_talk")
-          )}</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="speakResetBtn">${escapeHtml(
-            t("speak_reset")
-          )}</button>
-          <button type="button" class="btn btn-success btn-sm" id="speakDoneBtn">${escapeHtml(
-            t("speak_done")
-          )}</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="speakPrepBtn">${escapeHtml(t("speak_start_prep"))}</button>
+          <button type="button" class="btn btn-primary btn-sm" id="speakTalkBtn">${escapeHtml(t("speak_start_talk"))}</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="speakResetBtn">${escapeHtml(t("speak_reset"))}</button>
+          <button type="button" class="btn btn-success btn-sm" id="speakDoneBtn">${escapeHtml(t("speak_done"))}</button>
         </div>
       </div>
     `;
@@ -653,9 +829,7 @@
     };
     $("#speakDoneBtn").onclick = () => {
       clearSpeakTimer();
-      markActivity(20);
-      completeDailyTask();
-      toast(t("speak_done"));
+      toast(awardOnce(`speak:${s.id}`, 20) ? `${t("speak_done_ok")} +20 XP` : t("toast_already"));
     };
   }
 
@@ -664,19 +838,20 @@
     speakPhase = phase;
     speakLeft = seconds;
     $("#speakClock").textContent = fmtTime(speakLeft);
-    $("#speakPhaseLabel").textContent =
-      phase === "prep" ? t("speak_prep") : t("speak_talk");
+    $("#speakPhaseLabel").textContent = phase === "prep" ? t("speak_prep") : t("speak_talk");
     speakTimerId = setInterval(() => {
       speakLeft -= 1;
       if (speakLeft <= 0) {
         clearSpeakTimer();
         $("#speakClock").textContent = "00:00";
-        toast(phase === "prep" ? t("speak_start_talk") : "✓");
+        playSfx("done");
         if (phase === "prep" && currentSpeak) {
-          // auto-suggest starting talk
+          toast(t("speak_start_talk"));
           $("#speakPhaseLabel").textContent = t("speak_talk");
+        } else {
+          toast("✓");
+          burstConfetti();
         }
-        burstConfetti();
         return;
       }
       $("#speakClock").textContent = fmtTime(speakLeft);
@@ -696,7 +871,7 @@
     list.innerHTML = items
       .map(
         (w) =>
-          `<button type="button" data-id="${w.id}"><strong>${escapeHtml(
+          `<button type="button" data-id="${w.id}" class="${currentWrite && currentWrite.id === w.id ? "active" : ""}"><strong>${escapeHtml(
             w.task
           )}</strong><br/><span class="muted">${escapeHtml(w.title)}</span></button>`
       )
@@ -708,6 +883,7 @@
         openWrite(b.dataset.id);
       };
     });
+    if (currentWrite && !writeRunning) openWrite(currentWrite.id);
   }
 
   function countWords(text) {
@@ -731,38 +907,39 @@
         <span id="writeWordCount">0 / ${w.minWords} ${escapeHtml(t("write_words"))}</span>
       </div>
       <div class="focus-actions">
-        <button type="button" class="btn btn-primary btn-sm" id="writeStart">${escapeHtml(
-          t("write_start")
-        )}</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="writePause">${escapeHtml(
-          t("write_pause")
-        )}</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="writeReset">${escapeHtml(
-          t("write_reset")
-        )}</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="writeSave">${escapeHtml(
-          t("write_save")
-        )}</button>
-        <button type="button" class="btn btn-success btn-sm" id="writeDone">${escapeHtml(
-          t("write_done")
-        )}</button>
+        <button type="button" class="btn btn-primary btn-sm" id="writeStart">${escapeHtml(t("write_start"))}</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="writePause">${escapeHtml(t("write_pause"))}</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="writeReset">${escapeHtml(t("write_reset"))}</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="writeSave">${escapeHtml(t("write_save"))}</button>
+        <button type="button" class="btn btn-success btn-sm" id="writeDone">${escapeHtml(t("write_done"))}</button>
       </div>
-      <textarea id="writeArea" class="write-area" rows="12" placeholder="Write your answer here...">${escapeHtml(
-        saved
-      )}</textarea>
+      <textarea id="writeArea" class="write-area" rows="12" placeholder="${escapeHtml(t("write_ph"))}">${escapeHtml(saved)}</textarea>
+      <p class="muted small" id="writeAutosave"></p>
       <div class="tips-box">
         <h3>${escapeHtml(t("write_tips"))}</h3>
         <ul>${w.tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
       </div>
     `;
     const area = $("#writeArea");
+    let saveT;
+    const persist = () => {
+      state.drafts[w.id] = area.value;
+      saveState();
+    };
     const updateCount = () => {
       const n = countWords(area.value);
       const el = $("#writeWordCount");
       el.textContent = `${n} / ${w.minWords} ${t("write_words")}`;
       el.classList.toggle("ok", n >= w.minWords);
     };
-    area.addEventListener("input", updateCount);
+    area.addEventListener("input", () => {
+      updateCount();
+      clearTimeout(saveT);
+      saveT = setTimeout(() => {
+        persist();
+        $("#writeAutosave").textContent = t("write_autosaved");
+      }, 800);
+    });
     updateCount();
 
     $("#writeStart").onclick = () => {
@@ -773,8 +950,8 @@
         if (writeLeft <= 0) {
           clearWriteTimer();
           $("#writeClock").textContent = "00:00";
-          toast("Time!");
-          burstConfetti();
+          toast(t("write_time_up"));
+          playSfx("done");
           return;
         }
         $("#writeClock").textContent = fmtTime(writeLeft);
@@ -787,18 +964,18 @@
       $("#writeClock").textContent = fmtTime(writeLeft);
     };
     $("#writeSave").onclick = () => {
-      if (!state.drafts) state.drafts = {};
-      state.drafts[w.id] = area.value;
-      saveState();
+      persist();
       toast(t("write_saved"));
     };
     $("#writeDone").onclick = () => {
-      if (!state.drafts) state.drafts = {};
-      state.drafts[w.id] = area.value;
-      saveState();
-      markActivity(25);
-      completeDailyTask();
-      toast(t("write_done"));
+      persist();
+      const n = countWords(area.value);
+      if (n < Math.min(50, w.minWords)) {
+        toast(fmt(t("write_too_short"), { n: Math.min(50, w.minWords) }));
+        return;
+      }
+      clearWriteTimer();
+      toast(awardOnce(`write:${w.id}`, 25) ? `${t("write_done_ok")} +25 XP` : t("toast_already"));
     };
   }
 
@@ -813,9 +990,10 @@
         <p class="phrase-en">${escapeHtml(p.en)}</p>
         <p class="muted">${escapeHtml(p.kk)}</p>
         <p class="phrase-use">${escapeHtml(p.use)}</p>
-        <button type="button" class="btn btn-secondary btn-sm" data-copy="${escapeHtml(
-          p.en
-        )}">${escapeHtml(t("phrase_copy"))}</button>
+        <div class="phrase-actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-say="${escapeHtml(p.en)}">🔊</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-copy="${escapeHtml(p.en)}">${escapeHtml(t("phrase_copy"))}</button>
+        </div>
       </article>`
       )
       .join("");
@@ -829,6 +1007,22 @@
         }
       };
     });
+    grid.querySelectorAll("[data-say]").forEach((btn) => (btn.onclick = () => speakText(btn.dataset.say)));
+  }
+
+  /* Practice hub */
+  function renderPractice() {
+    const set = (sel, v) => {
+      const el = $(sel);
+      if (el) el.textContent = v;
+    };
+    set("#pcGrammar", fmt(t("pc_lessons"), { n: DATA.lessons.length }));
+    set("#pcListening", fmt(t("pc_tracks"), { n: (DATA.listening || []).length }));
+    set("#pcReading", fmt(t("pc_texts"), { n: (DATA.readings || []).length }));
+    set("#pcSpeaking", fmt(t("pc_topics"), { n: (DATA.speaking || []).length }));
+    set("#pcWriting", fmt(t("pc_tasks"), { n: (DATA.writing || []).length }));
+    set("#pcPhrases", fmt(t("pc_phrases"), { n: (DATA.phrases || []).length }));
+    set("#pcVocab", fmt(t("pc_words"), { n: DATA.vocab.length }));
   }
 
   /* Focus pomodoro */
@@ -844,14 +1038,12 @@
 
   /* Export / import */
   function exportProgress() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], {
-      type: "application/json",
-    });
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `fluentpath-progress-${todayStr()}.json`;
+    a.download = `fluentpath-progress-${localDay()}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast(t("export_ok"));
   }
 
@@ -860,11 +1052,11 @@
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        state = { ...defaultState(), ...data };
+        if (!data || typeof data !== "object" || typeof data.xp !== "number") throw new Error("bad file");
+        state = normalizeState(data);
         saveState();
         applyTheme();
         applyI18n();
-        renderProgress();
         toast(t("import_ok"));
       } catch {
         toast(t("import_fail"));
@@ -890,29 +1082,16 @@
     if ($("#listenFill")) $("#listenFill").style.width = "0%";
   }
 
-  function pickEnglishVoice() {
-    const voices = speechSynthesis.getVoices() || [];
-    return (
-      voices.find((v) => /en(-|_)GB/i.test(v.lang)) ||
-      voices.find((v) => /en(-|_)US/i.test(v.lang)) ||
-      voices.find((v) => /^en/i.test(v.lang)) ||
-      null
-    );
-  }
-
   function updateListenProgress() {
     const total = listenSentences.length || 1;
     const p = Math.min(100, (listenSentIndex / total) * 100);
     if ($("#listenFill")) $("#listenFill").style.width = `${p}%`;
     if ($("#listenSentInfo")) {
-      $("#listenSentInfo").textContent = `Sentence ${Math.min(
-        listenSentIndex + 1,
-        total
-      )} / ${total}`;
+      $("#listenSentInfo").textContent = fmt(t("listen_sentence"), { n: Math.min(listenSentIndex + 1, total), total });
     }
     const cur = $("#listenCurrentSent");
     if (cur && listenSentences[listenSentIndex]) {
-      cur.classList.remove("hidden");
+      cur.classList.toggle("hidden", !listenShowText);
       cur.textContent = listenSentences[listenSentIndex];
     }
   }
@@ -939,9 +1118,7 @@
         (tr, i) => `
       <button type="button" data-id="${tr.id}">
         <span><strong>🎧 ${i + 1}. ${escapeHtml(tr.title)}</strong></span>
-        <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(
-          tr.duration || ""
-        )}</span>
+        <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(tr.duration || "")}</span>
       </button>`
       )
       .join("");
@@ -963,9 +1140,9 @@
     $("#listeningPick").classList.add("hidden");
     $("#listeningActive").classList.remove("hidden");
     $("#listenTitle").textContent = tr.title;
-    $("#listenMeta").textContent = `${tr.level} · ${tr.duration || ""} · ${
-      listenSentences.length
-    } sentences`;
+    $("#listenMeta").textContent = `${tr.level} · ${tr.duration || ""} · ${fmt(t("listen_sentences"), {
+      n: listenSentences.length,
+    })}`;
     renderTranscriptHighlight();
     $("#listenTranscript").classList.toggle("hidden", !listenShowText);
     const tog = $("#listenToggleText");
@@ -978,12 +1155,7 @@
       <div class="rq">
         <p>${qi + 1}. ${escapeHtml(qq.q)}</p>
         ${qq.options
-          .map(
-            (o, oi) =>
-              `<label><input type="radio" name="lq${qi}" value="${oi}" /> ${escapeHtml(
-                o
-              )}</label>`
-          )
+          .map((o, oi) => `<label><input type="radio" name="lq${qi}" value="${oi}" /> ${escapeHtml(o)}</label>`)
           .join("")}
       </div>`
       )
@@ -1034,7 +1206,6 @@
       toast(t("speek_unsupported"));
       return;
     }
-    // resume if paused
     if (speechSynthesis.paused) {
       speechSynthesis.resume();
       $("#eqAnim")?.classList.add("playing");
@@ -1042,9 +1213,7 @@
     }
     listenPlayingAll = true;
     const startAt =
-      listenSentIndex >= listenSentences.length - 1 && !speechSynthesis.speaking
-        ? 0
-        : listenSentIndex;
+      listenSentIndex >= listenSentences.length - 1 && !speechSynthesis.speaking ? 0 : listenSentIndex;
     speakSentence(startAt, true);
   }
 
@@ -1076,8 +1245,8 @@
     const el = $("#listenScore");
     el.classList.remove("hidden");
     el.textContent = `${t("result_score")}: ${score} / ${listenTrack.questions.length}`;
-    markActivity(score * 6 + 8);
-    completeDailyTask();
+    awardOnce(`listen:${listenTrack.id}`, score * 6 + 8);
+    playSfx(score === listenTrack.questions.length ? "done" : "ok");
     if (score === listenTrack.questions.length) burstConfetti();
   }
 
@@ -1089,7 +1258,7 @@
       .map(
         (r) =>
           `<button type="button" data-id="${r.id}">
-            <strong>${escapeHtml(r.title)}</strong>
+            <strong>📖 ${escapeHtml(r.title)}</strong>
             <span class="muted"> · ${r.level}</span>
           </button>`
       )
@@ -1105,21 +1274,17 @@
     $("#readingPick").classList.add("hidden");
     $("#readingActive").classList.remove("hidden");
     $("#readingScore").classList.add("hidden");
-    $("#passageText").innerHTML = `<h2>${escapeHtml(
-      r.title
-    )}</h2><p>${escapeHtml(r.text).replace(/\n\n/g, "</p><p>")}</p>`;
+    $("#passageText").innerHTML = `<h2>${escapeHtml(r.title)}</h2><p>${escapeHtml(r.text).replace(
+      /\n\n/g,
+      "</p><p>"
+    )}</p>`;
     $("#readingQs").innerHTML = r.questions
       .map(
         (qq, qi) => `
       <div class="rq">
         <p>${qi + 1}. ${escapeHtml(qq.q)}</p>
         ${qq.options
-          .map(
-            (o, oi) =>
-              `<label><input type="radio" name="rq${qi}" value="${oi}" /> ${escapeHtml(
-                o
-              )}</label>`
-          )
+          .map((o, oi) => `<label><input type="radio" name="rq${qi}" value="${oi}" /> ${escapeHtml(o)}</label>`)
           .join("")}
       </div>`
       )
@@ -1133,24 +1298,93 @@
       const el = $("#readingScore");
       el.classList.remove("hidden");
       el.textContent = `${t("result_score")}: ${score} / ${r.questions.length}`;
-      markActivity(score * 5 + 5);
-      completeDailyTask();
+      awardOnce(`read:${r.id}`, score * 5 + 5);
+      playSfx(score === r.questions.length ? "done" : "ok");
       if (score === r.questions.length) burstConfetti();
     };
   }
 
   /* Progress */
+  const ACHIEVEMENTS = [
+    { id: "first", icon: "🎯", test: (s) => (s.lessonsDone || 0) >= 1 },
+    { id: "lessons10", icon: "📗", test: (s) => (s.lessonsDone || 0) >= 10 },
+    { id: "perfect", icon: "💯", test: (s) => (s.perfectLessons || 0) >= 1 },
+    { id: "streak3", icon: "🔥", test: (s) => (s.bestStreak || 0) >= 3 },
+    { id: "streak7", icon: "⚡", test: (s) => (s.bestStreak || 0) >= 7 },
+    { id: "words50", icon: "🧠", test: (s) => Object.keys(s.srs || {}).length >= 50 },
+    { id: "words200", icon: "📚", test: (s) => Object.keys(s.srs || {}).length >= 200 },
+    { id: "xp1000", icon: "💎", test: (s) => (s.xp || 0) >= 1000 },
+    { id: "a1", icon: "🌱", test: () => (course()?.sectionsDone() || []).includes("A1") },
+    { id: "b2", icon: "🎓", test: () => (course()?.sectionsDone() || []).includes("B2") },
+  ];
+
+  function renderWeekChart() {
+    const box = $("#weekChart");
+    if (!box) return;
+    const days = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) days.push(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i));
+    const vals = days.map((d) => state.xpLog[localDay(d)] || 0);
+    const max = Math.max(state.goalXp, ...vals);
+    const labels = days.map((d, i) =>
+      i === 6 ? t("c_today_short") : weekday(d)
+    );
+    const total = vals.reduce((a, b) => a + b, 0);
+    $("#weekTotal").textContent = fmt(t("week_total"), { n: total });
+    $("#weekGoal").textContent = fmt(t("week_goal_legend"), { n: state.goalXp });
+    box.innerHTML = `<div class="cols" role="img" aria-label="${escapeHtml(
+      labels.map((l, i) => `${l}: ${vals[i]} XP`).join(", ")
+    )}">
+      <div class="cols-plot">
+        <span class="goal-line" style="bottom:calc((100% - 18px) * ${state.goalXp / max})"></span>
+        ${vals
+          .map(
+            (v, i) => `<div class="col" data-tip="${escapeHtml(labels[i])}: ${v} XP">
+              <span class="col-val">${i === 6 && v ? v : ""}</span>
+              <span class="col-bar" style="height:${v ? Math.max(4, (v / max) * 100) : 0}%"></span>
+            </div>`
+          )
+          .join("")}
+      </div>
+      <div class="cols-lbls">${labels
+        .map((l, i) => `<span class="${i === 6 ? "is-today" : ""}">${escapeHtml(l)}</span>`)
+        .join("")}</div>
+    </div>
+    <table class="sr-only"><tr>${labels.map((l) => `<th>${escapeHtml(l)}</th>`).join("")}</tr><tr>${vals
+      .map((v) => `<td>${v}</td>`)
+      .join("")}</tr></table>`;
+    bindTips(box);
+  }
+
   function renderProgress() {
     $("#pXp").textContent = state.xp;
     $("#pStreak").textContent = state.streak;
-    $("#pKnown").textContent = Object.keys(state.known).length;
+    $("#pBest").textContent = fmt(t("progress_best"), { n: state.bestStreak || 0 });
+    $("#pKnown").textContent = Object.keys(state.srs).length;
     if (state.quizHistory.length) {
-      const avg = Math.round(
-        state.quizHistory.reduce((s, h) => s + h.score, 0) /
-          state.quizHistory.length
-      );
+      const avg = Math.round(state.quizHistory.reduce((s, h) => s + h.score, 0) / state.quizHistory.length);
       $("#pQuiz").textContent = `${avg}%`;
     } else $("#pQuiz").textContent = "—";
+
+    const cs = course()?.courseStats();
+    if (cs) {
+      $("#pCourse").textContent = `${cs.pct}%`;
+      $("#pCourseFill").style.width = `${cs.pct}%`;
+      $("#pCourseMeta").textContent = fmt(t("c_course_lessons"), { d: cs.done, n: cs.total });
+    }
+    renderWeekChart();
+
+    const ach = $("#achGrid");
+    if (ach) {
+      ach.innerHTML = ACHIEVEMENTS.map((a) => {
+        const on = a.test(state);
+        return `<div class="ach${on ? " on" : ""}">
+          <span class="ach-ico">${a.icon}</span>
+          <strong>${escapeHtml(t(`ach_${a.id}_t`))}</strong>
+          <span class="muted">${escapeHtml(t(`ach_${a.id}_d`))}</span>
+        </div>`;
+      }).join("");
+    }
 
     const hist = $("#quizHistory");
     if (!state.quizHistory.length) {
@@ -1159,49 +1393,120 @@
       hist.innerHTML = state.quizHistory
         .map(
           (h) =>
-            `<li><span>${escapeHtml(h.mode)} · ${h.date}</span><strong>${
-              h.score
-            }% <span class="muted">(${h.detail})</span></strong></li>`
+            `<li><span>${escapeHtml(t(QUIZ_NAMES[h.mode] || h.mode))} · ${h.date}</span><strong>${h.score}% <span class="muted">(${
+              h.detail
+            })</span></strong></li>`
         )
         .join("");
     }
+    renderGoalChips();
+  }
+
+  function renderGoalChips() {
+    $all("[data-goal]").forEach((b) => b.classList.toggle("active", +b.dataset.goal === state.goalXp));
   }
 
   function updateChrome() {
-    refreshDaily();
-    const n = DATA.vocab?.length || 0;
-    if ($("#statWords")) $("#statWords").textContent = `${n}+`;
-    if ($("#statLessons"))
-      $("#statLessons").textContent = String(DATA.lessons?.length || 0);
-    if ($("#statStreak")) $("#statStreak").textContent = String(state.streak);
-    if ($("#heroStreak"))
-      $("#heroStreak").textContent = `${state.streak} ${t("days")}`;
-    if ($("#xpChip")) $("#xpChip").textContent = String(state.xp);
-    if ($("#xpLabel")) $("#xpLabel").textContent = String(state.xp);
+    refreshStreak();
+    const set = (sel, v) => {
+      const el = $(sel);
+      if (el) el.textContent = v;
+    };
+    set("#statWords", String(DATA.vocab.length));
+    set("#statLessons", String(course()?.totalLessons() || DATA.lessons.length));
+    set("#statStreak", String(state.streak));
+    set("#xpChip", String(state.xp));
+    set("#streakChip", String(state.streak));
+    set("#xpLabel", String(todayXp()));
+    $all(".js-streak").forEach((el) => (el.textContent = String(state.streak)));
+    $all(".js-xp-today").forEach((el) => (el.textContent = String(todayXp())));
+    $all(".js-goal").forEach((el) => (el.textContent = String(state.goalXp)));
 
-    const goal = 3;
-    const done = state.dailyDone || 0;
-    if ($("#dailyDone")) $("#dailyDone").textContent = String(done);
-    if ($("#dailyGoal")) $("#dailyGoal").textContent = String(goal);
-    if ($("#dailyFill"))
-      $("#dailyFill").style.width = `${Math.min(100, (done / goal) * 100)}%`;
-    // ring: circumference ~ 100 with path design using dasharray percent
-    const ring = $("#dailyRing");
-    if (ring) {
-      const pct = Math.min(100, (done / goal) * 100);
-      ring.setAttribute("stroke-dasharray", `${pct}, 100`);
+    const goal = state.goalXp;
+    const done = todayXp();
+    const pct = Math.min(100, (done / goal) * 100);
+    set("#dailyDone", String(Math.min(done, 999)));
+    set("#dailyGoal", String(goal));
+    if ($("#dailyFill")) $("#dailyFill").style.width = `${pct}%`;
+    $("#dailyRing")?.setAttribute("stroke-dasharray", `${pct}, 100`);
+    $("#goalCard")?.classList.toggle("is-hit", done >= goal);
+
+    const due = course()?.dueCount() || 0;
+    $all(".due-badge").forEach((b) => {
+      b.textContent = due > 99 ? "99+" : String(due);
+      b.classList.toggle("hidden", due === 0);
+    });
+    $all(".js-due").forEach((el) => (el.textContent = String(due)));
+    course()?.updateSide();
+    renderGoalChips();
+  }
+
+  // Older saves only had known/learning flags — give those words SRS cards once.
+  function migrateToSrs() {
+    if (state.srsMigrated) return;
+    const now = Date.now();
+    Object.keys(state.known).forEach((id) => {
+      if (!state.srs[id]) state.srs[id] = { b: 4, due: now + 3 * SRS.DAY, n: 1, w: 0, last: now };
+    });
+    Object.keys(state.learning).forEach((id) => {
+      if (!state.srs[id]) state.srs[id] = { b: 1, due: now, n: 1, w: 1, last: now };
+    });
+    state.srsMigrated = true;
+    saveState();
+  }
+
+  /* PWA */
+  function setupPwa() {
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
     }
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const showInstall = (on) => $all(".install-btn").forEach((b) => b.classList.toggle("hidden", !on));
+    showInstall(!standalone && isIos);
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      installPrompt = e;
+      showInstall(true);
+    });
+    window.addEventListener("appinstalled", () => {
+      installPrompt = null;
+      showInstall(false);
+      toast(t("install_done"));
+    });
+    $all(".install-btn").forEach((b) =>
+      b.addEventListener("click", async () => {
+        if (installPrompt) {
+          installPrompt.prompt();
+          await installPrompt.userChoice.catch(() => null);
+          installPrompt = null;
+          showInstall(false);
+        } else if (isIos) {
+          toast(t("install_ios"));
+        }
+      })
+    );
   }
 
   function bind() {
-    $all("[data-nav]").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        const name = el.getAttribute("data-nav");
-        if (name) {
-          e.preventDefault();
-          showView(name);
-        }
-      });
+    // Delegated so buttons rendered later (path, review, home cards) navigate too.
+    document.addEventListener("click", (e) => {
+      const el = e.target.closest("[data-nav]");
+      if (!el) return;
+      const name = el.getAttribute("data-nav");
+      if (!name) return;
+      e.preventDefault();
+      if (name === "quiz") resetQuizUI();
+      showView(name, { scroll: true });
+    });
+
+    window.addEventListener("popstate", (e) => {
+      if (course()?.isLessonOpen()) return;
+      const name = (e.state && e.state.view) || viewFromHash();
+      showView(name, { push: false });
     });
 
     $("#dockMoreBtn")?.addEventListener("click", (e) => {
@@ -1214,7 +1519,8 @@
     $("#moreClose")?.addEventListener("click", closeMoreSheet);
 
     $("#burger")?.addEventListener("click", () => {
-      $("#mainNav").classList.toggle("open");
+      const open = $("#mainNav").classList.toggle("open");
+      $("#burger").setAttribute("aria-expanded", String(open));
     });
 
     // YouTube study music widget
@@ -1249,6 +1555,16 @@
       applyI18n();
     });
 
+    $all("[data-goal]").forEach((b) =>
+      b.addEventListener("click", () => {
+        state.goalXp = +b.dataset.goal;
+        saveState();
+        updateChrome();
+        if (currentView === "progress") renderWeekChart();
+        toast(fmt(t("goal_set"), { n: state.goalXp }));
+      })
+    );
+
     // Listening controls
     $("#listenPlay")?.addEventListener("click", playListening);
     $("#listenPause")?.addEventListener("click", pauseListening);
@@ -1268,16 +1584,16 @@
       listenShowText = !listenShowText;
       $("#listenTranscript")?.classList.toggle("hidden", !listenShowText);
       if (listenShowText) renderTranscriptHighlight();
+      updateListenProgress();
       const tog = $("#listenToggleText");
       if (tog) tog.textContent = listenShowText ? t("listen_hide") : t("listen_show");
     });
     $all("[data-rate]").forEach((btn) => {
+      if (btn.closest("#lesson")) return;
       btn.addEventListener("click", () => {
         listenRate = parseFloat(btn.dataset.rate) || 1;
-        $all("[data-rate]").forEach((b) =>
-          b.classList.toggle("active", b === btn)
-        );
-        if (speechSynthesis.speaking || speechSynthesis.pending) {
+        $all(".speed-row [data-rate]").forEach((b) => b.classList.toggle("active", b === btn));
+        if (window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending)) {
           listenPlayingAll = true;
           speakSentence(listenSentIndex, true);
         }
@@ -1289,36 +1605,19 @@
       speechSynthesis.onvoiceschanged = () => pickEnglishVoice();
     }
 
-    $("#flashCard")?.addEventListener("click", () => {
+    const flip = () => {
+      if (!vocabQueue.length) return;
       flashFlipped = !flashFlipped;
       $("#flashCard").classList.toggle("flipped", flashFlipped);
-    });
-
-    $("#flashEasy")?.addEventListener("click", () => {
+    };
+    $("#flashCard")?.addEventListener("click", flip);
+    $("#flashSay")?.addEventListener("click", (e) => {
+      e.stopPropagation();
       const w = vocabQueue[vocabIndex];
-      if (w) {
-        state.known[w.id] = true;
-        delete state.learning[w.id];
-        saveState();
-        markActivity(4);
-        toast(`✓ ${w.en}`);
-      }
-      nextFlash();
-      renderVocabTable();
+      if (w) speakText(w.en);
     });
-
-    $("#flashHard")?.addEventListener("click", () => {
-      const w = vocabQueue[vocabIndex];
-      if (w) {
-        state.learning[w.id] = true;
-        delete state.known[w.id];
-        saveState();
-        markActivity(2);
-      }
-      nextFlash();
-      renderVocabTable();
-    });
-
+    $("#flashEasy")?.addEventListener("click", () => gradeFlash(true));
+    $("#flashHard")?.addEventListener("click", () => gradeFlash(false));
     $("#flashSkip")?.addEventListener("click", nextFlash);
 
     $("#modeAll")?.addEventListener("click", () => setVocabMode("all"));
@@ -1327,19 +1626,18 @@
 
     // Flashcard keyboard shortcuts
     document.addEventListener("keydown", (e) => {
-      if (!$("#view-vocab")?.classList.contains("active")) return;
+      if (currentView !== "vocab" || document.body.classList.contains("lesson-open")) return;
       const tag = (e.target && e.target.tagName) || "";
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return;
       if (e.code === "Space") {
         e.preventDefault();
-        flashFlipped = !flashFlipped;
-        $("#flashCard")?.classList.toggle("flipped", flashFlipped);
+        flip();
       } else if (e.code === "ArrowLeft") {
         e.preventDefault();
-        $("#flashHard")?.click();
+        gradeFlash(false);
       } else if (e.code === "ArrowRight") {
         e.preventDefault();
-        $("#flashEasy")?.click();
+        gradeFlash(true);
       }
     });
 
@@ -1354,8 +1652,8 @@
         if (focusLeft <= 0) {
           clearFocus();
           toast(t("focus_done"));
+          playSfx("done");
           markActivity(30);
-          completeDailyTask();
           burstConfetti();
           focusLeft = 25 * 60;
           updateFocusClock();
@@ -1393,8 +1691,9 @@
     $("#readingBack")?.addEventListener("click", initReadingList);
 
     $("#resetProgress")?.addEventListener("click", () => {
-      if (confirm("Барлық прогресс өшеді. Жалғастырасың ба?")) {
-        state = defaultState();
+      if (confirm(t("reset_confirm"))) {
+        const keep = { theme: state.theme, lang: state.lang };
+        state = { ...defaultState(), ...keep, srsMigrated: true };
         saveState();
         applyTheme();
         updateChrome();
@@ -1404,29 +1703,65 @@
     });
 
     // scroll top progress
-    window.addEventListener("scroll", () => {
-      const el = $("#scrollProgress");
-      if (!el) return;
-      const h = document.documentElement;
-      const max = h.scrollHeight - h.clientHeight;
-      const p = max > 0 ? (h.scrollTop / max) * 100 : 0;
-      el.style.width = `${p}%`;
-    });
+    window.addEventListener(
+      "scroll",
+      () => {
+        const el = $("#scrollProgress");
+        if (!el) return;
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        el.style.width = `${max > 0 ? (h.scrollTop / max) * 100 : 0}%`;
+      },
+      { passive: true }
+    );
   }
+
+  // Core API for course.js (lesson path, player, review).
+  window.FP = {
+    get state() {
+      return state;
+    },
+    save: saveState,
+    t,
+    toast,
+    escapeHtml,
+    shuffle,
+    addXp: markActivity,
+    goalReached,
+    confetti: burstConfetti,
+    speak: speakText,
+    stopSpeech,
+    hasTTS: () => !!window.speechSynthesis,
+    sfx: playSfx,
+    showView,
+    refresh: updateChrome,
+    localDay,
+    locale,
+    weekday,
+    bindTips,
+  };
 
   function init() {
     if (!DATA || !DATA.vocab) {
       console.error("FP_DATA missing");
       return;
     }
-    if (!["kk", "ru", "es", "zh"].includes(state.lang)) state.lang = "kk";
-    refreshDaily();
+    migrateToSrs();
+    refreshStreak();
     applyTheme();
     bind();
-    initWotd();
+    course()?.init();
+    setupPwa();
+    const first = viewFromHash();
+    currentView = first;
+    try {
+      history.replaceState({ view: first }, "", `#${first}`);
+    } catch {
+      /* ignore */
+    }
     applyI18n();
     updateFocusClock();
-    showView("home");
+    showView(first, { push: false });
   }
 
   document.addEventListener("DOMContentLoaded", init);
