@@ -1,6 +1,6 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "3";
+const VERSION = "4";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
 const ASSETS = [
@@ -11,8 +11,11 @@ const ASSETS = [
   `js/course-data.js?v=${VERSION}`,
   `js/i18n.js?v=${VERSION}`,
   `js/srs.js?v=${VERSION}`,
+  `js/ai-prompts.js?v=${VERSION}`,
+  `js/ai.js?v=${VERSION}`,
   `js/app.js?v=${VERSION}`,
   `js/course.js?v=${VERSION}`,
+  `js/ai-ui.js?v=${VERSION}`,
   "manifest.webmanifest",
   "icons/icon.svg",
   "icons/icon-192.png",

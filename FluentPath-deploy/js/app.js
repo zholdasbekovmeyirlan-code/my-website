@@ -47,6 +47,7 @@
   let listenSentIndex = 0;
   let listenPlayingAll = false;
   let vocabMode = "all"; // all | weak | known
+  let vocabTopic = "all";
   let speakTimerId = null;
   let speakLeft = 0;
   let speakPhase = null; // prep | talk
@@ -99,7 +100,6 @@
     });
     const sel = $("#langSelect");
     if (sel) sel.value = state.lang;
-    fillTopicSelect();
     initWotd();
     updateChrome();
     if (currentView === "listening" && listenTrack && !$("#listeningActive").classList.contains("hidden")) {
@@ -368,6 +368,7 @@
     $all(".dock-item[data-nav]").forEach((b) => b.classList.toggle("active", b.dataset.nav === name));
     $("#dockMoreBtn")?.classList.toggle("active", !DOCK_MAIN.has(name));
     closeMoreSheet();
+    if (name !== "chat") document.body.classList.remove("chat-open");
     $("#mainNav")?.classList.remove("open");
     $("#burger")?.setAttribute("aria-expanded", "false");
     const changed = currentView !== name;
@@ -396,6 +397,12 @@
     if (name === "writing") initWriting();
     if (name === "phrases") initPhrases();
     if (name === "practice") renderPractice();
+    if (name === "chat") window.FP_AIUI?.render();
+    if (name !== "speaking" && speakPhase === "talk") {
+      clearSpeakTimer();
+      stopSpeakRec();
+      speakPhase = "idle";
+    }
     if (name === "progress") renderProgress();
     if (name === "quiz" && !quiz) resetQuizUI();
   }
@@ -451,7 +458,7 @@
 
   function filteredVocab() {
     const level = $("#vocabLevel")?.value || "all";
-    const topic = $("#vocabTopic")?.value || "all";
+    const topic = vocabTopic;
     const q = ($("#vocabSearch")?.value || "").trim().toLowerCase();
     return DATA.vocab.filter((w) => {
       if (level !== "all" && w.level !== level) return false;
@@ -491,23 +498,10 @@
     return (DATA.topics.find((x) => x.id === id) || {}).label || id;
   }
 
-  function fillTopicSelect() {
-    const sel = $("#vocabTopic");
-    if (!sel) return;
-    const current = sel.value || "all";
-    sel.innerHTML =
-      `<option value="all">${escapeHtml(t("topic_all"))}</option>` +
-      DATA.topics
-        .filter((x) => x.id !== "all")
-        .map((x) => `<option value="${x.id}">${escapeHtml(topicLabel(x.id))}</option>`)
-        .join("");
-    sel.value = current;
-  }
-
   function buildTopicChips() {
     const box = $("#topicChips");
     if (!box) return;
-    const current = $("#vocabTopic")?.value || "all";
+    const current = vocabTopic;
     box.innerHTML = DATA.topics
       .map(
         (x) =>
@@ -518,7 +512,7 @@
       .join("");
     box.querySelectorAll("button").forEach((btn) => {
       btn.onclick = () => {
-        $("#vocabTopic").value = btn.dataset.topic;
+        vocabTopic = btn.dataset.topic;
         initVocab();
       };
     });
@@ -764,20 +758,79 @@
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  let speakRec = null;
+  let speakTalkStart = 0;
+
   function clearSpeakTimer() {
     clearInterval(speakTimerId);
     speakTimerId = null;
   }
 
+  function stopSpeakRec() {
+    const rec = speakRec;
+    speakRec = null;
+    if (rec) {
+      try {
+        rec.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+  }
+
+  // Live speech-to-text (Chrome/Edge/Safari). Chrome ends the session on silence, so restart it.
+  function startSpeechRec(onText, { continuous = true } = {}) {
+    if (!SpeechRec) return null;
+    const rec = new SpeechRec();
+    rec.lang = "en-US";
+    rec.continuous = continuous;
+    rec.interimResults = true;
+    let finalText = "";
+    let restarts = 0;
+    let dead = false;
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) finalText += `${r[0].transcript.trim()} `;
+        else interim += r[0].transcript;
+      }
+      onText(finalText.trim(), interim.trim());
+    };
+    rec.onerror = (e) => {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") toast(t("mic_denied"));
+      if (e.error !== "no-speech") dead = true;
+    };
+    rec.onend = () => {
+      if (continuous && !dead && speakRec === rec && restarts++ < 40) {
+        try {
+          rec.start();
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    try {
+      rec.start();
+      return rec;
+    } catch {
+      return null;
+    }
+  }
+
   function initSpeaking() {
     const list = $("#speakList");
     const items = DATA.speaking || [];
+    const bands = state.speakBands || {};
     list.innerHTML = items
       .map(
         (s) =>
           `<button type="button" data-id="${s.id}" class="${currentSpeak && currentSpeak.id === s.id ? "active" : ""}"><strong>${escapeHtml(
-            s.part
-          )}</strong><br/><span class="muted">${escapeHtml(s.title)}</span></button>`
+            s.title
+          )}</strong><span class="muted small">${escapeHtml(s.part)}${
+            bands[s.id] ? ` · <b class="band-chip">${bands[s.id]}</b>` : ""
+          }</span></button>`
       )
       .join("");
     list.querySelectorAll("button").forEach((b) => {
@@ -785,9 +838,10 @@
         list.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
         b.classList.add("active");
         openSpeak(b.dataset.id);
+        revealPanel("#speakPanel");
       };
     });
-    if (currentSpeak) openSpeak(currentSpeak.id);
+    if (currentSpeak && speakPhase !== "talk") openSpeak(currentSpeak.id);
   }
 
   function openSpeak(id) {
@@ -795,67 +849,129 @@
     if (!s) return;
     currentSpeak = s;
     clearSpeakTimer();
-    speakPhase = null;
+    stopSpeakRec();
     const panel = $("#speakPanel");
     panel.innerHTML = `
       <span class="pill">${escapeHtml(s.part)}</span>
       <h2>${escapeHtml(s.title)}</h2>
-      <p class="muted">${escapeHtml(t("speak_tip"))}</p>
+      <p class="muted small">${escapeHtml(t("speak_cue"))}</p>
       <ul class="cue-list">
         ${s.cue.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
       </ul>
       <div class="timer-box">
-        <div class="timer-labels">
-          <span>${escapeHtml(t("speak_prep"))}: ${s.prep}s</span>
-          <span>${escapeHtml(t("speak_talk"))}: ${s.speak}s</span>
+        <p class="phase-label" id="speakPhaseLabel"></p>
+        <div class="timer-display" id="speakClock"></div>
+        <div class="progress-bar slim"><div class="progress-fill" id="speakFill" style="width:0%"></div></div>
+        <div class="speak-actions">
+          <button type="button" class="btn-3d" id="speakMain"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="speakReset">↻ ${escapeHtml(t("speak_reset"))}</button>
         </div>
-        <div class="timer-display" id="speakClock">${fmtTime(s.prep)}</div>
-        <p class="muted center" id="speakPhaseLabel">—</p>
-        <div class="focus-actions">
-          <button type="button" class="btn btn-secondary btn-sm" id="speakPrepBtn">${escapeHtml(t("speak_start_prep"))}</button>
-          <button type="button" class="btn btn-primary btn-sm" id="speakTalkBtn">${escapeHtml(t("speak_start_talk"))}</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="speakResetBtn">${escapeHtml(t("speak_reset"))}</button>
-          <button type="button" class="btn btn-success btn-sm" id="speakDoneBtn">${escapeHtml(t("speak_done"))}</button>
+        <p class="speak-live hidden" id="speakLive"></p>
+      </div>
+      <div class="speak-after hidden" id="speakAfter">
+        <label class="muted small" for="speakText">${escapeHtml(t(SpeechRec ? "speak_transcript" : "speak_type"))}</label>
+        <textarea id="speakText" class="write-area" rows="5" placeholder="${escapeHtml(t("speak_text_ph"))}"></textarea>
+        <div class="speak-actions">
+          <button type="button" class="btn-3d" id="speakAi">🤖 ${escapeHtml(t("ai_check_speak"))}</button>
         </div>
+        <div id="speakFb"></div>
       </div>
     `;
-    $("#speakPrepBtn").onclick = () => startSpeakPhase("prep", s.prep);
-    $("#speakTalkBtn").onclick = () => startSpeakPhase("talk", s.speak);
-    $("#speakResetBtn").onclick = () => {
-      clearSpeakTimer();
-      speakPhase = null;
-      $("#speakClock").textContent = fmtTime(s.prep);
-      $("#speakPhaseLabel").textContent = "—";
-    };
-    $("#speakDoneBtn").onclick = () => {
-      clearSpeakTimer();
-      toast(awardOnce(`speak:${s.id}`, 20) ? `${t("speak_done_ok")} +20 XP` : t("toast_already"));
-    };
-  }
+    const main = $("#speakMain");
+    const label = $("#speakPhaseLabel");
+    const clock = $("#speakClock");
+    const fill = $("#speakFill");
+    const live = $("#speakLive");
 
-  function startSpeakPhase(phase, seconds) {
-    clearSpeakTimer();
-    speakPhase = phase;
-    speakLeft = seconds;
-    $("#speakClock").textContent = fmtTime(speakLeft);
-    $("#speakPhaseLabel").textContent = phase === "prep" ? t("speak_prep") : t("speak_talk");
-    speakTimerId = setInterval(() => {
-      speakLeft -= 1;
-      if (speakLeft <= 0) {
-        clearSpeakTimer();
-        $("#speakClock").textContent = "00:00";
-        playSfx("done");
-        if (phase === "prep" && currentSpeak) {
-          toast(t("speak_start_talk"));
-          $("#speakPhaseLabel").textContent = t("speak_talk");
-        } else {
-          toast("✓");
-          burstConfetti();
+    const runTimer = (seconds, onDone) => {
+      clearSpeakTimer();
+      speakLeft = seconds;
+      clock.textContent = fmtTime(speakLeft);
+      fill.style.width = "0%";
+      speakTimerId = setInterval(() => {
+        speakLeft -= 1;
+        clock.textContent = fmtTime(Math.max(0, speakLeft));
+        fill.style.width = `${((seconds - speakLeft) / seconds) * 100}%`;
+        if (speakLeft <= 0) {
+          clearSpeakTimer();
+          onDone();
         }
+      }, 1000);
+    };
+
+    const setPhase = (phase) => {
+      speakPhase = phase;
+      $("#speakPanel .timer-box").dataset.phase = phase;
+      main.classList.toggle("hidden", phase === "done");
+      if (phase === "idle") {
+        label.textContent = t("speak_ready");
+        clock.textContent = fmtTime(s.prep);
+        fill.style.width = "0%";
+        main.textContent = fmt(t("speak_start_prep"), { n: Math.round(s.prep / 60) || 1 });
+        live.classList.add("hidden");
+        $("#speakAfter").classList.add("hidden");
+      } else if (phase === "prep") {
+        label.textContent = t("speak_prep");
+        main.textContent = t("speak_start_talk");
+        runTimer(s.prep, () => {
+          playSfx("tap");
+          setPhase("talk");
+        });
+      } else if (phase === "talk") {
+        label.textContent = t("speak_talk");
+        main.textContent = t("speak_finish");
+        speakTalkStart = Date.now();
+        const area = $("#speakText");
+        area.value = "";
+        speakRec = startSpeechRec((final, interim) => {
+          area.value = final;
+          live.textContent = `${final} ${interim}`.trim() || "…";
+        });
+        live.classList.toggle("hidden", !speakRec);
+        if (speakRec) live.textContent = t("speak_listening");
+        runTimer(s.speak, () => setPhase("done"));
+      } else if (phase === "done") {
+        clearSpeakTimer();
+        stopSpeakRec();
+        label.textContent = t("speak_done_label");
+        fill.style.width = "100%";
+        live.classList.add("hidden");
+        $("#speakAfter").classList.remove("hidden");
+        playSfx("done");
+        if (awardOnce(`speak:${s.id}`, 20)) toast(`${t("speak_done_ok")} +20 XP`);
+      }
+    };
+
+    main.onclick = () => {
+      if (speakPhase === "idle") setPhase("prep");
+      else if (speakPhase === "prep") setPhase("talk");
+      else if (speakPhase === "talk") setPhase("done");
+    };
+    $("#speakReset").onclick = () => {
+      clearSpeakTimer();
+      stopSpeakRec();
+      setPhase("idle");
+    };
+    $("#speakAi").onclick = async () => {
+      const transcript = $("#speakText").value;
+      if (countWords(transcript) < 15) {
+        toast(t("ai_err_short"));
         return;
       }
-      $("#speakClock").textContent = fmtTime(speakLeft);
-    }, 1000);
+      const seconds = speakTalkStart ? Math.round((Date.now() - speakTalkStart) / 1000) : s.speak;
+      const data = await window.FP_AIUI.runFeedback(
+        "speaking",
+        { topic: s.title, cue: s.cue, transcript, seconds: Math.min(seconds, s.speak) },
+        $("#speakFb"),
+        $("#speakAi")
+      );
+      if (data) {
+        if (!state.speakBands) state.speakBands = {};
+        state.speakBands[s.id] = data.overall;
+        saveState();
+      }
+    };
+    setPhase("idle");
   }
 
   /* Writing */
@@ -868,12 +984,15 @@
   function initWriting() {
     const list = $("#writeList");
     const items = DATA.writing || [];
+    const bands = state.writeBands || {};
     list.innerHTML = items
       .map(
         (w) =>
           `<button type="button" data-id="${w.id}" class="${currentWrite && currentWrite.id === w.id ? "active" : ""}"><strong>${escapeHtml(
-            w.task
-          )}</strong><br/><span class="muted">${escapeHtml(w.title)}</span></button>`
+            w.title
+          )}</strong><span class="muted small">${escapeHtml(w.task)}${
+            bands[w.id] ? ` · <b class="band-chip">${bands[w.id]}</b>` : ""
+          }</span></button>`
       )
       .join("");
     list.querySelectorAll("button").forEach((b) => {
@@ -881,13 +1000,19 @@
         list.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
         b.classList.add("active");
         openWrite(b.dataset.id);
+        revealPanel("#writePanel");
       };
     });
     if (currentWrite && !writeRunning) openWrite(currentWrite.id);
   }
 
+  // On phones the topic list sits above the panel, so bring the panel into view after a pick.
+  function revealPanel(sel) {
+    if (window.innerWidth <= 900) $(sel)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function countWords(text) {
-    return (text.trim().match(/\S+/g) || []).length;
+    return (String(text).trim().match(/\S+/g) || []).length;
   }
 
   function openWrite(id) {
@@ -899,32 +1024,40 @@
     const saved = (state.drafts && state.drafts[w.id]) || "";
     const panel = $("#writePanel");
     panel.innerHTML = `
-      <span class="pill">${escapeHtml(w.task)}</span>
+      <span class="pill">${escapeHtml(w.task)} · ${w.minutes || 40} ${escapeHtml(t("write_min"))}</span>
       <h2>${escapeHtml(w.title)}</h2>
       <p class="prompt-box">${escapeHtml(w.prompt)}</p>
       <div class="write-meta">
-        <span id="writeClock">${fmtTime(writeLeft)}</span>
-        <span id="writeWordCount">0 / ${w.minWords} ${escapeHtml(t("write_words"))}</span>
-      </div>
-      <div class="focus-actions">
-        <button type="button" class="btn btn-primary btn-sm" id="writeStart">${escapeHtml(t("write_start"))}</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="writePause">${escapeHtml(t("write_pause"))}</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="writeReset">${escapeHtml(t("write_reset"))}</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="writeSave">${escapeHtml(t("write_save"))}</button>
-        <button type="button" class="btn btn-success btn-sm" id="writeDone">${escapeHtml(t("write_done"))}</button>
+        <div class="write-timer">
+          <button type="button" class="btn btn-ghost btn-sm" id="writeTimer"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="writeReset" aria-label="${escapeHtml(t("write_reset"))}" title="${escapeHtml(
+            t("write_reset")
+          )}">↻</button>
+        </div>
+        <span id="writeWordCount"></span>
       </div>
       <textarea id="writeArea" class="write-area" rows="12" placeholder="${escapeHtml(t("write_ph"))}">${escapeHtml(saved)}</textarea>
-      <p class="muted small" id="writeAutosave"></p>
-      <div class="tips-box">
-        <h3>${escapeHtml(t("write_tips"))}</h3>
-        <ul>${w.tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
+      <p class="muted small" id="writeAutosave">${escapeHtml(saved ? t("write_autosaved") : t("write_autosave_hint"))}</p>
+      <div class="write-actions">
+        <button type="button" class="btn-3d" id="writeAi">🤖 ${escapeHtml(t("ai_check_write"))}</button>
+        <button type="button" class="btn btn-ghost" id="writeDone">${escapeHtml(t("write_done"))}</button>
       </div>
+      <div id="writeFb"></div>
+      <details class="tips-box">
+        <summary>${escapeHtml(t("write_tips"))}</summary>
+        <ul>${w.tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
+      </details>
     `;
     const area = $("#writeArea");
+    const timerBtn = $("#writeTimer");
     let saveT;
     const persist = () => {
       state.drafts[w.id] = area.value;
       saveState();
+    };
+    const drawTimer = () => {
+      timerBtn.textContent = `${writeRunning ? "⏸" : "▶"} ${fmtTime(Math.max(0, writeLeft))}`;
+      timerBtn.classList.toggle("is-running", writeRunning);
     };
     const updateCount = () => {
       const n = countWords(area.value);
@@ -941,41 +1074,60 @@
       }, 800);
     });
     updateCount();
+    drawTimer();
 
-    $("#writeStart").onclick = () => {
-      if (writeRunning) return;
+    timerBtn.onclick = () => {
+      if (writeRunning) {
+        clearWriteTimer();
+        drawTimer();
+        return;
+      }
+      if (writeLeft <= 0) writeLeft = (w.minutes || 40) * 60;
       writeRunning = true;
+      drawTimer();
       writeTimerId = setInterval(() => {
         writeLeft -= 1;
         if (writeLeft <= 0) {
           clearWriteTimer();
-          $("#writeClock").textContent = "00:00";
           toast(t("write_time_up"));
           playSfx("done");
-          return;
         }
-        $("#writeClock").textContent = fmtTime(writeLeft);
+        drawTimer();
       }, 1000);
     };
-    $("#writePause").onclick = () => clearWriteTimer();
     $("#writeReset").onclick = () => {
       clearWriteTimer();
       writeLeft = (w.minutes || 40) * 60;
-      $("#writeClock").textContent = fmtTime(writeLeft);
+      drawTimer();
     };
-    $("#writeSave").onclick = () => {
-      persist();
-      toast(t("write_saved"));
+    const longEnough = () => {
+      const min = Math.min(50, w.minWords);
+      if (countWords(area.value) >= min) return true;
+      toast(fmt(t("write_too_short"), { n: min }));
+      return false;
     };
     $("#writeDone").onclick = () => {
       persist();
-      const n = countWords(area.value);
-      if (n < Math.min(50, w.minWords)) {
-        toast(fmt(t("write_too_short"), { n: Math.min(50, w.minWords) }));
-        return;
-      }
+      if (!longEnough()) return;
       clearWriteTimer();
+      drawTimer();
       toast(awardOnce(`write:${w.id}`, 25) ? `${t("write_done_ok")} +25 XP` : t("toast_already"));
+    };
+    $("#writeAi").onclick = async () => {
+      persist();
+      if (!longEnough()) return;
+      const data = await window.FP_AIUI.runFeedback(
+        "writing",
+        { text: area.value, prompt: w.prompt, minWords: w.minWords, task: w.task },
+        $("#writeFb"),
+        $("#writeAi")
+      );
+      if (data) {
+        if (!state.writeBands) state.writeBands = {};
+        state.writeBands[w.id] = data.overall;
+        saveState();
+        if (awardOnce(`write:${w.id}`, 25)) toast(`${t("write_done_ok")} +25 XP`);
+      }
     };
   }
 
@@ -1139,6 +1291,7 @@
     }
     $("#listeningPick").classList.add("hidden");
     $("#listeningActive").classList.remove("hidden");
+    updatePlayBtn();
     $("#listenTitle").textContent = tr.title;
     $("#listenMeta").textContent = `${tr.level} · ${tr.duration || ""} · ${fmt(t("listen_sentences"), {
       n: listenSentences.length,
@@ -1169,8 +1322,10 @@
     }
     if (index < 0 || index >= listenSentences.length) {
       listenPlayingAll = false;
+      listenSentIndex = Math.max(0, listenSentences.length - 1);
       $("#eqAnim")?.classList.remove("playing");
       if ($("#listenFill")) $("#listenFill").style.width = "100%";
+      updatePlayBtn();
       return;
     }
     speechSynthesis.cancel();
@@ -1185,12 +1340,16 @@
     const voice = pickEnglishVoice();
     if (voice) utter.voice = voice;
 
-    utter.onstart = () => $("#eqAnim")?.classList.add("playing");
+    utter.onstart = () => {
+      $("#eqAnim")?.classList.add("playing");
+      updatePlayBtn();
+    };
     utter.onend = () => {
       if (thenNext && listenPlayingAll) {
         speakSentence(index + 1, true);
       } else {
         $("#eqAnim")?.classList.remove("playing");
+        updatePlayBtn();
       }
     };
     utter.onerror = () => {
@@ -1228,6 +1387,13 @@
       $("#eqAnim")?.classList.add("playing");
       listenPlayingAll = true;
     }
+  }
+
+  function updatePlayBtn() {
+    const btn = $("#listenPlay");
+    if (!btn) return;
+    const playing = window.speechSynthesis && speechSynthesis.speaking && !speechSynthesis.paused && listenPlayingAll;
+    btn.textContent = playing ? t("listen_pause") : t("listen_play");
   }
 
   function replaySentence() {
@@ -1400,6 +1566,18 @@
         .join("");
     }
     renderGoalChips();
+    renderAiSettings();
+  }
+
+  function renderAiSettings() {
+    const AI = window.FP_AI;
+    if (!AI || !$("#aiStatus")) return;
+    const key = AI.getKey();
+    $("#aiStatus").textContent = key ? t("ai_status_own") : t("ai_status_server");
+    $("#aiKey").value = key ? "••••••••" + key.slice(-4) : "";
+    $("#aiModel").value = AI.getModel();
+    $("#aiModel").placeholder = AI.defaultModel;
+    $("#aiKeyClear").classList.toggle("hidden", !key);
   }
 
   function renderGoalChips() {
@@ -1566,13 +1744,11 @@
     );
 
     // Listening controls
-    $("#listenPlay")?.addEventListener("click", playListening);
-    $("#listenPause")?.addEventListener("click", pauseListening);
-    $("#listenStop")?.addEventListener("click", () => {
-      stopListening();
-      listenSentIndex = 0;
-      updateListenProgress();
-      renderTranscriptHighlight();
+    $("#listenPlay")?.addEventListener("click", () => {
+      const speaking = window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.paused);
+      if (speaking && listenTrack) pauseListening();
+      else playListening();
+      updatePlayBtn();
     });
     $("#listenReplaySent")?.addEventListener("click", replaySentence);
     $("#listeningBack")?.addEventListener("click", () => {
@@ -1667,6 +1843,20 @@
       updateFocusClock();
     });
 
+    // AI settings (personal Gemini key, saved only on this device)
+    $("#aiKeySave")?.addEventListener("click", () => {
+      const key = $("#aiKey").value.trim();
+      if (key && !key.startsWith("••")) window.FP_AI.setKey(key);
+      window.FP_AI.setModel($("#aiModel").value);
+      renderAiSettings();
+      toast(t("ai_key_saved"));
+    });
+    $("#aiKeyClear")?.addEventListener("click", () => {
+      window.FP_AI.setKey("");
+      renderAiSettings();
+      toast(t("ai_key_removed"));
+    });
+
     // Export / import
     $("#exportProgress")?.addEventListener("click", exportProgress);
     $("#importProgress")?.addEventListener("change", (e) => {
@@ -1681,7 +1871,6 @@
       searchT = setTimeout(initVocab, 120);
     });
     $("#vocabLevel")?.addEventListener("change", initVocab);
-    $("#vocabTopic")?.addEventListener("change", initVocab);
 
     $all("[data-quiz]").forEach((btn) => {
       btn.addEventListener("click", () => startQuiz(btn.dataset.quiz));
@@ -1727,6 +1916,10 @@
     escapeHtml,
     shuffle,
     addXp: markActivity,
+    awardOnce,
+    fmt,
+    startSpeechRec,
+    hasSpeechRec: () => !!SpeechRec,
     goalReached,
     confetti: burstConfetti,
     speak: speakText,

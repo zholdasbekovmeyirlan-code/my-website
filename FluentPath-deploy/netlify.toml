@@ -2,6 +2,11 @@
 [build]
   publish = "."
 
+# AI proxy for Gemini — needs GEMINI_API_KEY in the site's environment variables.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[headers]]
   for = "/*"
   [headers.values]
