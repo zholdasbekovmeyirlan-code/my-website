@@ -249,8 +249,8 @@
       })
     );
     $all("[data-jump]", host).forEach((b) =>
-      b.addEventListener("click", () => {
-        if (confirm(t("c_jump_desc"))) startJump(+b.dataset.jump);
+      b.addEventListener("click", async () => {
+        if (await FP().confirm(t("c_jump_desc"), { yes: t("c_jump_yes"), no: t("c_cancel") })) startJump(+b.dataset.jump);
       })
     );
     updateSide();
@@ -735,9 +735,15 @@
     refreshViews();
   }
 
-  function askClose() {
+  async function askClose() {
     if (!L) return;
-    if (L.finished || L.done === 0 || confirm(t("c_quit_confirm"))) closeLesson();
+    if (L.finished || L.done === 0) {
+      closeLesson();
+      return;
+    }
+    const session = L;
+    const quit = await FP().confirm(t("c_quit_confirm"), { yes: t("c_quit_yes"), no: t("c_quit_no") });
+    if (quit && L === session) closeLesson();
   }
 
   function refreshViews() {
@@ -1412,7 +1418,7 @@
       if (L) closeLesson(true);
     });
     document.addEventListener("keydown", (e) => {
-      if (!L) return;
+      if (!L || document.body.classList.contains("ask-open")) return;
       const typing = e.target && e.target.tagName === "INPUT";
       if (e.key === "Escape") {
         e.preventDefault();

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
 </head>
 <body>
   <div class="bg-scene" aria-hidden="true">
@@ -701,18 +701,29 @@
     </div>
   </div>
 
+  <div class="ask hidden" id="askDialog" role="alertdialog" aria-modal="true" aria-labelledby="askText">
+    <div class="ask-backdrop" id="askBackdrop"></div>
+    <div class="ask-panel glass">
+      <p id="askText"></p>
+      <div class="ask-btns">
+        <button type="button" class="btn btn-ghost" id="askNo">Жоқ</button>
+        <button type="button" class="btn-3d" id="askYes">Иә</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
   <div class="viz-tip hidden" id="vizTip" role="tooltip"></div>
   <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
-  <script src="js/data.js?v=4"></script>
-  <script src="js/course-data.js?v=4"></script>
-  <script src="js/i18n.js?v=4"></script>
-  <script src="js/srs.js?v=4"></script>
-  <script src="js/ai-prompts.js?v=4"></script>
-  <script src="js/ai.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
-  <script src="js/course.js?v=4"></script>
-  <script src="js/ai-ui.js?v=4"></script>
+  <script src="js/data.js?v=5"></script>
+  <script src="js/course-data.js?v=5"></script>
+  <script src="js/i18n.js?v=5"></script>
+  <script src="js/srs.js?v=5"></script>
+  <script src="js/ai-prompts.js?v=5"></script>
+  <script src="js/ai.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
+  <script src="js/course.js?v=5"></script>
+  <script src="js/ai-ui.js?v=5"></script>
 </body>
 </html>

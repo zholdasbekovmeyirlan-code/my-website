@@ -203,6 +203,45 @@
     return true;
   }
 
+  // In-page confirmation (native confirm() is blocked in some embedded viewers and looks out of place).
+  function askConfirm(text, { yes = t("ask_yes"), no = t("ask_no"), danger = false } = {}) {
+    const box = $("#askDialog");
+    if (!box) return Promise.resolve(window.confirm(text));
+    return new Promise((resolve) => {
+      const yesBtn = $("#askYes");
+      const noBtn = $("#askNo");
+      $("#askText").textContent = text;
+      yesBtn.textContent = yes;
+      noBtn.textContent = no;
+      yesBtn.classList.toggle("is-danger", danger);
+      box.classList.remove("hidden");
+      document.body.classList.add("ask-open");
+      const done = (val) => {
+        box.classList.add("hidden");
+        document.body.classList.remove("ask-open");
+        yesBtn.onclick = noBtn.onclick = $("#askBackdrop").onclick = null;
+        document.removeEventListener("keydown", onKey, true);
+        resolve(val);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          done(false);
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          done(true);
+        }
+      };
+      yesBtn.onclick = () => done(true);
+      noBtn.onclick = () => done(false);
+      $("#askBackdrop").onclick = () => done(false);
+      document.addEventListener("keydown", onKey, true);
+      setTimeout(() => noBtn.focus(), 30);
+    });
+  }
+
   function toast(msg) {
     const el = $("#toast");
     el.textContent = msg;
@@ -1879,8 +1918,8 @@
     $("#quizRetry")?.addEventListener("click", resetQuizUI);
     $("#readingBack")?.addEventListener("click", initReadingList);
 
-    $("#resetProgress")?.addEventListener("click", () => {
-      if (confirm(t("reset_confirm"))) {
+    $("#resetProgress")?.addEventListener("click", async () => {
+      if (await askConfirm(t("reset_confirm"), { yes: t("progress_reset"), no: t("ask_no"), danger: true })) {
         const keep = { theme: state.theme, lang: state.lang };
         state = { ...defaultState(), ...keep, srsMigrated: true };
         saveState();
@@ -1913,6 +1952,7 @@
     save: saveState,
     t,
     toast,
+    confirm: askConfirm,
     escapeHtml,
     shuffle,
     addXp: markActivity,

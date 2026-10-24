@@ -2352,3 +2352,37 @@ Object.assign(window.FP_I18N.zh, {
   ai_err_blocked: "AI 无法回应此内容，请换个说法。",
   ai_err_generic: "AI 没有回应，请重试。",
 });
+
+/* v4.1 — in-page confirmation dialog */
+Object.assign(window.FP_I18N.kk, {
+  ask_yes: "Иә",
+  ask_no: "Жоқ",
+  c_quit_yes: "Шығу",
+  c_quit_no: "Жалғастыру",
+  c_jump_yes: "Тестті бастау",
+  c_cancel: "Болдырмау",
+});
+Object.assign(window.FP_I18N.ru, {
+  ask_yes: "Да",
+  ask_no: "Нет",
+  c_quit_yes: "Выйти",
+  c_quit_no: "Остаться",
+  c_jump_yes: "Начать тест",
+  c_cancel: "Отмена",
+});
+Object.assign(window.FP_I18N.es, {
+  ask_yes: "Sí",
+  ask_no: "No",
+  c_quit_yes: "Salir",
+  c_quit_no: "Seguir",
+  c_jump_yes: "Empezar test",
+  c_cancel: "Cancelar",
+});
+Object.assign(window.FP_I18N.zh, {
+  ask_yes: "是",
+  ask_no: "否",
+  c_quit_yes: "退出",
+  c_quit_no: "继续",
+  c_jump_yes: "开始测试",
+  c_cancel: "取消",
+});
