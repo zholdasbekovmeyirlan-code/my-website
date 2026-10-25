@@ -89,6 +89,12 @@
   const taskLabel = (x) =>
     String(x || "").replace(/Task\s*(\d)( practice)?/i, (_, n, pr) => fmt(t(pr ? "task_n_practice" : "task_n"), { n }));
 
+  // Icons from the sprite in js/icons.js; iconLabel(el, icon, text) fills a button with an icon and a caption.
+  const ic = (name, cls) => window.FP_IC(name, cls);
+  function iconLabel(el, icon, text) {
+    if (el) el.innerHTML = `${ic(icon)}<span>${escapeHtml(text)}</span>`;
+  }
+
   function weekday(d, style = "short") {
     const names = t(style === "long" ? "wd_long" : "wd_short").split(",");
     return names[d.getDay()] || d.toLocaleDateString(locale(), { weekday: style });
@@ -489,7 +495,7 @@
     const meta = $('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", theme === "light" ? "#eef2ff" : "#070b16");
     const btn = $("#themeToggle");
-    if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
+    if (btn) btn.innerHTML = ic(theme === "light" ? "moon" : "sun");
   }
 
   /* Word of day */
@@ -514,7 +520,7 @@
       awardOnce("wotd", 3);
       saveState();
       updateChrome();
-      toast(`“${item.word}” ${t("toast_saved")} ✨`);
+      toast(`“${item.word}” ${t("toast_saved")}`);
     };
   }
 
@@ -636,7 +642,7 @@
     if (ok) {
       state.known[w.id] = true;
       delete state.learning[w.id];
-      toast(`✓ ${w.en}`);
+      toast(w.en);
     } else {
       state.learning[w.id] = true;
       delete state.known[w.id];
@@ -655,7 +661,7 @@
       .map((w) => {
         const status = wordStatus(w);
         return `<tr>
-          <td><button type="button" class="say small" data-say="${escapeHtml(w.en)}" aria-label="Play">🔊</button><strong>${escapeHtml(
+          <td><button type="button" class="say small" data-say="${escapeHtml(w.en)}" aria-label="Play">${ic("volume-2")}</button><strong>${escapeHtml(
             w.en
           )}</strong></td>
           <td>${escapeHtml(w.kk)}</td>
@@ -678,7 +684,7 @@
       .map(
         (l, i) =>
           `<button type="button" data-i="${i}"><span class="lesson-check">${
-            state.lessonDone[l.id] ? "✓" : ""
+            state.lessonDone[l.id] ? ic("check") : ""
           }</span>${escapeHtml(l.title)} <span class="muted">· ${l.level}</span></button>`
       )
       .join("");
@@ -723,7 +729,7 @@
           // Update the list in place — re-rendering here used to wipe the feedback.
           state.lessonDone[l.id] = true;
           const mark = $(`#lessonList button[data-i="${i}"] .lesson-check`);
-          if (mark) mark.textContent = "✓";
+          if (mark) mark.innerHTML = ic("check");
           awardOnce(`gram:${l.id}`, 15);
           saveState();
         }
@@ -790,7 +796,8 @@
     exp.textContent = item.exp || "";
     exp.classList.toggle("hidden", !item.exp);
     $("#quizNext").classList.remove("hidden");
-    $("#quizNext").textContent = quiz.i + 1 >= quiz.questions.length ? t("quiz_result") + " 🎉" : t("quiz_next");
+    const last = quiz.i + 1 >= quiz.questions.length;
+    $("#quizNext").innerHTML = `<span>${escapeHtml(last ? t("quiz_result") : t("quiz_next"))}</span>${ic(last ? "flag" : "arrow-right")}`;
   }
 
   function nextQuiz() {
@@ -935,7 +942,7 @@
         <div class="progress-bar slim"><div class="progress-fill" id="speakFill" style="width:0%"></div></div>
         <div class="speak-actions">
           <button type="button" class="btn-3d" id="speakMain"></button>
-          <button type="button" class="btn btn-ghost btn-sm" id="speakReset">↻ ${escapeHtml(t("speak_reset"))}</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="speakReset">${ic("rotate-ccw")}<span>${escapeHtml(t("speak_reset"))}</span></button>
         </div>
         <p class="speak-live hidden" id="speakLive"></p>
       </div>
@@ -943,7 +950,7 @@
         <label class="muted small" for="speakText">${escapeHtml(t(SpeechRec ? "speak_transcript" : "speak_type"))}</label>
         <textarea id="speakText" class="write-area" rows="5" placeholder="${escapeHtml(t("speak_text_ph"))}"></textarea>
         <div class="speak-actions">
-          <button type="button" class="btn-3d" id="speakAi">🤖 ${escapeHtml(t("ai_check_speak"))}</button>
+          <button type="button" class="btn-3d" id="speakAi">${ic("sparkles")}<span>${escapeHtml(t("ai_check_speak"))}</span></button>
         </div>
         <div id="speakFb"></div>
       </div>
@@ -978,19 +985,19 @@
         label.textContent = t("speak_ready");
         clock.textContent = fmtTime(s.prep);
         fill.style.width = "0%";
-        main.textContent = fmt(t("speak_start_prep"), { n: Math.round(s.prep / 60) || 1 });
+        iconLabel(main, "play", fmt(t("speak_start_prep"), { n: Math.round(s.prep / 60) || 1 }));
         live.classList.add("hidden");
         $("#speakAfter").classList.add("hidden");
       } else if (phase === "prep") {
         label.textContent = t("speak_prep");
-        main.textContent = t("speak_start_talk");
+        iconLabel(main, "mic", t("speak_start_talk"));
         runTimer(s.prep, () => {
           playSfx("tap");
           setPhase("talk");
         });
       } else if (phase === "talk") {
         label.textContent = t("speak_talk");
-        main.textContent = t("speak_finish");
+        iconLabel(main, "square", t("speak_finish"));
         speakTalkStart = Date.now();
         const area = $("#speakText");
         area.value = "";
@@ -1103,14 +1110,14 @@
           <button type="button" class="btn btn-ghost btn-sm" id="writeTimer"></button>
           <button type="button" class="btn btn-ghost btn-sm" id="writeReset" aria-label="${escapeHtml(t("write_reset"))}" title="${escapeHtml(
             t("write_reset")
-          )}">↻</button>
+          )}">${ic("rotate-ccw")}</button>
         </div>
         <span id="writeWordCount"></span>
       </div>
       <textarea id="writeArea" class="write-area" rows="12" placeholder="${escapeHtml(t("write_ph"))}">${escapeHtml(saved)}</textarea>
       <p class="muted small" id="writeAutosave">${escapeHtml(saved ? t("write_autosaved") : t("write_autosave_hint"))}</p>
       <div class="write-actions">
-        <button type="button" class="btn-3d" id="writeAi">🤖 ${escapeHtml(t("ai_check_write"))}</button>
+        <button type="button" class="btn-3d" id="writeAi">${ic("sparkles")}<span>${escapeHtml(t("ai_check_write"))}</span></button>
         <button type="button" class="btn btn-ghost" id="writeDone">${escapeHtml(t("write_done"))}</button>
       </div>
       <div id="writeFb"></div>
@@ -1127,7 +1134,7 @@
       saveState();
     };
     const drawTimer = () => {
-      timerBtn.textContent = `${writeRunning ? "⏸" : "▶"} ${fmtTime(Math.max(0, writeLeft))}`;
+      iconLabel(timerBtn, writeRunning ? "pause" : "timer", fmtTime(Math.max(0, writeLeft)));
       timerBtn.classList.toggle("is-running", writeRunning);
     };
     const updateCount = () => {
@@ -1214,7 +1221,7 @@
         <p class="muted">${escapeHtml(p.kk)}</p>
         <p class="phrase-use">${escapeHtml(p.use)}</p>
         <div class="phrase-actions">
-          <button type="button" class="btn btn-ghost btn-sm" data-say="${escapeHtml(p.en)}">🔊</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-say="${escapeHtml(p.en)}" aria-label="Play">${ic("volume-2")}</button>
           <button type="button" class="btn btn-secondary btn-sm" data-copy="${escapeHtml(p.en)}">${escapeHtml(t("phrase_copy"))}</button>
         </div>
       </article>`
@@ -1340,7 +1347,7 @@
       .map(
         (tr, i) => `
       <button type="button" data-id="${tr.id}">
-        <span><strong>🎧 ${i + 1}. ${escapeHtml(tr.title)}</strong></span>
+        <span class="track-title">${ic("headphones")}<strong>${i + 1}. ${escapeHtml(tr.title)}</strong></span>
         <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(minLabel(tr.duration))}</span>
       </button>`
       )
@@ -1459,7 +1466,7 @@
     const btn = $("#listenPlay");
     if (!btn) return;
     const playing = VOICE.isSpeaking() && listenPlayingAll;
-    btn.textContent = playing ? t("listen_pause") : t("listen_play");
+    iconLabel(btn, playing ? "pause" : "play", playing ? t("listen_pause") : t("listen_play"));
   }
 
   function replaySentence() {
@@ -1492,9 +1499,9 @@
       .map(
         (r) =>
           `<button type="button" data-id="${r.id}">
-            <span><strong>📖 ${escapeHtml(r.title)}</strong></span>
+            <span class="track-title">${ic("book-open-text")}<strong>${escapeHtml(r.title)}</strong></span>
             <span class="track-meta">${r.level} · ${fmt(t("read_questions"), { n: r.questions.length })}${
-              done[r.id] != null ? ` · <b class="done-chip">✓ ${done[r.id]}/${r.questions.length}</b>` : ""
+              done[r.id] != null ? ` · <b class="done-chip">${ic("check")} ${done[r.id]}/${r.questions.length}</b>` : ""
             }</span>
           </button>`
       )
@@ -1546,16 +1553,16 @@
 
   /* Progress */
   const ACHIEVEMENTS = [
-    { id: "first", icon: "🎯", test: (s) => (s.lessonsDone || 0) >= 1 },
-    { id: "lessons10", icon: "📗", test: (s) => (s.lessonsDone || 0) >= 10 },
-    { id: "perfect", icon: "💯", test: (s) => (s.perfectLessons || 0) >= 1 },
-    { id: "streak3", icon: "🔥", test: (s) => (s.bestStreak || 0) >= 3 },
-    { id: "streak7", icon: "⚡", test: (s) => (s.bestStreak || 0) >= 7 },
-    { id: "words50", icon: "🧠", test: (s) => Object.keys(s.srs || {}).length >= 50 },
-    { id: "words200", icon: "📚", test: (s) => Object.keys(s.srs || {}).length >= 200 },
-    { id: "xp1000", icon: "💎", test: (s) => (s.xp || 0) >= 1000 },
-    { id: "a1", icon: "🌱", test: () => (course()?.sectionsDone() || []).includes("A1") },
-    { id: "b2", icon: "🎓", test: () => (course()?.sectionsDone() || []).includes("B2") },
+    { id: "first", icon: "footprints", test: (s) => (s.lessonsDone || 0) >= 1 },
+    { id: "lessons10", icon: "book-check", test: (s) => (s.lessonsDone || 0) >= 10 },
+    { id: "perfect", icon: "badge-check", test: (s) => (s.perfectLessons || 0) >= 1 },
+    { id: "streak3", icon: "flame", test: (s) => (s.bestStreak || 0) >= 3 },
+    { id: "streak7", icon: "calendar-check", test: (s) => (s.bestStreak || 0) >= 7 },
+    { id: "words50", icon: "brain", test: (s) => Object.keys(s.srs || {}).length >= 50 },
+    { id: "words200", icon: "library", test: (s) => Object.keys(s.srs || {}).length >= 200 },
+    { id: "xp1000", icon: "gem", test: (s) => (s.xp || 0) >= 1000 },
+    { id: "a1", icon: "sprout", test: () => (course()?.sectionsDone() || []).includes("A1") },
+    { id: "b2", icon: "graduation-cap", test: () => (course()?.sectionsDone() || []).includes("B2") },
   ];
 
   function renderWeekChart() {
@@ -1619,7 +1626,7 @@
       ach.innerHTML = ACHIEVEMENTS.map((a) => {
         const on = a.test(state);
         return `<div class="ach${on ? " on" : ""}">
-          <span class="ach-ico">${a.icon}</span>
+          <span class="ach-ico">${ic(a.icon)}</span>
           <strong>${escapeHtml(t(`ach_${a.id}_t`))}</strong>
           <span class="muted">${escapeHtml(t(`ach_${a.id}_d`))}</span>
         </div>`;

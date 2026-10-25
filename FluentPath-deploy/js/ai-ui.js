@@ -13,6 +13,7 @@
 
   const level = () => FP().state.aiLevel || "A2";
   const voiceOn = () => FP().state.chatVoice !== false;
+  const ic = (name, cls) => window.FP_IC(name, cls);
   // Each conversation partner keeps one voice: the barista is a woman, the check-in agent a man, and so on.
   const PARTNER_VOICE = { cafe: "f1", airport: "m1", shop: "f2", interview: "m1", ielts1: "m2", free: "f1" };
   const chatVoice = () => PARTNER_VOICE[chat && chat.scenario] || "f1";
@@ -62,7 +63,7 @@
         d.phrases && d.phrases.length
           ? `<h4>${esc(t("ai_phrases"))}</h4><ul class="fb-phrases">${list(
               d.phrases,
-              (p) => `<li><button type="button" class="say small" data-say="${esc(p.phrase)}" aria-label="Play">🔊</button><div><strong>${esc(
+              (p) => `<li><button type="button" class="say small" data-say="${esc(p.phrase)}" aria-label="Play">${ic("volume-2")}</button><div><strong>${esc(
                 p.phrase
               )}</strong><span>${esc(p.use)}</span></div></li>`
             )}</ul>`
@@ -76,7 +77,7 @@
 
   function errorHtml(code) {
     return `<div class="ai-error glass" role="alert">
-      <strong>⚠️ ${esc(t(AI().errorKey(code)))}</strong>
+      <strong>${ic("triangle-alert")}${esc(t(AI().errorKey(code)))}</strong>
       ${code === "not_configured" ? `<p class="muted small">${esc(t("ai_setup_hint"))}</p>` : ""}
     </div>`;
   }
@@ -110,7 +111,7 @@
     grid.innerHTML = AI()
       .scenarios.map(
         (sc) => `<button type="button" class="scenario-card" data-sc="${sc.id}">
-          <span class="sc-ico">${sc.icon}</span>
+          <span class="sc-ico">${ic(sc.icon)}</span>
           <strong>${esc(t(`chat_sc_${sc.id}`))}</strong>
           <span class="muted small">${esc(t(`chat_sc_${sc.id}_d`))}</span>
         </button>`
@@ -132,7 +133,7 @@
   function start(id) {
     const sc = AI().scenarios.find((s) => s.id === id);
     chat = { scenario: id, level: level(), msgs: [], suggestions: [], busy: false, error: null };
-    $("#chatTitle").innerHTML = `<span>${sc.icon}</span> ${esc(t(`chat_sc_${id}`))} <em>${esc(chat.level)}</em>`;
+    $("#chatTitle").innerHTML = `${ic(sc.icon)}<span>${esc(t(`chat_sc_${id}`))}</span><em>${esc(chat.level)}</em>`;
     showRoom(true);
     drawLog();
     requestReply();
@@ -155,7 +156,7 @@
             <div class="bubble">
               <p>${esc(m.text)}</p>
               <div class="msg-tools">
-                <button type="button" class="say small" data-say="${esc(m.text)}" aria-label="Play">🔊</button>
+                <button type="button" class="say small" data-say="${esc(m.text)}" aria-label="Play">${ic("volume-2")}</button>
                 ${m.kk ? `<button type="button" class="kk-toggle" data-kk="${i}">${esc(t("chat_translate"))}</button>` : ""}
               </div>
               ${m.kk ? `<p class="msg-kk${m.showKk ? "" : " hidden"}">${esc(m.kk)}</p>` : ""}
@@ -166,7 +167,7 @@
           <div class="bubble"><p>${esc(m.text)}</p></div>
           ${
             m.fix
-              ? `<div class="msg-fix"><span>✏️ ${esc(t("chat_better"))}</span><strong>${esc(m.fix.corrected)}</strong>${
+              ? `<div class="msg-fix"><span>${ic("pencil")}${esc(t("chat_better"))}</span><strong>${esc(m.fix.corrected)}</strong>${
                   m.fix.why ? `<p>${esc(m.fix.why)}</p>` : ""
                 }</div>`
               : ""
@@ -199,7 +200,7 @@
     sug.innerHTML = chat.busy
       ? ""
       : (chat.suggestions || [])
-          .map((x, i) => `<button type="button" class="chip-btn" data-sug="${i}">💡 ${esc(x)}</button>`)
+          .map((x, i) => `<button type="button" class="chip-btn" data-sug="${i}">${ic("lightbulb")}<span>${esc(x)}</span></button>`)
           .join("");
     $all("[data-sug]", sug).forEach((b) =>
       b.addEventListener("click", () => {
@@ -296,7 +297,7 @@
   function updateVoiceBtn() {
     const b = $("#chatVoice");
     if (!b) return;
-    b.textContent = voiceOn() ? "🔊" : "🔇";
+    b.innerHTML = ic(voiceOn() ? "volume-2" : "volume-x");
     b.setAttribute("aria-pressed", String(voiceOn()));
   }
 

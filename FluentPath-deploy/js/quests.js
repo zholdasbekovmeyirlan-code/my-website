@@ -3,26 +3,27 @@ window.FP_QUESTS = (() => {
   const FP = () => window.FP;
   const t = (k) => FP().t(k);
   const esc = (s) => FP().escapeHtml(s);
+  const ic = (name, cls) => window.FP_IC(name, cls);
   const QUEST_XP = 10;
   const WEEKLY_XP = 50;
 
   // Three slots so every day mixes a core task, a skill task and a fun task.
   const SLOTS = [
     [
-      { id: "lesson1", type: "lesson", goal: 1, icon: "📗" },
-      { id: "lesson2", type: "lesson", goal: 2, icon: "📚" },
-      { id: "xp30", type: "xp", goal: 30, icon: "⚡" },
-      { id: "xp50", type: "xp", goal: 50, icon: "⚡" },
+      { id: "lesson1", type: "lesson", goal: 1, icon: "book-open" },
+      { id: "lesson2", type: "lesson", goal: 2, icon: "library" },
+      { id: "xp30", type: "xp", goal: 30, icon: "zap" },
+      { id: "xp50", type: "xp", goal: 50, icon: "zap" },
     ],
     [
-      { id: "review10", type: "review", goal: 10, icon: "🧠" },
-      { id: "perfect1", type: "perfect", goal: 1, icon: "💯" },
-      { id: "listen1", type: "listen", goal: 1, icon: "🎧" },
-      { id: "read1", type: "read", goal: 1, icon: "📰" },
+      { id: "review10", type: "review", goal: 10, icon: "brain" },
+      { id: "perfect1", type: "perfect", goal: 1, icon: "badge-check" },
+      { id: "listen1", type: "listen", goal: 1, icon: "headphones" },
+      { id: "read1", type: "read", goal: 1, icon: "newspaper" },
     ],
     [
-      { id: "story1", type: "story", goal: 1, icon: "📖" },
-      { id: "speak3", type: "speak", goal: 3, icon: "🎙", needsMic: true },
+      { id: "story1", type: "story", goal: 1, icon: "drama" },
+      { id: "speak3", type: "speak", goal: 3, icon: "mic", needsMic: true },
     ],
   ];
   const ALL = SLOTS.flat();
@@ -82,7 +83,7 @@ window.FP_QUESTS = (() => {
       if (item.progress >= d.goal) {
         item.done = true;
         FP().addXp(QUEST_XP, { noQuest: true });
-        FP().toast(`✅ ${title(d)} · +${FP().xp(QUEST_XP)}`);
+        FP().toast(`${title(d)} · +${FP().xp(QUEST_XP)}`);
         FP().sfx("done");
       }
     });
@@ -98,7 +99,7 @@ window.FP_QUESTS = (() => {
     if (!w.claimed && w.xp >= w.target) {
       FP().state.weeklyClaimed = w.key;
       FP().addXp(WEEKLY_XP, { noQuest: true });
-      FP().toast(`🏅 ${t("q_weekly_done")} +${FP().xp(WEEKLY_XP)}`);
+      FP().toast(`${t("q_weekly_done")} +${FP().xp(WEEKLY_XP)}`);
       FP().confetti();
       FP().save();
     }
@@ -120,7 +121,7 @@ window.FP_QUESTS = (() => {
           if (!d) return "";
           const pct = Math.round((item.progress / d.goal) * 100);
           return `<li class="quest${item.done ? " is-done" : ""}">
-            <span class="q-ico">${item.done ? "✅" : d.icon}</span>
+            <span class="q-ico">${ic(item.done ? "check" : d.icon)}</span>
             <div class="q-body">
               <strong>${esc(title(d))}</strong>
               <div class="progress-bar slim"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -130,7 +131,7 @@ window.FP_QUESTS = (() => {
         })
         .join("")}</ul>
       <div class="weekly${w.claimed ? " is-done" : ""}">
-        <div class="weekly-top"><span>🏅 ${esc(t("q_weekly"))}</span><strong>${Math.min(w.xp, w.target)} / ${FP().xp(w.target)}</strong></div>
+        <div class="weekly-top"><span>${ic("medal")}${esc(t("q_weekly"))}</span><strong>${Math.min(w.xp, w.target)} / ${FP().xp(w.target)}</strong></div>
         <div class="progress-bar slim"><div class="progress-fill" style="width:${Math.min(100, (w.xp / w.target) * 100)}%"></div></div>
         <p class="muted small">${esc(w.claimed ? t("q_weekly_claimed") : FP().fmt(t("q_weekly_sub"), { n: WEEKLY_XP }))}</p>
       </div>`;

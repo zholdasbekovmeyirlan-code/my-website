@@ -14,10 +14,10 @@
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
   const LEVELS = [
-    { id: "A1", color: "#34d399", icon: "🌱" },
-    { id: "A2", color: "#22d3ee", icon: "🧭" },
-    { id: "B1", color: "#a78bfa", icon: "🚀" },
-    { id: "B2", color: "#7c9bff", icon: "🎓" },
+    { id: "A1", color: "#34d399", icon: "sprout" },
+    { id: "A2", color: "#22d3ee", icon: "compass" },
+    { id: "B1", color: "#a78bfa", icon: "rocket" },
+    { id: "B2", color: "#7c9bff", icon: "graduation-cap" },
   ];
   // Beginner units follow a teaching order; B1/B2 interleave topics instead.
   const TOPIC_ORDER = {
@@ -168,26 +168,27 @@
     return { done, total: c.nodes.length, pct: Math.round((done / c.nodes.length) * 100) };
   }
 
+  const ic = (name, cls) => window.FP_IC(name, cls);
+  const starRow = (n, cls = "") => Array.from({ length: n }, () => ic("star", `ic-fill ${cls}`)).join("");
+
   /* ---------- Path view ---------- */
   function nodeHtml(nd, cur, k) {
     const st = nodeState(nd, cur);
     const p = prog()[nd.id];
-    let icon = "★";
-    if (nd.type === "grammar") icon = "📘";
-    else if (nd.type === "review") icon = "🏆";
-    else if (st === "done") icon = "✓";
-    if (st === "locked") icon = nd.type === "words" ? "🔒" : icon;
+    let icon = "star";
+    if (nd.type === "grammar") icon = "book";
+    else if (nd.type === "review") icon = "trophy";
+    else if (st === "done") icon = "check";
+    if (st === "locked") icon = nd.type === "words" ? "lock" : icon;
     const stars =
       st === "done" && p && p.stars
-        ? `<div class="node-stars" aria-hidden="true">${"★".repeat(p.stars || 1)}<span>${"★".repeat(
-            3 - (p.stars || 1)
-          )}</span></div>`
+        ? `<div class="node-stars" aria-hidden="true">${starRow(p.stars || 1)}<span>${starRow(3 - (p.stars || 1))}</span></div>`
         : "";
     return `<div class="node-wrap" style="--x:${NODE_OFFSETS[k % NODE_OFFSETS.length]}px">
       ${st === "current" ? `<div class="node-bubble">${esc(t("c_bubble_start"))}</div>` : ""}
       <button type="button" class="node node-${nd.type} is-${st}" data-node="${nd.index}" aria-label="${esc(
         nodeTitle(nd)
-      )}"><span class="node-ico">${icon}</span></button>
+      )}"><span class="node-ico">${ic(icon)}</span></button>
       ${stars}
     </div>`;
   }
@@ -221,7 +222,7 @@
         return `<section class="sec${canJump ? " is-ahead" : ""}" style="--sec:${sec.color}" id="sec-${sec.id}">
           <header class="sec-head">
             <div class="sec-copy">
-              <p class="sec-eyebrow">${sec.icon} ${sec.id} · ${esc(fmt(t("c_section_n"), { n: sec.index + 1 }))}</p>
+              <p class="sec-eyebrow">${ic(sec.icon)} ${sec.id} · ${esc(fmt(t("c_section_n"), { n: sec.index + 1 }))}</p>
               <h2>${esc(t("c_sec_" + sec.id))}</h2>
               <p class="sec-meta">${esc(fmt(t("c_lessons_words"), { l: lessons, w: sec.words.length }))}</p>
             </div>
@@ -345,7 +346,7 @@
           const on = (log[key] || 0) > 0;
           return `<span class="wk${on ? " on" : ""}${key === FP().localDay() ? " today" : ""}" title="${esc(
             FP().weekday(d, "long")
-          )}"><i>${on ? "🔥" : ""}</i><b>${esc(FP().weekday(d))}</b></span>`;
+          )}"><i>${on ? ic("flame") : ""}</i><b>${esc(FP().weekday(d))}</b></span>`;
         })
         .join("");
     }
@@ -360,12 +361,12 @@
     if (box) {
       const nd = c.nodes[cur];
       if (!nd) {
-        box.innerHTML = `<p class="cont-eyebrow">🎓 ${esc(t("c_course_done"))}</p>
+        box.innerHTML = `<p class="cont-eyebrow">${ic("graduation-cap")} ${esc(t("c_course_done"))}</p>
           <h3>${esc(t("c_course_done_sub"))}</h3>
           <button type="button" class="btn-3d btn-3d-block" data-nav="review">${esc(t("c_rev_start"))}</button>`;
       } else {
         box.style.setProperty("--sec", nd.section.color);
-        box.innerHTML = `<p class="cont-eyebrow">${nd.section.icon} ${nd.section.id} · ${esc(
+        box.innerHTML = `<p class="cont-eyebrow">${ic(nd.section.icon)} ${nd.section.id} · ${esc(
           t("c_sec_" + nd.section.id)
         )}</p>
           <h3>${esc(unitTitle(nd.unit))} · ${esc(nodeTitle(nd))}</h3>
@@ -386,7 +387,7 @@
           const done = sec.nodes.filter(isDone).length;
           const pct = Math.round((done / sec.nodes.length) * 100);
           return `<button type="button" class="level-card" style="--sec:${sec.color}" data-level="${sec.id}">
-            <span class="level-ico">${sec.icon}</span>
+            <span class="level-ico">${ic(sec.icon)}</span>
             <span class="level-id">${sec.id}</span>
             <strong>${esc(t("c_sec_" + sec.id))}</strong>
             <span class="level-meta">${esc(fmt(t("c_lessons_words"), {
@@ -768,7 +769,7 @@
     $("#lessonBar").style.width = `${pct}%`;
     const combo = $("#lessonCombo");
     if (L.combo >= 3 && !L.finished) {
-      combo.textContent = `🔥 ${L.combo}`;
+      combo.innerHTML = `${ic("flame")}${L.combo}`;
       combo.classList.remove("pop");
       void combo.offsetWidth;
       combo.classList.add("pop", "on");
@@ -783,7 +784,7 @@
     }
     const left = Math.max(0, L.test.max + 1 - L.mistakes);
     el.classList.remove("hidden");
-    el.textContent = `❤ ${left}`;
+    el.innerHTML = `${ic("heart", "ic-fill")}${left}`;
   }
 
   function nextStep() {
@@ -863,13 +864,13 @@
   }
 
   function speakBtn(text, cls = "") {
-    return `<button type="button" class="say ${cls}" data-say="${esc(text)}" aria-label="Play">🔊</button>`;
+    return `<button type="button" class="say ${cls}" data-say="${esc(text)}" aria-label="Play">${ic("volume-2")}</button>`;
   }
 
   function listenBtns(text) {
     return `<div class="listen-btns">
-      <button type="button" class="say huge" data-say="${esc(text)}" aria-label="Play">🔊</button>
-      <button type="button" class="say slow" data-say="${esc(text)}" data-rate="0.6" aria-label="Slow">🐢</button>
+      <button type="button" class="say huge" data-say="${esc(text)}" aria-label="Play">${ic("volume-2")}</button>
+      <button type="button" class="say slow" data-say="${esc(text)}" data-rate="0.6" aria-label="Slow">${ic("snail")}</button>
     </div>`;
   }
 
@@ -937,7 +938,7 @@
     tip: (ex) => `<div class="tip-card">${ex.lesson.body}</div>`,
     speak: (ex) => `<div class="prompt-word speak-prompt">${speakBtn(ex.text, "big")}<span>${esc(ex.text)}</span></div>
       ${ex.word ? `<p class="speak-kk">${esc(ex.word.kk)}</p>` : ""}
-      <button type="button" class="mic-big" id="micBtn" aria-label="Microphone">🎙</button>
+      <button type="button" class="mic-big" id="micBtn" aria-label="Microphone">${ic("mic")}</button>
       <p class="mic-hint" id="micHint">${esc(t("c_mic_tap"))}</p>`,
   };
 
@@ -1257,8 +1258,8 @@
     }
     const note = res.note ? `<p class="fb-note">${esc(res.note)}</p>` : "";
     const html = res.ok
-      ? `<span class="fb-ico">✓</span><div><strong>${esc(t(pick(OK_TITLES)))}</strong>${note}</div>`
-      : `<span class="fb-ico">✕</span><div><strong>${esc(t("c_bad_title"))}</strong>${
+      ? `<span class="fb-ico">${ic("check")}</span><div><strong>${esc(t(pick(OK_TITLES)))}</strong>${note}</div>`
+      : `<span class="fb-ico">${ic("x")}</span><div><strong>${esc(t("c_bad_title"))}</strong>${
           res.answer ? `<p class="fb-answer">${esc(res.answer)}</p>` : ""
         }${note}</div>`;
     setFoot("result", html, res.ok);
@@ -1277,14 +1278,14 @@
     let xp = 0;
     let title = perfect ? t("c_perfect") : t("c_done_title");
     let sub = "";
-    let emoji = perfect ? "💯" : "🎉";
+    let emoji = perfect ? "badge-check" : "party-popper";
     const now = Date.now();
 
     if (L.kind === "jump") {
       if (L.testFailed) {
         title = t("c_test_fail_t");
         sub = t("c_test_fail");
-        emoji = "💪";
+        emoji = "rotate-ccw";
       } else {
         const target = L.test.target;
         course().nodes.forEach((nd) => {
@@ -1292,7 +1293,7 @@
         });
         xp = L.xp;
         title = t("c_test_pass");
-        emoji = "🚀";
+        emoji = "rocket";
         scrollToCurrent = true;
       }
     } else {
@@ -1332,13 +1333,13 @@
     const mm = Math.floor(secs / 60);
     const ss = String(secs % 60).padStart(2, "0");
     $("#lessonStage").innerHTML = `<div class="summary">
-      <div class="summary-emoji">${emoji}</div>
+      <div class="summary-emoji">${ic(emoji)}</div>
       <h2>${esc(title)}</h2>
       ${sub ? `<p class="muted">${esc(sub)}</p>` : ""}
       ${
         showStars
           ? `<div class="summary-stars" aria-label="${stars}/3">${[1, 2, 3]
-              .map((i) => `<span class="${i <= stars ? "on" : ""}" style="--d:${i * 0.12}s">★</span>`)
+              .map((i) => `<span class="${i <= stars ? "on" : ""}" style="--d:${i * 0.12}s">${ic("star", "ic-fill")}</span>`)
               .join("")}</div>`
           : ""
       }
@@ -1363,7 +1364,7 @@
     const b = $("#lessonSound");
     if (!b) return;
     const on = S().sound !== false;
-    b.textContent = on ? "🔊" : "🔇";
+    b.innerHTML = ic(on ? "volume-2" : "volume-x");
     b.setAttribute("aria-pressed", String(on));
     b.title = on ? t("c_sound_on") : t("c_sound_off");
   }
@@ -1407,14 +1408,14 @@
     let hero;
     if (!ids.length) {
       hero = `<div class="rev-hero glass is-empty">
-        <div class="rev-emoji">🌱</div>
+        <div class="rev-emoji">${ic("sprout")}</div>
         <div><h2>${esc(t("c_rev_none"))}</h2><p class="muted">${esc(t("c_rev_none_sub"))}</p></div>
         <button type="button" class="btn-3d" data-nav="learn">${esc(t("c_start_first"))}</button>
       </div>`;
     } else if (!due.length) {
       const next = SRS.nextDue(srs);
       hero = `<div class="rev-hero glass is-empty">
-        <div class="rev-emoji">✅</div>
+        <div class="rev-emoji">${ic("circle-check")}</div>
         <div><h2>${esc(t("c_rev_empty"))}</h2><p class="muted">${esc(
           fmt(t("c_rev_next"), { when: next ? whenLabel(next) : "—" })
         )}</p></div>
@@ -1483,9 +1484,9 @@
           ? `<ul class="weak-list">${weak
               .map((id) => {
                 const w = byId.get(id);
-                return `<li><button type="button" class="say small" data-say="${esc(w.en)}" aria-label="Play">🔊</button><strong>${esc(
+                return `<li><button type="button" class="say small" data-say="${esc(w.en)}" aria-label="Play">${ic("volume-2")}</button><strong>${esc(
                   w.en
-                )}</strong><span>${esc(w.kk)}</span>${srs[id].w ? `<em>✕${srs[id].w}</em>` : ""}</li>`;
+                )}</strong><span>${esc(w.kk)}</span>${srs[id].w ? `<em>${ic("x")}${srs[id].w}</em>` : ""}</li>`;
               })
               .join("")}</ul>
             <button type="button" class="btn-3d btn-3d-light btn-3d-block" id="revWeak">${esc(t("c_rev_weak_btn"))}</button>`

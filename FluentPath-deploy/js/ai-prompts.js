@@ -9,37 +9,37 @@
   const SCENARIOS = [
     {
       id: "cafe",
-      icon: "☕",
+      icon: "coffee",
       level: "A2",
       role: "a friendly barista in a café in Almaty. The learner is a customer ordering drinks and food. Ask what they want, the size, whether to eat here or take away, and the payment.",
     },
     {
       id: "airport",
-      icon: "✈️",
+      icon: "plane",
       level: "A2",
       role: "an airline check-in agent at Almaty airport. The learner is a passenger flying to London. Ask for the passport, luggage, seat preference and give the gate number.",
     },
     {
       id: "shop",
-      icon: "🛍",
+      icon: "shopping-bag",
       level: "A2",
       role: "a shop assistant in a clothes shop. The learner wants to buy something. Ask about size, colour, price and trying it on.",
     },
     {
       id: "interview",
-      icon: "💼",
+      icon: "briefcase",
       level: "B1",
       role: "an HR manager interviewing the learner for a job at an international company. Ask typical interview questions one at a time.",
     },
     {
       id: "ielts1",
-      icon: "🎓",
+      icon: "graduation-cap",
       level: "B2",
       role: "an IELTS Speaking examiner running Part 1. Ask one short question at a time about familiar topics (home town, studies or work, hobbies, food, technology) and follow up naturally.",
     },
     {
       id: "free",
-      icon: "💬",
+      icon: "message-circle",
       level: "B1",
       role: "a friendly English tutor having a relaxed conversation about the learner's day, interests and plans.",
     },

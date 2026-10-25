@@ -3808,14 +3808,207 @@ body.chat-open .music-widget { display: none; }
 }
 [data-theme="light"] .freeze-chip b { color: #0284c7; }
 
-/* Units next to numbers, so 🔥 and ⚡ are never a riddle */
-.chip-unit { font-size: 0.78em; font-weight: 700; opacity: 0.8; }
-.path-strip small { font-size: 0.78em; font-weight: 700; color: var(--muted); }
-.goal-sub { margin: 0.15rem 0 0; }
 @media (max-width: 1100px) {
   .path-strip { flex-wrap: wrap; }
 }
 @media (max-width: 420px) {
   .path-strip { gap: 0.35rem; }
   .path-strip > * { padding: 0.4rem 0.6rem; font-size: 0.86rem; }
+}
+
+/* =====================================================================
+   v9 — line icons (Lucide sprite, js/icons.js) instead of emoji
+   ===================================================================== */
+.ic {
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.2em;
+}
+.ic-fill { fill: currentColor; }
+
+/* buttons and labels that carry an icon next to their caption */
+.btn, .btn-3d, .chip-btn, .back-link, .link-btn, .seg-btn, .music-open, .pill { display: inline-flex; align-items: center; justify-content: center; gap: 0.45em; }
+.btn-3d-block { display: flex; }
+.back-link .ic { width: 1.05em; height: 1.05em; }
+.icon-btn, .lesson-x, .lesson-sound, .music-toggle { display: inline-grid; place-items: center; }
+.icon-btn .ic, .burger .ic, .lesson-x .ic, .lesson-sound .ic { width: 20px; height: 20px; }
+.music-toggle .ic { width: 22px; height: 22px; }
+
+/* top bar: icon + number, nothing else */
+.chip { gap: 0.35rem; }
+.chip .ic { width: 1.05rem; height: 1.05rem; }
+.chip-streak .ic { color: #f97316; fill: color-mix(in srgb, #f97316 30%, transparent); }
+.chip-xp .ic { color: var(--warning); fill: color-mix(in srgb, var(--warning) 30%, transparent); }
+.lang-select { font-weight: 800; letter-spacing: 0.04em; }
+
+/* learn page strip and goal card */
+.path-strip > * { gap: 0.35rem; }
+.path-strip .ic { width: 1.05rem; height: 1.05rem; }
+.st-flame .ic { color: #f97316; }
+.st-zap .ic { color: var(--warning); }
+.freeze-chip .ic { color: #38bdf8; }
+.st-brain .ic { color: var(--primary-2); }
+.goal-sub { display: flex; gap: 0.9rem; margin: 0.2rem 0 0; }
+.goal-sub > span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.goal-sub strong { font-size: 0.95rem !important; color: var(--text); }
+.ring-label .ic { color: var(--warning); width: 1.3rem; height: 1.3rem; }
+.side-ico { color: var(--primary); display: grid; place-items: center; }
+
+/* icon tiles */
+.pc-ico { color: var(--c); font-size: 1.35rem; }
+.feature-icon { color: var(--primary); font-size: 1.3rem; }
+.feature:nth-child(2) .feature-icon { color: var(--primary-2); background: color-mix(in srgb, var(--primary-2) 14%, transparent); }
+.feature:nth-child(3) .feature-icon { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.feature:nth-child(4) .feature-icon { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.mode-emoji { color: var(--primary); font-size: 1.4rem; }
+.sc-ico { color: var(--primary); font-size: 1.5rem; }
+.level-ico { color: var(--sec); font-size: 1.35rem; }
+.cont-eyebrow, .sec-eyebrow { display: flex; align-items: center; gap: 0.4rem; }
+.q-ico { color: var(--primary); font-size: 1.05rem; }
+.quest.is-done .q-ico { color: var(--ok); }
+.weekly-top span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.weekly-top .ic { color: #f59e0b; }
+.dock-ico .ic { width: 22px; height: 22px; }
+.dock-item.active .dock-ico .ic { stroke-width: 2.4; }
+.more-grid button { display: flex; align-items: center; gap: 0.6rem; }
+.more-grid button .ic { color: var(--primary); width: 20px; height: 20px; }
+.track-title { display: inline-flex; align-items: center; gap: 0.55rem; }
+.track-title .ic { color: var(--accent); }
+.done-chip { display: inline-flex; align-items: center; gap: 0.2rem; }
+
+/* achievements: icon in a soft tile, grey until earned */
+.ach .ach-ico {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 0.45rem;
+  border-radius: 16px;
+  font-size: 1.45rem;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  filter: none;
+  opacity: 0.7;
+}
+.ach.on .ach-ico { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); opacity: 1; }
+
+/* lesson path */
+.node-ico { display: grid; place-items: center; }
+.node-ico .ic { width: 30px; height: 30px; stroke-width: 2.5; }
+.node.is-current .node-ico .ic, .node.is-done .node-ico .ic { fill: none; }
+.node.is-locked .node-ico .ic { width: 26px; height: 26px; }
+.node-stars { display: flex; justify-content: center; gap: 1px; }
+.node-stars .ic { width: 13px; height: 13px; }
+.node-stars span { display: inline-flex; gap: 1px; }
+.wk i .ic { width: 15px; height: 15px; color: #f97316; fill: color-mix(in srgb, #f97316 35%, transparent); }
+
+/* lesson player */
+.say .ic { width: 20px; height: 20px; }
+.say.small .ic { width: 16px; height: 16px; }
+.say.huge .ic { width: 40px; height: 40px; }
+.say.big .ic { width: 26px; height: 26px; }
+.say.slow .ic { width: 22px; height: 22px; }
+.mic-big .ic { width: 44px; height: 44px; }
+.fb-ico .ic { width: 22px; height: 22px; stroke-width: 3; }
+.lesson-combo, .lesson-hearts { display: inline-flex; align-items: center; gap: 0.25rem; }
+.lesson-hearts .ic { color: #f43f5e; }
+.summary-emoji,
+.st-end .summary-emoji {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 0.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 2.6rem;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+.summary-stars span { display: inline-grid; }
+.summary-stars .ic { width: 2.8rem; height: 2.8rem; }
+.rev-emoji { color: var(--success); font-size: 2.3rem; display: grid; place-items: center; }
+
+/* stories */
+.story-ico {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 1.3rem;
+  color: #f97316;
+  background: color-mix(in srgb, #f97316 14%, transparent);
+}
+.st-title { display: flex; align-items: center; gap: 0.5rem; }
+.st-title .ic { color: #f97316; }
+.st-avatar { font-family: var(--display); font-weight: 900; font-size: 1.05rem; color: #fff; border: 0; }
+.st-avatar.is-f { background: linear-gradient(135deg, #f472b6, #db2777); }
+.st-avatar.is-m { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+.st-q { display: flex; align-items: flex-start; gap: 0.5rem; }
+.st-q .ic { color: var(--primary); margin-top: 0.15em; }
+
+/* exams, chat, cloud */
+.exam-badge {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  font-size: 1.6rem;
+  margin-bottom: 0.6rem;
+  color: var(--primary-2);
+  background: color-mix(in srgb, var(--primary-2) 15%, transparent);
+}
+.exam-block-head strong { display: inline-flex; align-items: center; gap: 0.45rem; }
+.exam-block-head .ic { color: var(--accent); }
+.chat-title { display: flex; align-items: center; gap: 0.5rem; }
+.chat-title .ic { color: var(--primary); }
+.msg-fix span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.chat-suggest .chip-btn .ic { color: var(--warning); }
+.ai-error strong { display: inline-flex; align-items: center; gap: 0.4rem; }
+.cloud-card h3 { display: flex; align-items: center; gap: 0.5rem; }
+.cloud-card h3 .ic { color: var(--primary); }
+.auth-ico, .cta-ico, .cloud-off-ico, .empty-card > span {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.7rem;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.auth-perks li { display: flex; align-items: center; gap: 0.6rem; }
+.auth-perks .ic { color: var(--primary); }
+.sync-line .ic { width: 1.05em; height: 1.05em; }
+.lg-mine span { display: inline-flex; align-items: center; gap: 0.25rem; }
+.lg-mine .ic { width: 1.3rem; height: 1.3rem; }
+.lg-streak { display: inline-flex; align-items: center; gap: 0.2rem; }
+.lg-streak .ic { color: #f97316; }
+.rank-medal {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  color: #3b2a00;
+}
+.rank-medal.r1 { background: linear-gradient(135deg, #fde68a, #f59e0b); }
+.rank-medal.r2 { background: linear-gradient(135deg, #f1f5f9, #94a3b8); color: #1e293b; }
+.rank-medal.r3 { background: linear-gradient(135deg, #fed7aa, #c2410c); color: #fff; }
+.seg-btn .ic { width: 1.05em; height: 1.05em; }
+.task-ico { color: var(--primary); display: grid; place-items: center; }
+.class-table th .ic { width: 0.95em; height: 0.95em; margin-right: 0.2rem; }
+.class-table th { white-space: nowrap; }
+.node-words.is-current .node-ico .ic { fill: currentColor; }
+@media (max-width: 760px) {
+  .lg-streak { display: none; }
 }

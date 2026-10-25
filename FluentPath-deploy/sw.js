@@ -1,6 +1,6 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "8";
+const VERSION = "9";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
 const AUDIO_CACHE = "fluentpath-audio"; // recorded voice clips: named by content hash, so they never go stale
@@ -9,6 +9,7 @@ const ASSETS = [
   "./",
   "index.html",
   `css/style.css?v=${VERSION}`,
+  `js/icons.js?v=${VERSION}`,
   `js/data.js?v=${VERSION}`,
   `js/course-data.js?v=${VERSION}`,
   `js/content-extra.js?v=${VERSION}`,
@@ -120,8 +121,8 @@ self.addEventListener("fetch", (event) => {
 
 /* Daily reminder: the server sends an empty push, the text lives here. */
 const REMINDER = {
-  kk: { title: "FluentPath 🔥", body: "Бүгін әлі сабақ жасаған жоқсың. 5 минут оқысаң, қатарынан оқыған күндерің үзілмейді!" },
-  ru: { title: "FluentPath 🔥", body: "Сегодня ещё не было занятия — 5 минут, и серия сохранится!" },
+  kk: { title: "FluentPath", body: "Бүгін әлі сабақ жасаған жоқсың. 5 минут оқысаң, қатарынан оқыған күндерің үзілмейді!" },
+  ru: { title: "FluentPath", body: "Сегодня ещё не было занятия — 5 минут, и серия сохранится!" },
 };
 
 async function reminderText() {

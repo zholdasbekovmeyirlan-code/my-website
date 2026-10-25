@@ -3,6 +3,7 @@
   const FP = () => window.FP;
   const t = (k) => FP().t(k);
   const esc = (s) => FP().escapeHtml(s);
+  const ic = (name, cls) => window.FP_IC(name, cls);
   const $ = (s, root = document) => root.querySelector(s);
   const $all = (s, root = document) => [...root.querySelectorAll(s)];
   const STORY_XP = 12;
@@ -18,10 +19,10 @@
     box.innerHTML = stories()
       .map(
         (s) => `<button type="button" class="story-card${done[s.id] ? " is-done" : ""}" data-story="${s.id}">
-          <span class="story-ico">${s.icon}</span>
+          <span class="story-ico">${ic(s.icon)}</span>
           <span class="story-lvl">${s.level}</span>
           <strong>${esc(s.title)}</strong>
-          <span class="muted small">${esc(FP().fmt(t("st_meta"), { n: s.lines.length }))}${done[s.id] ? ` · ✓ ${done[s.id]}/${s.checks.length}` : ""}</span>
+          <span class="muted small">${esc(FP().fmt(t("st_meta"), { n: s.lines.length }))}${done[s.id] ? ` · ${ic("check")} ${done[s.id]}/${s.checks.length}` : ""}</span>
         </button>`
       )
       .join("");
@@ -128,7 +129,7 @@
           return `<div class="st-line st-narr" data-line="${i}"><p>${esc(en)}</p><p class="st-kk hidden">${esc(kk)}</p></div>`;
         }
         return `<div class="st-line${me ? " st-right" : ""}" data-line="${i}">
-          <span class="st-avatar" aria-hidden="true">${s.cast[who] || "🙂"}</span>
+          <span class="st-avatar is-${(window.FP_VOICE.VOICES[run.voices[who]] || {}).g || "f"}" aria-hidden="true">${esc(who[0])}</span>
           <div class="st-bubble">
             <span class="st-who">${esc(who)}</span>
             <p>${esc(en)}</p>
@@ -142,7 +143,7 @@
       const c = run.waiting;
       const answered = c.picked != null;
       tail = `<div class="st-check glass">
-        <p class="st-q">❓ ${esc(c.q)}</p>
+        <p class="st-q">${ic("circle-help")}<span>${esc(c.q)}</span></p>
         <div class="choices">${c.options
           .map((o, i) => {
             const cls = answered ? (i === c.a ? " is-ok" : i === c.picked ? " is-bad" : "") : "";
@@ -155,13 +156,13 @@
       </div>`;
     } else if (run.finished) {
       tail = `<div class="st-end glass">
-        <div class="summary-emoji">${run.correct === s.checks.length ? "🏆" : "📖"}</div>
+        <div class="summary-emoji">${ic(run.correct === s.checks.length ? "trophy" : "book-open")}</div>
         <h3>${esc(t("st_done"))}</h3>
         <p class="muted">${esc(FP().fmt(t("st_score"), { n: run.correct, total: s.checks.length }))}${
           run.paid ? ` · +${FP().xp(STORY_XP)}` : ""
         }</p>
         <div class="st-end-btns">
-          <button type="button" class="btn btn-ghost" id="stAgain">↻ ${esc(t("st_again"))}</button>
+          <button type="button" class="btn btn-ghost" id="stAgain">${ic("rotate-ccw")}<span>${esc(t("st_again"))}</span></button>
           <button type="button" class="btn-3d" id="stBack">${esc(t("st_more"))}</button>
         </div>
       </div>`;
@@ -171,8 +172,8 @@
       )}</button>`;
     }
     box.innerHTML = `<div class="st-head">
-        <button type="button" class="icon-btn" id="stClose" aria-label="Back">←</button>
-        <div class="st-title"><span>${s.icon}</span> ${esc(s.title)} <em>${s.level}</em></div>
+        <button type="button" class="icon-btn" id="stClose" aria-label="Back">${ic("arrow-left")}</button>
+        <div class="st-title">${ic(s.icon)}<span>${esc(s.title)}</span><em>${s.level}</em></div>
       </div>
       <div class="progress-bar slim"><div class="progress-fill" style="width:${Math.min(100, (progress / total) * 100)}%"></div></div>
       <p class="muted small st-hint">${esc(t("st_hint"))}</p>

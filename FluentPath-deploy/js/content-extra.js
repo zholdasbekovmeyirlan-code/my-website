@@ -215,7 +215,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st1",
       level: "A1",
-      icon: "🏠",
+      icon: "house",
       title: "Hello, Neighbour!",
       cast: { Aruzhan: "👧", Daniyar: "👦" },
       lines: [
@@ -237,7 +237,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st2",
       level: "A1",
-      icon: "☕",
+      icon: "coffee",
       title: "At the Café",
       cast: { Arman: "🧑", Waiter: "🧑‍🍳" },
       lines: [
@@ -259,7 +259,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st3",
       level: "A2",
-      icon: "🗺️",
+      icon: "map-pin",
       title: "Lost in Astana",
       cast: { Madina: "👩", Man: "👨" },
       lines: [
@@ -282,7 +282,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st4",
       level: "A2",
-      icon: "🎁",
+      icon: "gift",
       title: "The Birthday Present",
       cast: { Alibek: "👦", Aigerim: "👧" },
       lines: [
@@ -304,7 +304,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st5",
       level: "B1",
-      icon: "💼",
+      icon: "briefcase",
       title: "The Job Interview",
       cast: { Dana: "👩‍💼", Manager: "🧑‍💼" },
       lines: [
@@ -326,7 +326,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st6",
       level: "B1",
-      icon: "🩺",
+      icon: "stethoscope",
       title: "Calling the Clinic",
       cast: { Yerlan: "🧑", Receptionist: "👩‍⚕️" },
       lines: [
@@ -348,7 +348,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st7",
       level: "B2",
-      icon: "🎤",
+      icon: "presentation",
       title: "The Classroom Debate",
       cast: { Teacher: "👩‍🏫", Asel: "👩", Nurlan: "👨" },
       lines: [
@@ -371,7 +371,7 @@ Rather than banning homework, many experts recommend changing it: fewer repetiti
     {
       id: "st8",
       level: "B2",
-      icon: "🚀",
+      icon: "lightbulb",
       title: "The Startup Idea",
       cast: { Timur: "🧔", Zhanna: "👩‍💻" },
       lines: [

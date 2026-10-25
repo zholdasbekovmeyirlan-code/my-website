@@ -7,6 +7,7 @@ window.FP_CLOUD_UI = (() => {
   const esc = (s) => FP().escapeHtml(s);
   const $ = (s, root = document) => root.querySelector(s);
   const $all = (s, root = document) => [...root.querySelectorAll(s)];
+  const ic = (name, cls) => window.FP_IC(name, cls);
 
   const ERR = {
     network: "cloud_err_network",
@@ -21,16 +22,16 @@ window.FP_CLOUD_UI = (() => {
 
   // Assignment kinds: icon and the screen where the student does the work.
   const KINDS = {
-    lesson: ["📗", "learn"],
-    review: ["🧠", "review"],
-    story: ["📖", "stories"],
-    reading: ["📰", "reading"],
-    listening: ["🎧", "listening"],
-    writing: ["✍️", "writing"],
-    speaking: ["🎤", "speaking"],
-    mock: ["🎓", "mock"],
-    unt: ["🇰🇿", "unt"],
-    other: ["📌", null],
+    lesson: ["book-open", "learn"],
+    review: ["brain", "review"],
+    story: ["drama", "stories"],
+    reading: ["newspaper", "reading"],
+    listening: ["headphones", "listening"],
+    writing: ["pen-line", "writing"],
+    speaking: ["mic", "speaking"],
+    mock: ["graduation-cap", "mock"],
+    unt: ["clipboard-check", "unt"],
+    other: ["pin", null],
   };
   const RESEND_WAIT = 60;
 
@@ -88,7 +89,7 @@ window.FP_CLOUD_UI = (() => {
     if (btn) {
       const u = C.user();
       btn.classList.toggle("is-in", !!u);
-      btn.innerHTML = u ? `<span class="avatar avatar-xs">${initial(myName())}</span>` : "👤";
+      btn.innerHTML = u ? `<span class="avatar avatar-xs">${initial(myName())}</span>` : ic("user");
       btn.setAttribute("aria-label", t(u ? "nav_account" : "auth_title"));
       btn.title = t(u ? "nav_account" : "auth_title");
     }
@@ -106,10 +107,10 @@ window.FP_CLOUD_UI = (() => {
     if (name === "class") renderClass();
   }
 
-  const offCard = () => `<div class="cloud-card glass cloud-off"><span class="cloud-off-ico">☁️</span><p>${esc(t("cloud_off"))}</p></div>`;
+  const offCard = () => `<div class="cloud-card glass cloud-off"><span class="cloud-off-ico">${ic("cloud")}</span><p>${esc(t("cloud_off"))}</p></div>`;
 
   const signInCta = (textKey) => `<div class="cloud-card glass cta-card">
-      <span class="cta-ico">🔐</span>
+      <span class="cta-ico">${ic("lock")}</span>
       <p>${esc(t(textKey))}</p>
       <button type="button" class="btn-3d" data-nav="account">${esc(t("auth_title"))}</button>
     </div>`;
@@ -167,12 +168,12 @@ window.FP_CLOUD_UI = (() => {
           ${err}${linkErr}
           <p class="muted small">${esc(t("auth_no_password"))}</p>`;
     return `<div class="cloud-card glass auth-card">
-        <div class="auth-ico">☁️</div>
+        <div class="auth-ico">${ic("cloud")}</div>
         <h2>${esc(t("auth_title"))}</h2>
         <ul class="auth-perks">
-          <li>🔄 ${esc(t("auth_perk_sync"))}</li>
-          <li>🏆 ${esc(t("auth_perk_league"))}</li>
-          <li>👥 ${esc(t("auth_perk_class"))}</li>
+          <li>${ic("refresh-cw")}<span>${esc(t("auth_perk_sync"))}</span></li>
+          <li>${ic("trophy")}<span>${esc(t("auth_perk_league"))}</span></li>
+          <li>${ic("users")}<span>${esc(t("auth_perk_class"))}</span></li>
         </ul>
         ${body}
       </div>`;
@@ -181,10 +182,10 @@ window.FP_CLOUD_UI = (() => {
   function syncLine() {
     const s = C.status();
     if (s.state === "syncing") return `<p class="sync-line is-busy"><span class="spinner"></span>${esc(t("acc_syncing"))}</p>`;
-    if (s.state === "error") return `<p class="sync-line is-bad">⚠ ${esc(errText(s.error))}</p>`;
+    if (s.state === "error") return `<p class="sync-line is-bad">${ic("triangle-alert")}${esc(errText(s.error))}</p>`;
     if (!s.at) return `<p class="sync-line">—</p>`;
     const time = new Date(s.at).toLocaleTimeString(FP().locale(), { hour: "2-digit", minute: "2-digit" });
-    return `<p class="sync-line is-ok">✓ ${esc(fmt(t("acc_synced_at"), { time }))}</p>`;
+    return `<p class="sync-line is-ok">${ic("check")}${esc(fmt(t("acc_synced_at"), { time }))}</p>`;
   }
 
   function pushBlock() {
@@ -218,26 +219,26 @@ window.FP_CLOUD_UI = (() => {
         </div>
 
         <div class="cloud-card glass">
-          <h3>🔄 ${esc(t("acc_sync"))}</h3>
+          <h3>${ic("cloud")}${esc(t("acc_sync"))}</h3>
           ${syncLine()}
           <p class="muted small">${esc(t("acc_sync_hint"))}</p>
-          <button type="button" class="btn btn-ghost btn-sm" id="syncNow" ${C.status().state === "syncing" ? "disabled" : ""}>↻ ${esc(
+          <button type="button" class="btn btn-ghost btn-sm" id="syncNow" ${C.status().state === "syncing" ? "disabled" : ""}>${ic("refresh-cw")}<span>${esc(
             t("acc_sync_now")
-          )}</button>
+          )}</span></button>
         </div>
 
         <div class="cloud-card glass">
-          <h3>🔔 ${esc(t("push_title"))}</h3>
+          <h3>${ic("bell")}${esc(t("push_title"))}</h3>
           <p class="muted small">${esc(t("push_sub"))}</p>
           ${pushBlock()}
         </div>
 
         <div class="account-tiles">
           <button type="button" class="pc-card" data-nav="league" style="--c:#fbbf24">
-            <span class="pc-ico">🏆</span><strong>${esc(t("nav_league"))}</strong><span class="pc-desc">${esc(t("lg_sub"))}</span>
+            <span class="pc-ico">${ic("trophy")}</span><strong>${esc(t("nav_league"))}</strong><span class="pc-desc">${esc(t("lg_sub"))}</span>
           </button>
           <button type="button" class="pc-card" data-nav="class" style="--c:#34d399">
-            <span class="pc-ico">👥</span><strong>${esc(t("nav_class"))}</strong><span class="pc-desc">${esc(t("cl_sub"))}</span>
+            <span class="pc-ico">${ic("users")}</span><strong>${esc(t("nav_class"))}</strong><span class="pc-desc">${esc(t("cl_sub"))}</span>
           </button>
         </div>
 
@@ -395,7 +396,7 @@ window.FP_CLOUD_UI = (() => {
     const mine = C.weekXp();
     const head = `<div class="league-head glass">
         <div><span class="muted small">${esc(t("lg_week"))}</span><strong>${esc(fmt(t("lg_days_left"), { n: daysLeft() }))}</strong></div>
-        <div class="lg-mine"><span>⚡ ${mine}</span><em>${esc(FP().xp(mine).replace(/^\S+\s/, ""))}</em></div>
+        <div class="lg-mine"><span>${ic("zap")}${mine}</span><em>${esc(FP().xp(mine).replace(/^\S+\s/, ""))}</em></div>
       </div>`;
     if (!C.enabled()) {
       host.innerHTML = head + offCard();
@@ -413,18 +414,18 @@ window.FP_CLOUD_UI = (() => {
     let body;
     if (!L.rows && L.busy) body = `<div class="ai-loading"><span class="spinner"></span>${esc(t("cloud_loading"))}</div>`;
     else if (!L.rows && L.error) body = `<p class="form-err">${esc(errText(L.error))}</p>`;
-    else if (!L.rows || !L.rows.length) body = `<div class="cloud-card glass empty-card"><span>🌱</span><p>${esc(t("lg_empty"))}</p></div>`;
+    else if (!L.rows || !L.rows.length) body = `<div class="cloud-card glass empty-card"><span>${ic("sprout")}</span><p>${esc(t("lg_empty"))}</p></div>`;
     else {
-      const medals = ["🥇", "🥈", "🥉"];
+      const medal = (i) => (i < 3 ? `<span class="rank-medal r${i + 1}">${i + 1}</span>` : i + 1);
       const inList = L.rows.some((r) => r.id === u.id);
       body = `<ol class="league-list">${L.rows
         .map((r, i) => {
           const me = r.id === u.id;
           return `<li class="lg-row${me ? " is-me" : ""}${i < 3 ? ` top${i + 1}` : ""}">
-            <span class="lg-rank">${medals[i] || i + 1}</span>
+            <span class="lg-rank">${medal(i)}</span>
             <span class="avatar avatar-sm">${initial(r.name)}</span>
             <span class="lg-name">${esc(r.name)}${me ? ` <em>· ${esc(t("lg_you"))}</em>` : ""}</span>
-            <span class="lg-streak">🔥 ${r.streak || 0}</span>
+            <span class="lg-streak">${ic("flame")}${r.streak || 0}</span>
             <strong class="lg-xp">${esc(FP().xp(r.week_xp))}</strong>
           </li>`;
         })
@@ -439,7 +440,7 @@ window.FP_CLOUD_UI = (() => {
     }
     host.innerHTML = `${head}${body}
       <div class="lg-foot">
-        <button type="button" class="btn btn-ghost btn-sm" id="lgRefresh" ${L.busy ? "disabled" : ""}>↻ ${esc(t("cloud_refresh"))}</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="lgRefresh" ${L.busy ? "disabled" : ""}>${ic("refresh-cw")}<span>${esc(t("cloud_refresh"))}</span></button>
         <span class="muted small">${esc(t("lg_rule"))}</span>
       </div>`;
     $("#lgRefresh", host)?.addEventListener("click", loadLeague);
@@ -492,10 +493,10 @@ window.FP_CLOUD_UI = (() => {
     }
     if (needLoad(classes)) loadClasses();
     const tabs = `<div class="seg" role="tablist">
-        <button type="button" role="tab" class="seg-btn${tab !== "teacher" ? " active" : ""}" data-tab="student" aria-selected="${tab !== "teacher"}">🎒 ${esc(
+        <button type="button" role="tab" class="seg-btn${tab !== "teacher" ? " active" : ""}" data-tab="student" aria-selected="${tab !== "teacher"}">${ic("backpack")}${esc(
           t("cl_tab_student")
         )}</button>
-        <button type="button" role="tab" class="seg-btn${tab === "teacher" ? " active" : ""}" data-tab="teacher" aria-selected="${tab === "teacher"}">🧑‍🏫 ${esc(
+        <button type="button" role="tab" class="seg-btn${tab === "teacher" ? " active" : ""}" data-tab="teacher" aria-selected="${tab === "teacher"}">${ic("presentation")}${esc(
           t("cl_tab_teacher")
         )}</button>
       </div>`;
@@ -511,7 +512,7 @@ window.FP_CLOUD_UI = (() => {
   function studentBody() {
     const list = classes.student || [];
     const form = `<form class="cloud-card glass join-card" id="joinForm">
-        <h3>🔑 ${esc(t("cl_join"))}</h3>
+        <h3>${ic("key-round")}${esc(t("cl_join"))}</h3>
         <p class="muted small">${esc(t("cl_join_hint"))}</p>
         <div class="name-row">
           <input type="text" id="joinCode" class="code-input" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" value="${esc(
@@ -520,7 +521,7 @@ window.FP_CLOUD_UI = (() => {
           <button type="submit" class="btn-3d btn-3d-sm">${esc(t("cl_join_btn"))}</button>
         </div>
       </form>`;
-    if (!list.length) return form + `<div class="cloud-card glass empty-card"><span>🎒</span><p>${esc(t("cl_none_student"))}</p></div>`;
+    if (!list.length) return form + `<div class="cloud-card glass empty-card"><span>${ic("backpack")}</span><p>${esc(t("cl_none_student"))}</p></div>`;
     return (
       form +
       list
@@ -536,7 +537,7 @@ window.FP_CLOUD_UI = (() => {
           const done = d && d.assignments ? d.assignments.filter((a) => d.mine.has(a.id)).length : 0;
           return `<section class="cloud-card glass class-card">
             <div class="class-top">
-              <div><h3>👥 ${esc(c.name)}</h3><span class="muted small">${esc(fmt(t("cl_teacher"), { name: (c.profiles && c.profiles.name) || "—" }))}</span></div>
+              <div><h3>${ic("users")}${esc(c.name)}</h3><span class="muted small">${esc(fmt(t("cl_teacher"), { name: (c.profiles && c.profiles.name) || "—" }))}</span></div>
               ${d && d.assignments && d.assignments.length ? `<span class="pill soft">${done} / ${d.assignments.length}</span>` : ""}
             </div>
             ${tasks}
@@ -553,7 +554,7 @@ window.FP_CLOUD_UI = (() => {
     const late = !done && a.due && a.due < FP().localDay();
     return `<li class="task${done ? " is-done" : ""}${late ? " is-late" : ""}">
       <label class="task-check"><input type="checkbox" data-done="${a.id}" ${done ? "checked" : ""} /><span aria-hidden="true"></span></label>
-      <span class="task-ico">${ico}</span>
+      <span class="task-ico">${ic(ico)}</span>
       <div class="task-body"><strong>${esc(a.title)}</strong><span class="muted small">${esc(t(`kind_${a.kind}`) || a.kind)}${
         a.due ? ` · ${esc(fmt(t("cl_due"), { d: dueText(a.due) }))}` : ""
       }</span></div>
@@ -565,13 +566,13 @@ window.FP_CLOUD_UI = (() => {
   function teacherBody() {
     const list = classes.teacher || [];
     const form = `<form class="cloud-card glass" id="newClassForm">
-        <h3>➕ ${esc(t("cl_new"))}</h3>
+        <h3>${ic("plus")}${esc(t("cl_new"))}</h3>
         <div class="name-row">
           <input type="text" id="newClassName" maxlength="60" placeholder="${esc(t("cl_new_ph"))}" aria-label="${esc(t("cl_new"))}" />
           <button type="submit" class="btn-3d btn-3d-sm">${esc(t("cl_create"))}</button>
         </div>
       </form>`;
-    if (!list.length) return form + `<div class="cloud-card glass empty-card"><span>🧑‍🏫</span><p>${esc(t("cl_none_teacher"))}</p></div>`;
+    if (!list.length) return form + `<div class="cloud-card glass empty-card"><span>${ic("presentation")}</span><p>${esc(t("cl_none_teacher"))}</p></div>`;
     if (!openId || !list.some((c) => c.id === openId)) openId = list[0].id;
     const chips = `<div class="class-chips">${list
       .map((c) => `<button type="button" class="chip-btn${c.id === openId ? " active" : ""}" data-open="${c.id}">${esc(c.name)}</button>`)
@@ -587,7 +588,7 @@ window.FP_CLOUD_UI = (() => {
         <div><span class="muted small">${esc(t("cl_code"))}</span><strong class="class-code">${esc(c.code)}</strong></div>
         <p class="muted small">${esc(t("cl_code_hint"))}</p>
         <div class="code-actions">
-          <button type="button" class="btn btn-secondary btn-sm" data-copy="${esc(joinLink(c.code))}">🔗 ${esc(t("cl_copy_link"))}</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-copy="${esc(joinLink(c.code))}">${ic("link")}<span>${esc(t("cl_copy_link"))}</span></button>
           <button type="button" class="link-btn danger" data-delclass="${c.id}">${esc(t("cl_delete"))}</button>
         </div>
       </div>`;
@@ -605,9 +606,9 @@ window.FP_CLOUD_UI = (() => {
     const today = FP().localDay();
     const table = members.length
       ? `<div class="table-wrap glass"><table class="data-table class-table">
-          <thead><tr><th>${esc(t("cl_student"))}</th><th>⚡ ${esc(t("cl_week"))}</th><th>🔥</th><th>${esc(t("cl_last"))}</th><th>${esc(
+          <thead><tr><th>${esc(t("cl_student"))}</th><th>${ic("zap")}${esc(t("cl_week"))}</th><th>${ic("flame")}</th><th>${esc(t("cl_last"))}</th><th>${esc(
             t("cl_lessons")
-          )}</th><th>${esc(t("cl_words"))}</th>${total ? `<th>✓ ${esc(t("cl_tasks"))}</th>` : ""}</tr></thead>
+          )}</th><th>${esc(t("cl_words"))}</th>${total ? `<th>${ic("check")}${esc(t("cl_tasks"))}</th>` : ""}</tr></thead>
           <tbody>${members
             .map(
               (m) => `<tr class="${m.last_active === today ? "is-today" : ""}">
@@ -622,25 +623,25 @@ window.FP_CLOUD_UI = (() => {
             )
             .join("")}</tbody>
         </table></div>`
-      : `<div class="cloud-card glass empty-card"><span>📭</span><p>${esc(t("cl_no_students"))}</p></div>`;
+      : `<div class="cloud-card glass empty-card"><span>${ic("inbox")}</span><p>${esc(t("cl_no_students"))}</p></div>`;
 
     const kinds = Object.keys(KINDS)
-      .map((k) => `<option value="${k}">${KINDS[k][0]} ${esc(t(`kind_${k}`))}</option>`)
+      .map((k) => `<option value="${k}">${esc(t(`kind_${k}`))}</option>`)
       .join("");
     const tasks = `<section class="cloud-card glass">
-        <h3>📋 ${esc(t("cl_assignments"))}</h3>
+        <h3>${ic("clipboard-list")}${esc(t("cl_assignments"))}</h3>
         ${
           total
             ? `<ul class="task-list">${d.assignments
                 .map((a) => {
                   const [ico] = KINDS[a.kind] || KINDS.other;
                   return `<li class="task">
-                    <span class="task-ico">${ico}</span>
+                    <span class="task-ico">${ic(ico)}</span>
                     <div class="task-body"><strong>${esc(a.title)}</strong><span class="muted small">${esc(t(`kind_${a.kind}`) || a.kind)}${
                       a.due ? ` · ${esc(fmt(t("cl_due"), { d: dueText(a.due) }))}` : ""
                     }</span></div>
                     <span class="pill soft" title="${esc(t("cl_done_by"))}">${doneFor[a.id] || 0} / ${members.length}</span>
-                    <button type="button" class="icon-btn" data-deltask="${a.id}" aria-label="${esc(t("cl_delete"))}">🗑</button>
+                    <button type="button" class="icon-btn" data-deltask="${a.id}" aria-label="${esc(t("cl_delete"))}">${ic("trash-2")}</button>
                   </li>`;
                 })
                 .join("")}</ul>`
@@ -655,8 +656,8 @@ window.FP_CLOUD_UI = (() => {
       </section>`;
 
     return `${codeCard}
-      <div class="class-sec-head"><h3>🎒 ${esc(fmt(t("cl_students_n"), { n: members.length }))}</h3>
-        <button type="button" class="btn btn-ghost btn-sm" data-reload="${c.id}">↻ ${esc(t("cloud_refresh"))}</button></div>
+      <div class="class-sec-head"><h3>${ic("backpack")}${esc(fmt(t("cl_students_n"), { n: members.length }))}</h3>
+        <button type="button" class="btn btn-ghost btn-sm" data-reload="${c.id}">${ic("refresh-cw")}<span>${esc(t("cloud_refresh"))}</span></button></div>
       ${table}
       ${tasks}`;
   }

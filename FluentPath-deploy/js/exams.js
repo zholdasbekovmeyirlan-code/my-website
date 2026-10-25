@@ -5,6 +5,7 @@
   const t = (k) => FP().t(k);
   const fmt = (s, v) => FP().fmt(s, v);
   const esc = (s) => FP().escapeHtml(s);
+  const ic = (name, cls) => window.FP_IC(name, cls);
   const $ = (s, root = document) => root.querySelector(s);
   const $all = (s, root = document) => [...root.querySelectorAll(s)];
   const shuffle = (a) => FP().shuffle(a);
@@ -162,7 +163,8 @@
     if (m.step === "intro") {
       const hist = (FP().state.mockHistory || []).slice(0, 5);
       return `<div class="exam-intro glass">
-        <h2>🎓 ${esc(t("mock_title"))}</h2>
+        <div class="exam-badge">${ic("graduation-cap")}</div>
+        <h2>${esc(t("mock_title"))}</h2>
         <p class="muted">${esc(t("mock_intro"))}</p>
         <ol class="exam-steps">
           <li><strong>${esc(t("mock_listening"))}</strong><span>${m.tracks.length} ${esc(t("mock_tracks"))} · 10 ${esc(t("write_min"))}</span></li>
@@ -189,7 +191,7 @@
       return `<p class="muted">${esc(t("mock_listen_hint"))}</p>${m.tracks
         .map((tr, ti) => {
           const block = `<div class="exam-block glass">
-            <div class="exam-block-head"><strong>🎧 ${esc(fmt(t("mock_track_n"), { n: ti + 1 }))}</strong>
+            <div class="exam-block-head"><strong>${ic("headphones")}${esc(fmt(t("mock_track_n"), { n: ti + 1 }))}</strong>
               <button type="button" class="btn btn-secondary btn-sm" data-play="${ti}">${esc(t("listen_play"))}</button></div>
             ${radios(`l${ti}_`, tr.questions, n)}
           </div>`;
@@ -278,7 +280,7 @@
       ${m.aiNote ? `<p class="muted small">${esc(m.aiNote)}</p>` : ""}
       <div id="mockFb"></div>
       <p class="fb-disclaimer">${esc(t("mock_disclaimer"))}</p>
-      <button type="button" class="btn-3d" id="mockAgain">↻ ${esc(t("mock_again"))}</button>
+      <button type="button" class="btn-3d" id="mockAgain">${ic("rotate-ccw")}<span>${esc(t("mock_again"))}</span></button>
     </div>`;
   }
 
@@ -546,7 +548,8 @@
     if (!unt) {
       const hist = (FP().state.untHistory || []).slice(0, 5);
       host.innerHTML = `<div class="exam-intro glass">
-        <h2>🇰🇿 ${esc(t("unt_title"))}</h2>
+        <div class="exam-badge">${ic("clipboard-check")}</div>
+        <h2>${esc(t("unt_title"))}</h2>
         <p class="muted">${esc(t("unt_intro"))}</p>
         <ol class="exam-steps">
           <li><strong>1–25</strong><span>${esc(t("unt_part1"))}</span></li>
@@ -615,7 +618,7 @@
         ${u.submitted ? "" : `<span class="exam-clock" id="untClock">--:--</span>`}
         ${
           u.submitted
-            ? `<button type="button" class="btn-3d btn-3d-sm" id="untAgain">↻ ${esc(t("mock_again"))}</button>`
+            ? `<button type="button" class="btn-3d btn-3d-sm" id="untAgain">${ic("rotate-ccw")}<span>${esc(t("mock_again"))}</span></button>`
             : `<button type="button" class="btn-3d btn-3d-sm" id="untSubmit">${esc(t("unt_submit"))}</button>`
         }
       </div>
