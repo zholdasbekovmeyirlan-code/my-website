@@ -493,7 +493,7 @@
     const theme = state.theme === "light" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", theme);
     const meta = $('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "light" ? "#eef2ff" : "#070b16");
+    if (meta) meta.setAttribute("content", theme === "light" ? "#fafafa" : "#09090b");
     const btn = $("#themeToggle");
     if (btn) btn.innerHTML = ic(theme === "light" ? "moon" : "sun");
   }

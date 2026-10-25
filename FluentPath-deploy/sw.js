@@ -1,6 +1,6 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "9";
+const VERSION = "10";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
 const AUDIO_CACHE = "fluentpath-audio"; // recorded voice clips: named by content hash, so they never go stale
@@ -9,6 +9,7 @@ const ASSETS = [
   "./",
   "index.html",
   `css/style.css?v=${VERSION}`,
+  `css/theme.css?v=${VERSION}`,
   `js/icons.js?v=${VERSION}`,
   `js/data.js?v=${VERSION}`,
   `js/course-data.js?v=${VERSION}`,
