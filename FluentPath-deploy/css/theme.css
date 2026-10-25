@@ -185,10 +185,10 @@ html[data-skin] .back-link { color: var(--muted); font-weight: 500; }
 html[data-skin] .link-btn { color: var(--accent); }
 
 /* ---------- icon tiles: one accent, quiet backgrounds ---------- */
-html[data-skin] .pc-card,
-html[data-skin] .sec,
-html[data-skin] .level-card,
-html[data-skin] .cont-card { --c: var(--accent) !important; --sec: var(--accent) !important; }
+html[data-skin]:not([data-icons="color"]) .pc-card,
+html[data-skin]:not([data-icons="color"]) .sec,
+html[data-skin]:not([data-icons="color"]) .level-card,
+html[data-skin]:not([data-icons="color"]) .cont-card { --c: var(--accent) !important; --sec: var(--accent) !important; }
 html[data-skin] .pc-ico,
 html[data-skin] .feature-icon,
 html[data-skin] .feature:nth-child(n) .feature-icon,
@@ -442,3 +442,65 @@ html[data-skin] .lesson-foot.is-bad .btn-3d { background: var(--accent); color: 
 html[data-skin] .logo-mark { padding: 7px; }
 html[data-skin] .logo-mark svg path,
 html[data-skin] .logo-mark svg circle { stroke-width: 48px; }
+
+
+/* =====================================================================
+   Colour accents on top of the minimal base (data-accent on <html>)
+   ===================================================================== */
+html[data-skin][data-accent] { --hot: #fb923c; --gold: #fbbf24; --ice: #7dd3fc; }
+html[data-skin][data-accent][data-theme="light"] { --hot: #ea580c; --gold: #d97706; --ice: #0284c7; }
+
+/* brand colour: sky blue of the Kazakh flag, gold for highlights */
+html[data-skin][data-accent="sky"] { --accent: #38bdf8; --accent-ink: #04131c; --gold: #f5c242; }
+html[data-skin][data-accent="sky"][data-theme="light"] { --accent: #0284c7; --accent-ink: #ffffff; --gold: #c08a00; }
+html[data-skin][data-accent="sky"] .eyebrow,
+html[data-skin][data-accent="sky"] .level-id { color: var(--gold); }
+
+/* warm stats in every colour option: flame orange, points gold, freeze ice */
+html[data-skin][data-accent] .chip-streak .ic,
+html[data-skin][data-accent] .st-flame .ic,
+html[data-skin][data-accent] .wk i .ic,
+html[data-skin][data-accent] .lg-streak .ic { color: var(--hot); fill: color-mix(in srgb, var(--hot) 25%, transparent); }
+html[data-skin][data-accent] .chip-xp .ic,
+html[data-skin][data-accent] .st-zap .ic,
+html[data-skin][data-accent] .ring-label .ic,
+html[data-skin][data-accent] .lg-mine .ic { color: var(--gold); fill: color-mix(in srgb, var(--gold) 25%, transparent); }
+html[data-skin][data-accent] .freeze-chip .ic { color: var(--ice); }
+html[data-skin][data-accent] .wk.on i { background: color-mix(in srgb, var(--hot) 16%, transparent); }
+html[data-skin][data-accent] .goal-card .ring-fg { stroke: var(--gold); }
+html[data-skin][data-accent] .node-stars,
+html[data-skin][data-accent] .summary-stars .on { color: var(--gold); }
+
+/* data-icons="color": every section keeps its own colour (works with or without a brand colour) */
+html[data-skin][data-icons="color"] .pc-ico,
+html[data-skin][data-icons="color"] .level-ico { color: var(--c, var(--sec)); background: color-mix(in srgb, var(--c, var(--sec)) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--sec)) 28%, transparent); }
+html[data-skin][data-icons="color"] .level-ico { background: none; box-shadow: none; }
+html[data-skin][data-icons="color"] .pc-card:hover { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); }
+html[data-skin][data-icons="color"] .pc-card em { color: var(--c); }
+html[data-skin][data-icons="color"] .pc-ai { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, transparent), transparent 60%), var(--card); border-color: color-mix(in srgb, var(--c) 35%, var(--line)); }
+html[data-skin][data-icons="color"] .level-id,
+html[data-skin][data-icons="color"] .sec-eyebrow,
+html[data-skin][data-icons="color"] .cont-eyebrow { color: var(--sec); }
+html[data-skin][data-icons="color"] .level-card .progress-fill,
+html[data-skin][data-icons="color"] .sec-bar .progress-fill,
+html[data-skin][data-icons="color"] .cont-card .progress-fill { background: var(--sec); }
+html[data-skin][data-icons="color"] .cont-card { border-color: color-mix(in srgb, var(--sec) 40%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--sec) 10%, transparent), transparent 55%), var(--card); }
+html[data-skin][data-icons="color"] .node { color: var(--sec); border-color: color-mix(in srgb, var(--sec) 45%, var(--line)); }
+html[data-skin][data-icons="color"] .node.is-current { background: var(--sec); border-color: var(--sec); color: #0b0f14; outline-color: color-mix(in srgb, var(--sec) 45%, transparent); }
+html[data-skin][data-icons="color"] .node.is-done { background: color-mix(in srgb, var(--sec) 15%, var(--card)); }
+html[data-skin][data-icons="color"] .node.is-locked { color: var(--muted); border-color: var(--line); }
+html[data-skin][data-icons="color"] .node-bubble { color: var(--sec); border-color: color-mix(in srgb, var(--sec) 40%, var(--line)); }
+html[data-skin][data-icons="color"] .feature:nth-child(1) .feature-icon { --c: #60a5fa; }
+html[data-skin][data-icons="color"] .feature:nth-child(2) .feature-icon { --c: #c084fc; }
+html[data-skin][data-icons="color"] .feature:nth-child(3) .feature-icon { --c: #34d399; }
+html[data-skin][data-icons="color"] .feature:nth-child(4) .feature-icon { --c: #fbbf24; }
+html[data-skin][data-icons="color"] .feature-icon,
+html[data-skin][data-icons="color"] .story-ico { color: var(--c, #fb923c); background: color-mix(in srgb, var(--c, #fb923c) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, #fb923c) 28%, transparent); }
+html[data-skin][data-icons="color"][data-theme="light"] .pc-ico,
+html[data-skin][data-icons="color"][data-theme="light"] .feature-icon,
+html[data-skin][data-icons="color"][data-theme="light"] .story-ico,
+html[data-skin][data-icons="color"][data-theme="light"] .pc-card em,
+html[data-skin][data-icons="color"][data-theme="light"] .level-id,
+html[data-skin][data-icons="color"][data-theme="light"] .sec-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .cont-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .node:not(.is-locked) { filter: saturate(1.2) brightness(0.78); }

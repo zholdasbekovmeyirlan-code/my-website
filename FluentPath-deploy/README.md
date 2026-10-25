@@ -74,7 +74,7 @@ Netlify-ге: осы папканы деплой ет (`netlify.toml` дайын
 ```
 index.html            — барлық бет (view) + сабақ ойнатқышы
 css/style.css         — негізгі стильдер (орналасу, компоненттер)
-css/theme.css         — «Минимал» дизайн: ақ-қара түс, Inter Tight тақырыптар, жұқа сызықтар
+css/theme.css         — «Минимал» дизайн: көгілдір (ту түсі) акцент, бөлімдердің өз түстері, Inter Tight тақырыптар
 js/icons.js           — Lucide иконкалар спрайты (scripts/build-icons.mjs жасайды)
 js/data.js            — негізгі контент: сөздер, грамматика, listening, reading…
 js/course-data.js     — A1/A2 сөздер, жаңа грамматика сабақтары, жаттығулар
