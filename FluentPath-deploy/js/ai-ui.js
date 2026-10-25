@@ -13,8 +13,26 @@
 
   const level = () => FP().state.aiLevel || "A2";
   const voiceOn = () => FP().state.chatVoice !== false;
+  // Each conversation partner keeps one voice: the barista is a woman, the check-in agent a man, and so on.
+  const PARTNER_VOICE = { cafe: "f1", airport: "m1", shop: "f2", interview: "m1", ielts1: "m2", free: "f1" };
+  const chatVoice = () => PARTNER_VOICE[chat && chat.scenario] || "f1";
 
   /* ---------- Feedback card (writing & speaking) ---------- */
+  // IELTS criteria come back in English; show them in plain Kazakh/Russian.
+  const CRIT = {
+    "task response": "crit_task",
+    "task achievement": "crit_task",
+    "coherence and cohesion": "crit_coherence",
+    "lexical resource": "crit_lexis",
+    "grammatical range and accuracy": "crit_grammar",
+    "fluency and coherence": "crit_fluency",
+    pronunciation: "crit_pron",
+  };
+  const critName = (name) => {
+    const key = CRIT[String(name).toLowerCase().trim()];
+    return key ? t(key) : name;
+  };
+
   function feedbackHtml(d) {
     const list = (items, fn) => items.map(fn).join("");
     return `<div class="fb-card glass">
@@ -25,7 +43,7 @@
       <div class="fb-crit">${list(
         d.criteria,
         (c) => `<div class="crit">
-          <div class="crit-top"><span>${esc(c.name)}</span><strong>${c.band}</strong></div>
+          <div class="crit-top"><span>${esc(critName(c.name))}</span><strong>${c.band}</strong></div>
           <div class="progress-bar slim"><div class="progress-fill" style="width:${(c.band / 9) * 100}%"></div></div>
           <p>${esc(c.comment)}</p>
         </div>`
@@ -163,7 +181,7 @@
         )}</button></div>`
       : "";
     log.innerHTML = bubbles + typing + error;
-    $all("[data-say]", log).forEach((b) => b.addEventListener("click", () => FP().speak(b.dataset.say)));
+    $all("[data-say]", log).forEach((b) => b.addEventListener("click", () => FP().speak(b.dataset.say, { voice: chatVoice() })));
     $all("[data-kk]", log).forEach((b) =>
       b.addEventListener("click", () => {
         const m = chat.msgs[+b.dataset.kk];
@@ -209,7 +227,7 @@
       if (lastUser && data.has_mistake) lastUser.fix = { corrected: data.corrected, why: data.explanation };
       chat.msgs.push({ role: "model", text: data.reply, kk: data.reply_kk });
       chat.suggestions = data.suggestions;
-      if (voiceOn()) FP().speak(data.reply);
+      if (voiceOn()) FP().speak(data.reply, { voice: chatVoice() });
     } catch (e) {
       if (session !== chat) return;
       chat.error = e.code || "upstream";

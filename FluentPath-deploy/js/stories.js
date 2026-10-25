@@ -6,7 +6,6 @@
   const $ = (s, root = document) => root.querySelector(s);
   const $all = (s, root = document) => [...root.querySelectorAll(s)];
   const STORY_XP = 12;
-  const PITCH = [1, 1.18, 0.88]; // a different voice height per character
 
   let run = null; // { story, shown, correct, asked, waiting, voices }
 
@@ -41,8 +40,8 @@
   function open(id) {
     const story = stories().find((s) => s.id === id);
     if (!story) return;
-    const voices = {};
-    Object.keys(story.cast || {}).forEach((name, i) => (voices[name] = PITCH[i % PITCH.length]));
+    // Each character keeps one voice: girls and women female, boys and men male.
+    const voices = window.FP_VOICE.storyVoices(story);
     run = { story, shown: 0, correct: 0, asked: new Set(), waiting: null, voices, finished: false };
     $("#storyList").classList.add("hidden");
     $("#storyPlayer").classList.remove("hidden");
@@ -55,9 +54,12 @@
     render();
   }
 
+  const voiceOf = (who) => (who && run.voices[who]) || "nar";
+
   function say(line) {
     const [who, en] = line;
-    FP().speak(en, { pitch: who ? run.voices[who] || 1 : 0.95, rate: who ? 1 : 0.95 });
+    const next = run.story.lines[run.shown];
+    FP().speak(en, { voice: voiceOf(who), onstart: () => next && window.FP_VOICE.preload(voiceOf(next[0]), next[1]) });
   }
 
   // Advance: show the next line, or the checkpoint question attached to the last shown line.
@@ -156,7 +158,7 @@
         <div class="summary-emoji">${run.correct === s.checks.length ? "🏆" : "📖"}</div>
         <h3>${esc(t("st_done"))}</h3>
         <p class="muted">${esc(FP().fmt(t("st_score"), { n: run.correct, total: s.checks.length }))}${
-          run.paid ? ` · +${STORY_XP} XP` : ""
+          run.paid ? ` · +${FP().xp(STORY_XP)}` : ""
         }</p>
         <div class="st-end-btns">
           <button type="button" class="btn btn-ghost" id="stAgain">↻ ${esc(t("st_again"))}</button>

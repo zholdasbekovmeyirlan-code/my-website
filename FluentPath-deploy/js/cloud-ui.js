@@ -395,7 +395,7 @@ window.FP_CLOUD_UI = (() => {
     const mine = C.weekXp();
     const head = `<div class="league-head glass">
         <div><span class="muted small">${esc(t("lg_week"))}</span><strong>${esc(fmt(t("lg_days_left"), { n: daysLeft() }))}</strong></div>
-        <div class="lg-mine"><span>⚡ ${mine}</span><em>XP</em></div>
+        <div class="lg-mine"><span>⚡ ${mine}</span><em>${esc(FP().xp(mine).replace(/^\S+\s/, ""))}</em></div>
       </div>`;
     if (!C.enabled()) {
       host.innerHTML = head + offCard();
@@ -425,7 +425,7 @@ window.FP_CLOUD_UI = (() => {
             <span class="avatar avatar-sm">${initial(r.name)}</span>
             <span class="lg-name">${esc(r.name)}${me ? ` <em>· ${esc(t("lg_you"))}</em>` : ""}</span>
             <span class="lg-streak">🔥 ${r.streak || 0}</span>
-            <strong class="lg-xp">${r.week_xp} XP</strong>
+            <strong class="lg-xp">${esc(FP().xp(r.week_xp))}</strong>
           </li>`;
         })
         .join("")}</ol>${
@@ -433,7 +433,7 @@ window.FP_CLOUD_UI = (() => {
           ? ""
           : `<div class="lg-row is-me lg-out"><span class="lg-rank">—</span><span class="avatar avatar-sm">${initial(
               myName()
-            )}</span><span class="lg-name">${esc(myName())} <em>· ${esc(t("lg_you"))}</em></span><strong class="lg-xp">${mine} XP</strong></div>
+            )}</span><span class="lg-name">${esc(myName())} <em>· ${esc(t("lg_you"))}</em></span><strong class="lg-xp">${esc(FP().xp(mine))}</strong></div>
             <p class="muted small center">${esc(t("lg_join_hint"))}</p>`
       }`;
     }

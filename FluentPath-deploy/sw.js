@@ -1,8 +1,9 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "7";
+const VERSION = "8";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
+const AUDIO_CACHE = "fluentpath-audio"; // recorded voice clips: named by content hash, so they never go stale
 const META_CACHE = "fluentpath-meta"; // small settings the page leaves for push (interface language)
 const ASSETS = [
   "./",
@@ -15,6 +16,8 @@ const ASSETS = [
   `js/srs.js?v=${VERSION}`,
   `js/ai-prompts.js?v=${VERSION}`,
   `js/ai.js?v=${VERSION}`,
+  `js/audio-index.js?v=${VERSION}`,
+  `js/voice.js?v=${VERSION}`,
   `js/app.js?v=${VERSION}`,
   `js/course.js?v=${VERSION}`,
   `js/ai-ui.js?v=${VERSION}`,
@@ -43,7 +46,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => ![CACHE, FONT_CACHE, META_CACHE].includes(k)).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => ![CACHE, FONT_CACHE, AUDIO_CACHE, META_CACHE].includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -70,6 +73,20 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   // Functions (site config, AI) are always live, never cached.
   if (url.pathname.startsWith("/.netlify/")) return;
+
+  // Voice clips: cache first in their own long-lived cache (each one is fetched whole, never by range).
+  if (url.pathname.includes("/audio/") && url.pathname.endsWith(".mp3")) {
+    event.respondWith(
+      caches.open(AUDIO_CACHE).then(async (cache) => {
+        const hit = await cache.match(req);
+        if (hit) return hit;
+        const res = await fetch(req);
+        if (res.status === 200) cache.put(req, res.clone());
+        return res;
+      })
+    );
+    return;
+  }
 
   // Pages: network first so updates arrive, cached shell when offline.
   if (req.mode === "navigate") {
@@ -103,7 +120,7 @@ self.addEventListener("fetch", (event) => {
 
 /* Daily reminder: the server sends an empty push, the text lives here. */
 const REMINDER = {
-  kk: { title: "FluentPath 🔥", body: "Бүгін әлі сабақ жасаған жоқсың — streak-ті сақтауға 5 минут жетеді!" },
+  kk: { title: "FluentPath 🔥", body: "Бүгін әлі сабақ жасаған жоқсың. 5 минут оқысаң, қатарынан оқыған күндерің үзілмейді!" },
   ru: { title: "FluentPath 🔥", body: "Сегодня ещё не было занятия — 5 минут, и серия сохранится!" },
 };
 

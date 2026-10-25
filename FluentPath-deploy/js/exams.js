@@ -64,7 +64,7 @@
 
   /* ---------- sentence-by-sentence audio (long utterances get cut off in some browsers) ---------- */
   let playToken = 0;
-  function playText(text, onState) {
+  function playText(text, onState, voice) {
     const token = ++playToken;
     const parts = text.split(/(?<=[.!?])\s+/).filter(Boolean);
     let i = 0;
@@ -74,7 +74,8 @@
         onState(false);
         return;
       }
-      FP().speak(parts[i++], { onend: step });
+      const next = parts[i + 1];
+      FP().speak(parts[i++], { voice, onend: step, onstart: () => next && window.FP_VOICE.preload(voice, next) });
     };
     onState(true);
     step();
@@ -166,8 +167,8 @@
         <ol class="exam-steps">
           <li><strong>${esc(t("mock_listening"))}</strong><span>${m.tracks.length} ${esc(t("mock_tracks"))} · 10 ${esc(t("write_min"))}</span></li>
           <li><strong>${esc(t("mock_reading"))}</strong><span>${m.texts.length} ${esc(t("mock_texts"))} · 20 ${esc(t("write_min"))}</span></li>
-          <li><strong>${esc(t("mock_writing"))}</strong><span>Task 2 · 40 ${esc(t("write_min"))}</span></li>
-          <li><strong>${esc(t("mock_speaking"))}</strong><span>Part 2 · 3 ${esc(t("write_min"))}</span></li>
+          <li><strong>${esc(t("mock_writing"))}</strong><span>${esc(t("mock_w_desc"))} · 40 ${esc(t("write_min"))}</span></li>
+          <li><strong>${esc(t("mock_speaking"))}</strong><span>${esc(t("mock_s_desc"))} · 3 ${esc(t("write_min"))}</span></li>
         </ol>
         <p class="muted small">${esc(t("mock_note"))}</p>
         <button type="button" class="btn-3d btn-3d-lg" id="mockStart">${esc(t("mock_start"))}</button>
@@ -266,7 +267,7 @@
     const overall = overallBand(b);
     return `<div class="exam-result glass">
       <h2>${esc(t("mock_result"))}</h2>
-      <div class="band-badge big" style="--p:${((overall || 0) / 9) * 100}%"><strong>${overall ?? "…"}</strong><span>Overall</span></div>
+      <div class="band-badge big" style="--p:${((overall || 0) / 9) * 100}%"><strong>${overall ?? "…"}</strong><span>${esc(t("mock_overall"))}</span></div>
       <div class="band-grid">
         ${cell("l", t("mock_listening"), `<em>${m.raw.l.right}/${m.raw.l.total}</em>`)}
         ${cell("r", t("mock_reading"), `<em>${m.raw.r.right}/${m.raw.r.total}</em>`)}
@@ -362,10 +363,15 @@
           x.classList.remove("is-playing");
           x.textContent = t("listen_play");
         });
-        playText(tr.text, (on) => {
-          b.classList.toggle("is-playing", on);
-          b.textContent = on ? t("listen_pause") : t("listen_play");
-        });
+        const voice = window.FP_VOICE.trackVoice(Math.max(0, D.listening.findIndex((x) => x.id === tr.id)));
+        playText(
+          tr.text,
+          (on) => {
+            b.classList.toggle("is-playing", on);
+            b.textContent = on ? t("listen_pause") : t("listen_play");
+          },
+          voice
+        );
       })
     );
     const essay = $("#mockEssay", host);

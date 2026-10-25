@@ -1,0 +1,4 @@
+# Voice model files and local virtualenv for scripts/build-audio.mjs
+*.onnx
+voices-*.bin
+.tts/

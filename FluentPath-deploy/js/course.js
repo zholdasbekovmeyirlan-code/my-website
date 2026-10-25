@@ -205,7 +205,7 @@
       .map((sec) => {
         const done = sec.nodes.filter(isDone).length;
         const pct = Math.round((done / sec.nodes.length) * 100);
-        const lessons = sec.nodes.filter((n) => n.type === "words").length;
+        const lessons = sec.nodes.length;
         const canJump = sec.index > curSection;
         const units = sec.units
           .map((u) => {
@@ -390,7 +390,7 @@
             <span class="level-id">${sec.id}</span>
             <strong>${esc(t("c_sec_" + sec.id))}</strong>
             <span class="level-meta">${esc(fmt(t("c_lessons_words"), {
-              l: sec.nodes.filter((n) => n.type === "words").length,
+              l: sec.nodes.length,
               w: sec.words.length,
             }))}</span>
             <span class="progress-bar slim"><span class="progress-fill" style="width:${pct}%"></span></span>
@@ -1493,7 +1493,8 @@
       }
     </div>`;
 
-    host.innerHTML = `${hero}<div class="rev-grid">${strength}${forecast}</div>${weakCard}`;
+    // Before the first lesson there is nothing to chart: show only the invitation.
+    host.innerHTML = ids.length ? `${hero}<div class="rev-grid">${strength}${forecast}</div>${weakCard}` : hero;
     $("#revStart", host)?.addEventListener("click", () => startReview(due, "srs"));
     $("#revWeak", host)?.addEventListener("click", () => startReview(weak, "weak"));
     $all("[data-say]", host).forEach((b) => b.addEventListener("click", () => FP().speak(b.dataset.say)));
@@ -1544,6 +1545,6 @@
     startReview,
     isLessonOpen: () => !!L,
     sectionsDone: () => course().sections.filter((s) => s.nodes.every(isDone)).map((s) => s.id),
-    totalLessons: () => course().nodes.filter((n) => n.type === "words").length,
+    totalLessons: () => course().nodes.length,
   };
 })();

@@ -82,7 +82,7 @@ window.FP_QUESTS = (() => {
       if (item.progress >= d.goal) {
         item.done = true;
         FP().addXp(QUEST_XP, { noQuest: true });
-        FP().toast(`✅ ${title(d)} · +${QUEST_XP} XP`);
+        FP().toast(`✅ ${title(d)} · +${FP().xp(QUEST_XP)}`);
         FP().sfx("done");
       }
     });
@@ -98,7 +98,7 @@ window.FP_QUESTS = (() => {
     if (!w.claimed && w.xp >= w.target) {
       FP().state.weeklyClaimed = w.key;
       FP().addXp(WEEKLY_XP, { noQuest: true });
-      FP().toast(`🏅 ${t("q_weekly_done")} +${WEEKLY_XP} XP`);
+      FP().toast(`🏅 ${t("q_weekly_done")} +${FP().xp(WEEKLY_XP)}`);
       FP().confetti();
       FP().save();
     }
@@ -130,7 +130,7 @@ window.FP_QUESTS = (() => {
         })
         .join("")}</ul>
       <div class="weekly${w.claimed ? " is-done" : ""}">
-        <div class="weekly-top"><span>🏅 ${esc(t("q_weekly"))}</span><strong>${Math.min(w.xp, w.target)} / ${w.target} XP</strong></div>
+        <div class="weekly-top"><span>🏅 ${esc(t("q_weekly"))}</span><strong>${Math.min(w.xp, w.target)} / ${FP().xp(w.target)}</strong></div>
         <div class="progress-bar slim"><div class="progress-fill" style="width:${Math.min(100, (w.xp / w.target) * 100)}%"></div></div>
         <p class="muted small">${esc(w.claimed ? t("q_weekly_claimed") : FP().fmt(t("q_weekly_sub"), { n: WEEKLY_XP }))}</p>
       </div>`;

@@ -41,7 +41,6 @@
   let listenTrack = null;
   let listenRate = 1;
   let listenShowText = false;
-  let utter = null;
   let speakTimer = null;
   let listenSentences = [];
   let listenSentIndex = 0;
@@ -75,6 +74,21 @@
   const locale = () => LOCALES[state.lang] || "kk-KZ";
 
   // Own weekday names: some browsers ship without Kazakh locale data.
+  // Points: «15 ұпай» in Kazakh, «15 баллов» in Russian.
+  function xpText(n) {
+    if (state.lang !== "ru") return `${n} ${t("xp_unit")}`;
+    const a = Math.abs(n) % 10;
+    const b = Math.abs(n) % 100;
+    const form = a === 1 && b !== 11 ? "балл" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "балла" : "баллов";
+    return `${n} ${form}`;
+  }
+
+  // Data labels written in English: "Part 2" → «2-бөлім», "≈1.5 min" → «≈1.5 мин».
+  const partLabel = (p) => String(p || "").replace(/Part\s*(\d)/i, (_, n) => fmt(t("part_n"), { n }));
+  const minLabel = (d) => String(d || "").replace(/\bmin\b/, t("write_min"));
+  const taskLabel = (x) =>
+    String(x || "").replace(/Task\s*(\d)( practice)?/i, (_, n, pr) => fmt(t(pr ? "task_n_practice" : "task_n"), { n }));
+
   function weekday(d, style = "short") {
     const names = t(style === "long" ? "wd_long" : "wd_short").split(",");
     return names[d.getDay()] || d.toLocaleDateString(locale(), { weekday: style });
@@ -363,38 +377,18 @@
     }
   }
 
-  /* Text to speech */
-  function pickEnglishVoice() {
-    if (!window.speechSynthesis) return null;
-    const voices = speechSynthesis.getVoices() || [];
-    return (
-      voices.find((v) => /en(-|_)GB/i.test(v.lang)) ||
-      voices.find((v) => /en(-|_)US/i.test(v.lang)) ||
-      voices.find((v) => /^en/i.test(v.lang)) ||
-      null
-    );
-  }
+  /* Text to speech — recorded voices with a device-voice fallback (js/voice.js) */
+  const VOICE = window.FP_VOICE;
+  const canSpeakAloud = () => !!window.speechSynthesis || VOICE.hasClips();
 
-  function speakText(text, { rate = 1, pitch = 1, onend = null } = {}) {
-    if (!window.speechSynthesis || !text) return false;
+  function speakText(text, opts = {}) {
+    if (!text) return false;
     listenPlayingAll = false;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-GB";
-    u.rate = rate;
-    u.pitch = pitch;
-    if (onend) {
-      u.onend = onend;
-      u.onerror = onend;
-    }
-    const voice = pickEnglishVoice();
-    if (voice) u.voice = voice;
-    speechSynthesis.speak(u);
-    return true;
+    return VOICE.say(text, opts);
   }
 
   function stopSpeech() {
-    if (window.speechSynthesis) speechSynthesis.cancel();
+    VOICE.stop();
   }
 
   /* Hover / tap tooltips for charts */
@@ -905,7 +899,7 @@
         (s) =>
           `<button type="button" data-id="${s.id}" class="${currentSpeak && currentSpeak.id === s.id ? "active" : ""}"><strong>${escapeHtml(
             s.title
-          )}</strong><span class="muted small">${escapeHtml(s.part)}${
+          )}</strong><span class="muted small">${escapeHtml(partLabel(s.part))}${
             bands[s.id] ? ` · <b class="band-chip">${bands[s.id]}</b>` : ""
           }</span></button>`
       )
@@ -929,7 +923,7 @@
     stopSpeakRec();
     const panel = $("#speakPanel");
     panel.innerHTML = `
-      <span class="pill">${escapeHtml(s.part)}</span>
+      <span class="pill">${escapeHtml(partLabel(s.part))}</span>
       <h2>${escapeHtml(s.title)}</h2>
       <p class="muted small">${escapeHtml(t("speak_cue"))}</p>
       <ul class="cue-list">
@@ -1015,7 +1009,7 @@
         live.classList.add("hidden");
         $("#speakAfter").classList.remove("hidden");
         playSfx("done");
-        if (awardOnce(`speak:${s.id}`, 20)) toast(`${t("speak_done_ok")} +20 XP`);
+        if (awardOnce(`speak:${s.id}`, 20)) toast(`${t("speak_done_ok")} +${xpText(20)}`);
       }
     };
 
@@ -1067,7 +1061,7 @@
         (w) =>
           `<button type="button" data-id="${w.id}" class="${currentWrite && currentWrite.id === w.id ? "active" : ""}"><strong>${escapeHtml(
             w.title
-          )}</strong><span class="muted small">${escapeHtml(w.task)}${
+          )}</strong><span class="muted small">${escapeHtml(taskLabel(w.task))}${
             bands[w.id] ? ` · <b class="band-chip">${bands[w.id]}</b>` : ""
           }</span></button>`
       )
@@ -1101,7 +1095,7 @@
     const saved = (state.drafts && state.drafts[w.id]) || "";
     const panel = $("#writePanel");
     panel.innerHTML = `
-      <span class="pill">${escapeHtml(w.task)} · ${w.minutes || 40} ${escapeHtml(t("write_min"))}</span>
+      <span class="pill">${escapeHtml(taskLabel(w.task))} · ${w.minutes || 40} ${escapeHtml(t("write_min"))}</span>
       <h2>${escapeHtml(w.title)}</h2>
       <p class="prompt-box">${escapeHtml(w.prompt)}</p>
       <div class="write-meta">
@@ -1188,7 +1182,7 @@
       if (!longEnough()) return;
       clearWriteTimer();
       drawTimer();
-      toast(awardOnce(`write:${w.id}`, 25) ? `${t("write_done_ok")} +25 XP` : t("toast_already"));
+      toast(awardOnce(`write:${w.id}`, 25) ? `${t("write_done_ok")} +${xpText(25)}` : t("toast_already"));
     };
     $("#writeAi").onclick = async () => {
       persist();
@@ -1203,7 +1197,7 @@
         if (!state.writeBands) state.writeBands = {};
         state.writeBands[w.id] = data.overall;
         saveState();
-        if (awardOnce(`write:${w.id}`, 25)) toast(`${t("write_done_ok")} +25 XP`);
+        if (awardOnce(`write:${w.id}`, 25)) toast(`${t("write_done_ok")} +${xpText(25)}`);
       }
     };
   }
@@ -1305,8 +1299,7 @@
 
   function stopListening() {
     listenPlayingAll = false;
-    if (window.speechSynthesis) speechSynthesis.cancel();
-    utter = null;
+    VOICE.stop();
     clearInterval(speakTimer);
     $("#eqAnim")?.classList.remove("playing");
     if ($("#listenFill")) $("#listenFill").style.width = "0%";
@@ -1348,7 +1341,7 @@
         (tr, i) => `
       <button type="button" data-id="${tr.id}">
         <span><strong>🎧 ${i + 1}. ${escapeHtml(tr.title)}</strong></span>
-        <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(tr.duration || "")}</span>
+        <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(minLabel(tr.duration))}</span>
       </button>`
       )
       .join("");
@@ -1371,7 +1364,7 @@
     $("#listeningActive").classList.remove("hidden");
     updatePlayBtn();
     $("#listenTitle").textContent = tr.title;
-    $("#listenMeta").textContent = `${tr.level} · ${tr.duration || ""} · ${fmt(t("listen_sentences"), {
+    $("#listenMeta").textContent = `${tr.level} · ${minLabel(tr.duration)} · ${fmt(t("listen_sentences"), {
       n: listenSentences.length,
     })}`;
     renderTranscriptHighlight();
@@ -1393,8 +1386,10 @@
       .join("");
   }
 
+  const trackVoice = () => VOICE.trackVoice(Math.max(0, (DATA.listening || []).indexOf(listenTrack)));
+
   function speakSentence(index, thenNext) {
-    if (!listenTrack || !window.speechSynthesis) {
+    if (!listenTrack || !canSpeakAloud()) {
       toast(t("speek_unsupported"));
       return;
     }
@@ -1406,71 +1401,64 @@
       updatePlayBtn();
       return;
     }
-    speechSynthesis.cancel();
     listenSentIndex = index;
     updateListenProgress();
     renderTranscriptHighlight();
-
-    utter = new SpeechSynthesisUtterance(listenSentences[index]);
-    utter.lang = "en-GB";
-    utter.rate = listenRate;
-    utter.pitch = 1;
-    const voice = pickEnglishVoice();
-    if (voice) utter.voice = voice;
-
-    utter.onstart = () => {
-      $("#eqAnim")?.classList.add("playing");
-      updatePlayBtn();
-    };
-    utter.onend = () => {
-      if (thenNext && listenPlayingAll) {
-        speakSentence(index + 1, true);
-      } else {
-        $("#eqAnim")?.classList.remove("playing");
+    const voice = trackVoice();
+    VOICE.say(listenSentences[index], {
+      voice,
+      rate: listenRate,
+      onstart: () => {
+        $("#eqAnim")?.classList.add("playing");
         updatePlayBtn();
-      }
-    };
-    utter.onerror = () => {
-      $("#eqAnim")?.classList.remove("playing");
-      listenPlayingAll = false;
-    };
-    speechSynthesis.speak(utter);
+        if (listenSentences[index + 1]) VOICE.preload(voice, listenSentences[index + 1]);
+      },
+      onend: () => {
+        if (thenNext && listenPlayingAll) {
+          speakSentence(index + 1, true);
+        } else {
+          $("#eqAnim")?.classList.remove("playing");
+          updatePlayBtn();
+        }
+      },
+    });
   }
 
   function playListening() {
     if (!listenTrack) return;
-    if (!window.speechSynthesis) {
+    if (!canSpeakAloud()) {
       toast(t("speek_unsupported"));
       return;
     }
-    if (speechSynthesis.paused) {
-      speechSynthesis.resume();
+    if (VOICE.isPaused()) {
+      VOICE.resume();
+      listenPlayingAll = true;
       $("#eqAnim")?.classList.add("playing");
+      updatePlayBtn();
       return;
     }
     listenPlayingAll = true;
-    const startAt =
-      listenSentIndex >= listenSentences.length - 1 && !speechSynthesis.speaking ? 0 : listenSentIndex;
+    const startAt = listenSentIndex >= listenSentences.length - 1 && !VOICE.isSpeaking() ? 0 : listenSentIndex;
     speakSentence(startAt, true);
   }
 
   function pauseListening() {
-    if (!window.speechSynthesis) return;
-    if (speechSynthesis.speaking && !speechSynthesis.paused) {
-      speechSynthesis.pause();
+    if (VOICE.isSpeaking()) {
+      VOICE.pause();
       $("#eqAnim")?.classList.remove("playing");
       listenPlayingAll = false;
-    } else if (speechSynthesis.paused) {
-      speechSynthesis.resume();
+    } else if (VOICE.isPaused()) {
+      VOICE.resume();
       $("#eqAnim")?.classList.add("playing");
       listenPlayingAll = true;
     }
+    updatePlayBtn();
   }
 
   function updatePlayBtn() {
     const btn = $("#listenPlay");
     if (!btn) return;
-    const playing = window.speechSynthesis && speechSynthesis.speaking && !speechSynthesis.paused && listenPlayingAll;
+    const playing = VOICE.isSpeaking() && listenPlayingAll;
     btn.textContent = playing ? t("listen_pause") : t("listen_play");
   }
 
@@ -1585,13 +1573,13 @@
     $("#weekTotal").textContent = fmt(t("week_total"), { n: total });
     $("#weekGoal").textContent = fmt(t("week_goal_legend"), { n: state.goalXp });
     box.innerHTML = `<div class="cols" role="img" aria-label="${escapeHtml(
-      labels.map((l, i) => `${l}: ${vals[i]} XP`).join(", ")
+      labels.map((l, i) => `${l}: ${xpText(vals[i])}`).join(", ")
     )}">
       <div class="cols-plot">
         <span class="goal-line" style="bottom:calc((100% - 18px) * ${state.goalXp / max})"></span>
         ${vals
           .map(
-            (v, i) => `<div class="col" data-tip="${escapeHtml(labels[i])}: ${v} XP">
+            (v, i) => `<div class="col" data-tip="${escapeHtml(labels[i])}: ${xpText(v)}">
               <span class="col-val">${i === 6 && v ? v : ""}</span>
               <span class="col-bar" style="height:${v ? Math.max(4, (v / max) * 100) : 0}%"></span>
             </div>`
@@ -1664,6 +1652,8 @@
     $("#aiModel").value = AI.getModel();
     $("#aiModel").placeholder = AI.defaultModel;
     $("#aiKeyClear").classList.toggle("hidden", !key);
+    // When the site already has AI on its server, a personal key is not needed: keep the settings simple.
+    window.FP_CLOUD?.config().then((c) => $("#aiBlock")?.classList.toggle("hidden", !!(c && c.ai) && !key));
   }
 
   function renderGoalChips() {
@@ -1833,8 +1823,7 @@
 
     // Listening controls
     $("#listenPlay")?.addEventListener("click", () => {
-      const speaking = window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.paused);
-      if (speaking && listenTrack) pauseListening();
+      if ((VOICE.isSpeaking() || VOICE.isPaused()) && listenTrack) pauseListening();
       else playListening();
       updatePlayBtn();
     });
@@ -1857,17 +1846,12 @@
       btn.addEventListener("click", () => {
         listenRate = parseFloat(btn.dataset.rate) || 1;
         $all(".speed-row [data-rate]").forEach((b) => b.classList.toggle("active", b === btn));
-        if (window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending)) {
+        if (VOICE.isSpeaking() || VOICE.isPaused()) {
           listenPlayingAll = true;
           speakSentence(listenSentIndex, true);
         }
       });
     });
-
-    // Chrome/Safari load voices async
-    if (window.speechSynthesis) {
-      speechSynthesis.onvoiceschanged = () => pickEnglishVoice();
-    }
 
     const flip = () => {
       if (!vocabQueue.length) return;
@@ -2008,13 +1992,14 @@
     addXp: markActivity,
     awardOnce,
     fmt,
+    xp: xpText,
     startSpeechRec,
     hasSpeechRec: () => !!SpeechRec,
     goalReached,
     confetti: burstConfetti,
     speak: speakText,
     stopSpeech,
-    hasTTS: () => !!window.speechSynthesis,
+    hasTTS: canSpeakAloud,
     sfx: playSfx,
     showView,
     refresh: updateChrome,
