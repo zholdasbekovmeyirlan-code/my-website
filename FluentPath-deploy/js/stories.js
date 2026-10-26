@@ -7,6 +7,8 @@
   const $ = (s, root = document) => root.querySelector(s);
   const $all = (s, root = document) => [...root.querySelectorAll(s)];
   const STORY_XP = 12;
+  // Story cards take the colour of their level, the same as the lesson path.
+  const LEVEL_C = { A1: "#34d399", A2: "#22d3ee", B1: "#a78bfa", B2: "#7c9bff" };
 
   let run = null; // { story, shown, correct, asked, waiting, voices }
 
@@ -18,7 +20,7 @@
     const done = FP().state.storiesDone || {};
     box.innerHTML = stories()
       .map(
-        (s) => `<button type="button" class="story-card${done[s.id] ? " is-done" : ""}" data-story="${s.id}">
+        (s) => `<button type="button" class="story-card${done[s.id] ? " is-done" : ""}" data-story="${s.id}" style="--c:${LEVEL_C[s.level] || "#fb923c"}">
           <span class="story-ico">${ic(s.icon)}</span>
           <span class="story-lvl">${s.level}</span>
           <strong>${esc(s.title)}</strong>
