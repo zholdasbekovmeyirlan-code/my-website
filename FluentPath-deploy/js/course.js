@@ -1547,5 +1547,7 @@
     isLessonOpen: () => !!L,
     sectionsDone: () => course().sections.filter((s) => s.nodes.every(isDone)).map((s) => s.id),
     totalLessons: () => course().nodes.length,
+    // Level of the next lesson on the path (B2 once everything is done).
+    currentLevel: () => course().nodes[currentIndex()]?.section.id || "B2",
   };
 })();

@@ -11,8 +11,22 @@ const json = (statusCode, body) => ({
   body: JSON.stringify(body),
 });
 
+// Browsers send Origin with every POST; only this site's own pages may use the key.
+function foreignOrigin(headers = {}) {
+  const origin = headers.origin || headers.Origin;
+  if (!origin) return false;
+  const hosts = [headers.host, headers["x-forwarded-host"]].filter(Boolean);
+  if (!hosts.length) return false;
+  try {
+    return !hosts.includes(new URL(origin).host);
+  } catch {
+    return true;
+  }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "method" });
+  if (foreignOrigin(event.headers)) return json(403, { error: "forbidden" });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return json(503, { error: "not_configured" });
   if (!event.body || event.body.length > MAX_BODY) return json(413, { error: "too_large" });

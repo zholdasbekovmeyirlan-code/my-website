@@ -9,17 +9,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="FluentPath" />
   <title>FluentPath — ағылшын тілін қазақша үйрен</title>
+  <!-- Link preview in WhatsApp, Telegram and social networks -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FluentPath" />
+  <meta property="og:locale" content="kk_KZ" />
+  <meta property="og:title" content="FluentPath — ағылшын тілін қазақша үйрен" />
+  <meta property="og:description" content="Күніне 10 минут: A1-ден B2-ге дейінгі қысқа сабақтар, сөз қайталау, AI-мен сөйлесу, IELTS және ҰБТ дайындық. Тегін." />
+  <meta name="twitter:card" content="summary" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=10" />
-  <link rel="stylesheet" href="css/theme.css?v=10" />
+  <link rel="stylesheet" href="css/style.css?v=11" />
+  <link rel="stylesheet" href="css/theme.css?v=11" />
 </head>
 <body>
-  <script src="js/icons.js?v=10"></script>
+  <script src="js/icons.js?v=11"></script>
   <div class="bg-scene" aria-hidden="true">
     <div class="orb orb-a"></div>
     <div class="orb orb-b"></div>
@@ -261,7 +268,7 @@
       </div>
 
       <div class="vocab-toolbar glass">
-        <input type="search" id="vocabSearch" placeholder="Сөз іздеу" data-i18n-placeholder="search_ph" autocomplete="off" />
+        <input type="search" id="vocabSearch" placeholder="Сөз іздеу" data-i18n-placeholder="search_ph" aria-label="Сөз іздеу" autocomplete="off" />
         <select id="vocabLevel" aria-label="Level">
           <option value="all" data-i18n="level_all">Барлық деңгей</option>
           <option value="A1">A1</option>
@@ -435,6 +442,7 @@
         <p class="score-big" id="quizScore">0%</p>
         <p id="quizLevelHint"></p>
         <div class="hero-cta">
+          <button type="button" class="btn btn-primary hidden" id="quizGoLevel"></button>
           <button type="button" class="btn btn-primary" id="quizRetry" data-i18n="quiz_retry">Қайта</button>
           <button type="button" class="btn btn-ghost" data-nav="learn" data-i18n="c_continue_lesson">Сабақты жалғастыру</button>
         </div>
@@ -796,22 +804,22 @@
   <div class="viz-tip hidden" id="vizTip" role="tooltip"></div>
   <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
-  <script src="js/data.js?v=10"></script>
-  <script src="js/course-data.js?v=10"></script>
-  <script src="js/content-extra.js?v=10"></script>
-  <script src="js/i18n.js?v=10"></script>
-  <script src="js/srs.js?v=10"></script>
-  <script src="js/ai-prompts.js?v=10"></script>
-  <script src="js/ai.js?v=10"></script>
-  <script src="js/audio-index.js?v=10"></script>
-  <script src="js/voice.js?v=10"></script>
-  <script src="js/app.js?v=10"></script>
-  <script src="js/course.js?v=10"></script>
-  <script src="js/ai-ui.js?v=10"></script>
-  <script src="js/quests.js?v=10"></script>
-  <script src="js/stories.js?v=10"></script>
-  <script src="js/exams.js?v=10"></script>
-  <script src="js/cloud.js?v=10"></script>
-  <script src="js/cloud-ui.js?v=10"></script>
+  <script src="js/data.js?v=11"></script>
+  <script src="js/course-data.js?v=11"></script>
+  <script src="js/content-extra.js?v=11"></script>
+  <script src="js/i18n.js?v=11"></script>
+  <script src="js/srs.js?v=11"></script>
+  <script src="js/ai-prompts.js?v=11"></script>
+  <script src="js/ai.js?v=11"></script>
+  <script src="js/audio-index.js?v=11"></script>
+  <script src="js/voice.js?v=11"></script>
+  <script src="js/app.js?v=11"></script>
+  <script src="js/course.js?v=11"></script>
+  <script src="js/ai-ui.js?v=11"></script>
+  <script src="js/quests.js?v=11"></script>
+  <script src="js/stories.js?v=11"></script>
+  <script src="js/exams.js?v=11"></script>
+  <script src="js/cloud.js?v=11"></script>
+  <script src="js/cloud-ui.js?v=11"></script>
 </body>
 </html>

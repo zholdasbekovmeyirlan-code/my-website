@@ -1,6 +1,6 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "10";
+const VERSION = "11";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
 const AUDIO_CACHE = "fluentpath-audio"; // recorded voice clips: named by content hash, so they never go stale
@@ -83,7 +83,8 @@ self.addEventListener("fetch", (event) => {
         const hit = await cache.match(req);
         if (hit) return hit;
         const res = await fetch(req);
-        if (res.status === 200) cache.put(req, res.clone());
+        // Only real audio: a missing clip comes back as the app page (see _redirects) and must not be kept.
+        if (res.status === 200 && (res.headers.get("content-type") || "").startsWith("audio/")) cache.put(req, res.clone());
         return res;
       })
     );

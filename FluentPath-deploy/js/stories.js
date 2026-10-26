@@ -71,7 +71,7 @@
     const s = run.story;
     const check = s.checks.find((c) => c.after === run.shown - 1 && !run.asked.has(c.after));
     if (check) {
-      run.waiting = check;
+      run.waiting = FP().mixOptions(check);
       draw();
       return;
     }
@@ -97,7 +97,6 @@
   function continueAfterCheck() {
     if (!run.waiting) return;
     run.asked.add(run.waiting.after);
-    delete run.waiting.picked;
     run.waiting = null;
     next();
   }

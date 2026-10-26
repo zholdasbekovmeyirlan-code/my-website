@@ -39,6 +39,7 @@
   let flashFlipped = false;
   let quiz = null;
   let listenTrack = null;
+  let listenQs = []; // the open track's questions, options mixed
   let listenRate = 1;
   let listenShowText = false;
   let speakTimer = null;
@@ -110,6 +111,7 @@
     $all("[data-i18n-placeholder]").forEach((el) => {
       const key = el.getAttribute("data-i18n-placeholder");
       if (key) el.setAttribute("placeholder", t(key));
+      if (key && el.hasAttribute("aria-label")) el.setAttribute("aria-label", t(key));
     });
     $all("[data-i18n-title]").forEach((el) => {
       const key = el.getAttribute("data-i18n-title");
@@ -502,14 +504,18 @@
   function initWotd() {
     const start = new Date(new Date().getFullYear(), 0, 0);
     const dayOfYear = Math.floor((Date.now() - start) / 86400000);
-    const pool = DATA.wordOfDayPool || [];
-    const item = pool[dayOfYear % pool.length] || { word: "crucial", ipa: "", meaning: "", example: "" };
-    const found = DATA.vocab.find((w) => w.en.toLowerCase() === item.word.toLowerCase());
+    // A word from the learner's own level (a beginner gets A1 words), a different one each day.
+    const level = course()?.currentLevel?.() || "A1";
+    const words = DATA.vocab.filter((w) => w.level === level && w.example);
+    const found = words.length ? words[(dayOfYear * 37) % words.length] : DATA.vocab[0];
+    const extra = (DATA.wordOfDayPool || []).find((x) => x.word.toLowerCase() === found.en.toLowerCase());
+    const item = { word: found.en, ipa: extra?.ipa || "", meaning: found.kk, example: found.example };
     $("#wotdWord").textContent = item.word;
     $("#wotdIpa").textContent = item.ipa;
+    $("#wotdIpa").classList.toggle("hidden", !item.ipa);
     $("#wotdMeaning").textContent = item.meaning;
     $("#wotdExample").textContent = `“${item.example}”`;
-    $("#wotdLevel").textContent = found ? `${found.level} · ${t(`topic_${found.topic}`)}` : "B2";
+    $("#wotdLevel").textContent = `${found.level} · ${t(`topic_${found.topic}`)}`;
     $("#wotdSay").onclick = () => speakText(item.word);
     $("#wotdSave").onclick = () => {
       if (found) {
@@ -537,7 +543,7 @@
     const level = $("#vocabLevel")?.value || "all";
     const topic = vocabTopic;
     const q = ($("#vocabSearch")?.value || "").trim().toLowerCase();
-    return DATA.vocab.filter((w) => {
+    const list = DATA.vocab.filter((w) => {
       if (level !== "all" && w.level !== level) return false;
       if (topic !== "all" && w.topic !== topic) return false;
       const st = wordStatus(w);
@@ -549,6 +555,17 @@
       }
       return true;
     });
+    if (!q) return list;
+    // The word itself first, then words that start with the search, then matches inside examples.
+    const rank = (w) => {
+      const en = w.en.toLowerCase();
+      const kk = w.kk.toLowerCase().split(/,\s*/);
+      if (en === q || kk.includes(q)) return 0;
+      if (en.startsWith(q) || kk.some((x) => x.startsWith(q))) return 1;
+      if (en.includes(q) || w.kk.toLowerCase().includes(q)) return 2;
+      return 3;
+    };
+    return list.map((w) => [rank(w), w]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
   }
 
   function setVocabMode(mode) {
@@ -566,6 +583,13 @@
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
+  }
+
+  // A copy of a question with its options in random order, so the right answer is not always in the same place.
+  function mixOptions(q) {
+    const key = "a" in q ? "a" : "answer";
+    const order = shuffle(q.options.map((_, i) => i));
+    return { ...q, options: order.map((i) => q.options[i]), [key]: order.indexOf(q[key]) };
   }
 
   function topicLabel(id) {
@@ -698,7 +722,7 @@
     const l = DATA.lessons[i];
     $all("#lessonList button").forEach((b, idx) => b.classList.toggle("active", idx === i));
     const body = $("#lessonBody");
-    const p = l.practice;
+    const p = mixOptions(l.practice);
     body.innerHTML = `
       ${l.body}
       <div class="mini-q">
@@ -755,7 +779,9 @@
     else {
       bank = shuffle([...DATA.quizBanks.vocab, ...DATA.quizBanks.grammar, ...DATA.quizBanks.placement.slice(0, 5)]);
     }
-    const questions = shuffle(bank).slice(0, mode === "placement" ? 15 : mode === "mixed" ? 12 : 10);
+    const questions = shuffle(bank)
+      .slice(0, mode === "placement" ? 15 : mode === "mixed" ? 12 : 10)
+      .map(mixOptions);
     quiz = { mode, questions, i: 0, score: 0, answered: false };
     $("#quizSetup").classList.add("hidden");
     $("#quizResult").classList.add("hidden");
@@ -816,10 +842,21 @@
     $("#quizResult").classList.remove("hidden");
     $("#quizScore").textContent = `${pct}%`;
     let key;
+    let level = null;
     if (quiz.mode === "placement") {
-      key = pct >= 85 ? "quiz_lvl_b2" : pct >= 70 ? "quiz_lvl_b1" : pct >= 50 ? "quiz_lvl_a2" : "quiz_lvl_a1";
+      level = pct >= 85 ? "B2" : pct >= 70 ? "B1" : pct >= 50 ? "A2" : "A1";
+      key = `quiz_lvl_${level.toLowerCase()}`;
     } else key = pct >= 80 ? "quiz_hint_great" : pct >= 60 ? "quiz_hint_good" : "quiz_hint_low";
     $("#quizLevelHint").textContent = `${fmt(t("quiz_correct_of"), { n: quiz.score, total })} ${t(key)}`;
+    // Above A1 the result leads straight to that part of the path, where the learner can skip ahead.
+    const go = $("#quizGoLevel");
+    if (go) {
+      go.classList.toggle("hidden", !level || level === "A1");
+      go.dataset.level = level || "";
+      go.innerHTML = `<span>${escapeHtml(fmt(t("quiz_go_level"), { level: level || "" }))}</span>${ic("arrow-right")}`;
+    }
+    $("#quizRetry")?.classList.toggle("btn-primary", !level || level === "A1");
+    $("#quizRetry")?.classList.toggle("btn-ghost", !!level && level !== "A1");
 
     state.quizHistory.unshift({ mode: quiz.mode, score: pct, date: localDay(), detail: `${quiz.score}/${total}` });
     state.quizHistory = state.quizHistory.slice(0, 20);
@@ -1360,6 +1397,7 @@
   function openListening(id, keepLangOnly = false) {
     const tr = (DATA.listening || []).find((x) => x.id === id);
     if (!tr) return;
+    if (!keepLangOnly || listenTrack !== tr) listenQs = tr.questions.map(mixOptions);
     listenTrack = tr;
     listenSentences = splitSentences(tr.text);
     if (!keepLangOnly) {
@@ -1380,7 +1418,7 @@
     if (tog) tog.textContent = listenShowText ? t("listen_hide") : t("listen_show");
     $("#listenScore")?.classList.add("hidden");
     updateListenProgress();
-    $("#listenQs").innerHTML = tr.questions
+    $("#listenQs").innerHTML = listenQs
       .map(
         (qq, qi) => `
       <div class="rq">
@@ -1476,18 +1514,19 @@
 
   function checkListening() {
     if (!listenTrack) return;
-    let score = 0;
-    listenTrack.questions.forEach((qq, qi) => {
-      const picked = document.querySelector(`input[name="lq${qi}"]:checked`);
-      if (picked && +picked.value === qq.a) score += 1;
-    });
+    const picks = listenQs.map((_, qi) => document.querySelector(`input[name="lq${qi}"]:checked`));
+    if (picks.some((x) => !x)) {
+      toast(t("answer_all"));
+      return;
+    }
+    const score = listenQs.filter((qq, qi) => +picks[qi].value === qq.a).length;
     const el = $("#listenScore");
     el.classList.remove("hidden");
-    el.textContent = `${t("result_score")}: ${score} / ${listenTrack.questions.length}`;
+    el.textContent = `${t("result_score")}: ${score} / ${listenQs.length}`;
     awardOnce(`listen:${listenTrack.id}`, score * 6 + 8);
     window.FP_QUESTS?.bump("listen");
-    playSfx(score === listenTrack.questions.length ? "done" : "ok");
-    if (score === listenTrack.questions.length) burstConfetti();
+    playSfx(score === listenQs.length ? "done" : "ok");
+    if (score === listenQs.length) burstConfetti();
   }
 
   /* Reading */
@@ -1521,7 +1560,8 @@
       /\n\n/g,
       "</p><p>"
     )}</p>`;
-    $("#readingQs").innerHTML = r.questions
+    const qs = r.questions.map(mixOptions);
+    $("#readingQs").innerHTML = qs
       .map(
         (qq, qi) => `
       <div class="rq">
@@ -1533,21 +1573,22 @@
       )
       .join("");
     $("#readingCheck").onclick = () => {
-      let score = 0;
-      r.questions.forEach((qq, qi) => {
-        const picked = document.querySelector(`input[name="rq${qi}"]:checked`);
-        if (picked && +picked.value === qq.a) score += 1;
-      });
+      const picks = qs.map((_, qi) => document.querySelector(`input[name="rq${qi}"]:checked`));
+      if (picks.some((x) => !x)) {
+        toast(t("answer_all"));
+        return;
+      }
+      const score = qs.filter((qq, qi) => +picks[qi].value === qq.a).length;
       const el = $("#readingScore");
       el.classList.remove("hidden");
-      el.textContent = `${t("result_score")}: ${score} / ${r.questions.length}`;
+      el.textContent = `${t("result_score")}: ${score} / ${qs.length}`;
       awardOnce(`read:${r.id}`, score * 5 + 5);
       if (!state.readDone) state.readDone = {};
       state.readDone[r.id] = Math.max(state.readDone[r.id] || 0, score);
       saveState();
       window.FP_QUESTS?.bump("read");
-      playSfx(score === r.questions.length ? "done" : "ok");
-      if (score === r.questions.length) burstConfetti();
+      playSfx(score === qs.length ? "done" : "ok");
+      if (score === qs.length) burstConfetti();
     };
   }
 
@@ -1956,6 +1997,11 @@
     });
     $("#quizNext")?.addEventListener("click", nextQuiz);
     $("#quizRetry")?.addEventListener("click", resetQuizUI);
+    $("#quizGoLevel")?.addEventListener("click", (e) => {
+      const level = e.currentTarget.dataset.level;
+      showView("learn");
+      setTimeout(() => $(`#sec-${level}`)?.scrollIntoView({ behavior: "smooth" }), 380);
+    });
     $("#readingBack")?.addEventListener("click", initReadingList);
 
     $("#resetProgress")?.addEventListener("click", async () => {
@@ -1996,6 +2042,7 @@
     confirm: askConfirm,
     escapeHtml,
     shuffle,
+    mixOptions,
     addXp: markActivity,
     awardOnce,
     fmt,

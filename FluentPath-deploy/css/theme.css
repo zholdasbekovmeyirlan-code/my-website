@@ -452,7 +452,7 @@ html[data-skin][data-accent][data-theme="light"] { --hot: #ea580c; --gold: #d977
 
 /* brand colour: sky blue of the Kazakh flag, gold for highlights */
 html[data-skin][data-accent="sky"] { --accent: #38bdf8; --accent-ink: #04131c; --gold: #f5c242; }
-html[data-skin][data-accent="sky"][data-theme="light"] { --accent: #0284c7; --accent-ink: #ffffff; --gold: #c08a00; }
+html[data-skin][data-accent="sky"][data-theme="light"] { --accent: #0369a1; --accent-ink: #ffffff; --gold: #c08a00; }
 html[data-skin][data-accent="sky"] .eyebrow,
 html[data-skin][data-accent="sky"] .level-id { color: var(--gold); }
 
@@ -779,3 +779,13 @@ html[data-skin] .listening-pick button,
 html[data-skin] .reading-pick button { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
 html[data-skin] .listening-pick .track-meta,
 html[data-skin] .reading-pick .track-meta { margin-left: calc(34px + 0.55rem); color: var(--muted); font-size: 0.82rem; }
+
+/* level cards: the slim bar keeps its height and sits at the bottom of every card */
+html[data-skin] .level-card .progress-bar { flex: none; height: 6px; margin-top: auto; }
+html[data-skin] .level-card .level-meta { margin-bottom: 0.55rem; }
+
+/* light mode: text in level colours is darkened enough to read on white (WCAG AA) */
+html[data-skin][data-icons="color"][data-theme="light"] .sec-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .cont-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .level-id,
+html[data-skin][data-icons="color"][data-theme="light"] .node-bubble { filter: none; color: color-mix(in srgb, var(--sec) 55%, #000); }
