@@ -1,0 +1,870 @@
+/* FluentPath — minimal premium look: black and white, one accent, hairline borders, Inter Tight headings, no glow.
+   Layered over style.css. Colour and type come from the tokens below; components only use tokens. */
+
+/* ---------- skin tokens ---------- */
+html[data-skin="mono"] {
+  --bg: #09090b;
+  --bg-elev: #0e0e11;
+  --card: #111114;
+  --card-solid: #111114;
+  --surface-2: #1a1a1f;
+  --text: #fafafa;
+  --muted: #a1a1aa;
+  --line: rgba(250, 250, 250, 0.08);
+  --line-strong: rgba(250, 250, 250, 0.16);
+  --accent: #fafafa;
+  --accent-ink: #09090b;
+  --display: "Inter Tight", "Inter", system-ui, sans-serif;
+  --display-weight: 600;
+  --display-scale: 1;
+}
+html[data-skin="mono"][data-theme="light"] {
+  --bg: #fafafa;
+  --bg-elev: #ffffff;
+  --card: #ffffff;
+  --card-solid: #ffffff;
+  --surface-2: #f0f0f2;
+  --text: #09090b;
+  --muted: #63636b;
+  --line: rgba(9, 9, 11, 0.09);
+  --line-strong: rgba(9, 9, 11, 0.18);
+  --accent: #09090b;
+  --accent-ink: #ffffff;
+}
+
+/* shared tokens, mapped onto the names style.css already uses */
+html[data-skin] {
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 38%, var(--line));
+  --primary: var(--accent);
+  --primary-2: var(--accent);
+  --btn: var(--accent);
+  --btn-top: var(--accent);
+  --btn-shadow: transparent;
+  --success: #5fb38a;
+  --ok: #5fb38a;
+  --ok-shadow: transparent;
+  --danger: #e0786d;
+  --bad: #e0786d;
+  --bad-shadow: transparent;
+  --warning: var(--accent);
+  --glow: none;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 12px 32px -16px rgba(0, 0, 0, 0.45);
+  --radius: 18px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --tier1: color-mix(in srgb, var(--accent) 25%, var(--surface-2));
+  --tier2: color-mix(in srgb, var(--accent) 50%, var(--surface-2));
+  --tier3: color-mix(in srgb, var(--accent) 75%, var(--surface-2));
+  --tier4: var(--accent);
+  --bar: var(--accent);
+}
+html[data-skin][data-theme="light"] {
+  --success: #2f8a62;
+  --ok: #2f8a62;
+  --danger: #b9473c;
+  --bad: #b9473c;
+  --shadow: 0 1px 2px rgba(27, 24, 19, 0.05), 0 12px 30px -18px rgba(27, 24, 19, 0.22);
+}
+
+/* ---------- canvas ---------- */
+html[data-skin] body { background: var(--bg); letter-spacing: -0.003em; -webkit-font-smoothing: antialiased; }
+html[data-skin] .orb,
+html[data-skin] .grid-fx { display: none; }
+html[data-skin] .bg-scene { background: radial-gradient(1100px 520px at 50% -240px, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%), var(--bg); }
+html[data-skin] .progress-top { background: var(--accent); box-shadow: none; height: 2px; }
+html[data-skin] ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* ---------- type ---------- */
+html[data-skin] h1,
+html[data-skin] h2,
+html[data-skin] .section-title,
+html[data-skin] .page-head h1,
+html[data-skin] .logo-text,
+html[data-skin] .wotd h2,
+html[data-skin] .flash-word,
+html[data-skin] .intro-word span,
+html[data-skin] .prompt-word span,
+html[data-skin] .summary h2 {
+  font-family: var(--display);
+  font-weight: var(--display-weight);
+  letter-spacing: -0.012em;
+}
+html[data-skin] .hero h1 { font-size: calc(clamp(2.2rem, 5.6vw, 3.6rem) * var(--display-scale)); line-height: 1.04; }
+html[data-skin] .page-head h1 { font-size: calc(clamp(1.6rem, 3.4vw, 2.1rem) * var(--display-scale)); }
+html[data-skin] .section-title { font-size: calc(1.55rem * var(--display-scale)); }
+html[data-skin] .grad-text { background: none; -webkit-text-fill-color: currentColor; color: var(--accent); }
+html[data-skin] .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.72rem; font-weight: 600; }
+html[data-skin] .lead,
+html[data-skin] .page-head p,
+html[data-skin] .section-sub { color: var(--muted); }
+html[data-skin] h3,
+html[data-skin] strong { letter-spacing: -0.005em; }
+html[data-skin] .side-card h3,
+html[data-skin] .card-title,
+html[data-skin] .quests-head h3,
+html[data-skin] .cloud-card h3,
+html[data-skin] .rev-card h3 { font-family: var(--font); font-weight: 600; }
+
+/* ---------- surfaces ---------- */
+html[data-skin] .glass {
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: none;
+}
+html[data-skin] .progress-bar { background: var(--surface-2); }
+html[data-skin] .progress-fill { background: var(--accent); box-shadow: none; }
+html[data-skin] .pill { background: var(--accent-soft); color: var(--accent); font-weight: 600; letter-spacing: 0.02em; }
+html[data-skin] .pill.soft { background: var(--surface-2); color: var(--muted); }
+
+/* ---------- top bar ---------- */
+html[data-skin] .topbar { background: color-mix(in srgb, var(--bg) 84%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+html[data-skin] .logo-mark {
+  background: transparent;
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  box-shadow: none;
+  border-radius: 11px;
+  font-family: var(--display);
+  font-weight: var(--display-weight);
+  font-size: calc(0.95rem * var(--display-scale));
+  letter-spacing: 0.02em;
+}
+html[data-skin] .logo-text { font-size: calc(1.15rem * var(--display-scale)); }
+html[data-skin] .logo-text span { color: var(--accent); }
+html[data-skin] .nav button { color: var(--muted); font-weight: 500; border-radius: 10px; }
+html[data-skin] .nav button:hover { color: var(--text); background: var(--surface-2); }
+html[data-skin] .nav button.active { color: var(--text); background: transparent; box-shadow: inset 0 -1.5px 0 var(--accent); border-radius: 0; }
+html[data-skin] .chip,
+html[data-skin] .chip-streak,
+html[data-skin] .chip-xp {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+html[data-skin] .chip .ic { color: var(--accent); fill: none; }
+html[data-skin] .lang-select,
+html[data-skin] .icon-btn,
+html[data-skin] .burger { background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 11px; }
+html[data-skin] .lang-select { font-size: 0.78rem; }
+
+/* ---------- buttons ---------- */
+html[data-skin] .btn-3d {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: none;
+  font-family: var(--font);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  border-radius: 12px;
+  transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+}
+html[data-skin] .btn-3d:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+html[data-skin] .btn-3d:active:not(:disabled) { transform: none; box-shadow: none; filter: brightness(0.96); }
+html[data-skin] .btn-3d:disabled { background: var(--surface-2); color: var(--muted); box-shadow: none; }
+html[data-skin] .btn-3d-light,
+html[data-skin] .btn-3d-ghost { background: transparent; color: var(--text); border: 1px solid var(--line-strong); box-shadow: none; }
+html[data-skin] .btn-3d-ghost { color: var(--muted); }
+html[data-skin] .btn { border-radius: 12px; font-weight: 600; }
+html[data-skin] .btn:hover { transform: none; }
+html[data-skin] .btn-primary { background: var(--accent); color: var(--accent-ink); }
+html[data-skin] .btn-glass,
+html[data-skin] .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line-strong); backdrop-filter: none; }
+html[data-skin] .btn-glass:hover,
+html[data-skin] .btn-ghost:hover,
+html[data-skin] .btn-secondary:hover { border-color: var(--accent-line); }
+html[data-skin] .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+html[data-skin] .btn-success { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 35%, transparent); }
+html[data-skin] .btn-danger { background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 32%, transparent); }
+html[data-skin] .chip-btn { background: transparent; border: 1px solid var(--line); color: var(--muted); font-weight: 500; }
+html[data-skin] .chip-btn:hover { color: var(--text); border-color: var(--line-strong); }
+html[data-skin] .chip-btn.active { color: var(--text); border-color: var(--accent-line); background: var(--accent-soft); }
+html[data-skin] .back-link { color: var(--muted); font-weight: 500; }
+html[data-skin] .link-btn { color: var(--accent); }
+
+/* ---------- icon tiles: one accent, quiet backgrounds ---------- */
+html[data-skin]:not([data-icons="color"]) .pc-card,
+html[data-skin]:not([data-icons="color"]) .sec,
+html[data-skin]:not([data-icons="color"]) .level-card,
+html[data-skin]:not([data-icons="color"]) .cont-card { --c: var(--accent) !important; --sec: var(--accent) !important; }
+html[data-skin] .pc-ico,
+html[data-skin] .feature-icon,
+html[data-skin] .feature:nth-child(n) .feature-icon,
+html[data-skin] .q-ico,
+html[data-skin] .story-ico,
+html[data-skin] .ach.on .ach-ico,
+html[data-skin] .exam-badge,
+html[data-skin] .auth-ico,
+html[data-skin] .cta-ico,
+html[data-skin] .cloud-off-ico,
+html[data-skin] .empty-card > span,
+html[data-skin] .summary-emoji,
+html[data-skin] .st-end .summary-emoji {
+  color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+html[data-skin] .ach .ach-ico { background: var(--surface-2); color: var(--muted); box-shadow: none; }
+html[data-skin] .mode-emoji,
+html[data-skin] .sc-ico,
+html[data-skin] .level-ico,
+html[data-skin] .side-ico,
+html[data-skin] .task-ico,
+html[data-skin] .track-title .ic,
+html[data-skin] .st-title .ic,
+html[data-skin] .st-q .ic,
+html[data-skin] .cloud-card h3 .ic,
+html[data-skin] .auth-perks .ic,
+html[data-skin] .exam-block-head .ic,
+html[data-skin] .chat-title .ic,
+html[data-skin] .weekly-top .ic,
+html[data-skin] .more-grid button .ic,
+html[data-skin] .path-strip .ic,
+html[data-skin] .goal-sub .ic,
+html[data-skin] .ring-label .ic,
+html[data-skin] .lg-streak .ic,
+html[data-skin] .lg-mine .ic,
+html[data-skin] .wk i .ic { color: var(--accent); fill: none; }
+html[data-skin] .quest.is-done .q-ico { color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); }
+
+/* ---------- home ---------- */
+html[data-skin] .trust-item { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .trust-item strong { font-family: var(--display); font-weight: var(--display-weight); font-size: calc(1.45rem * var(--display-scale)); }
+html[data-skin] .cont-card {
+  border: 1px solid var(--accent-line);
+  background: linear-gradient(180deg, var(--accent-soft), transparent 55%), var(--card);
+}
+html[data-skin] .cont-eyebrow { color: var(--accent); font-weight: 600; letter-spacing: 0.04em; }
+html[data-skin] .cont-card h3 { font-family: var(--display); font-weight: var(--display-weight); font-size: calc(1.35rem * var(--display-scale)); }
+html[data-skin] .wotd-word h2 { font-size: calc(2.1rem * var(--display-scale)); }
+html[data-skin] .example { border-left-color: var(--accent); background: var(--surface-2); }
+html[data-skin] .level-card { background: var(--card); border: 1px solid var(--line); border-top: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .level-card:hover { border-color: var(--accent-line); border-top-color: var(--accent-line); }
+html[data-skin] .level-id { color: var(--accent); letter-spacing: 0.08em; }
+html[data-skin] .level-card strong { font-family: var(--display); font-weight: var(--display-weight); font-size: calc(1.15rem * var(--display-scale)); }
+html[data-skin] .feature { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .weekly { border: 1px solid var(--line); background: var(--surface-2); }
+html[data-skin] .weekly .progress-fill { background: var(--accent); }
+html[data-skin] .weekly.is-done { border-color: color-mix(in srgb, var(--success) 40%, var(--line)); background: color-mix(in srgb, var(--success) 8%, transparent); }
+
+/* ---------- practice hub ---------- */
+html[data-skin] .pc-card { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .pc-card:hover { border-color: var(--accent-line); transform: translateY(-2px); }
+html[data-skin] .pc-card strong { font-family: var(--display); font-weight: var(--display-weight); font-size: calc(1.12rem * var(--display-scale)); }
+html[data-skin] .pc-card em { color: var(--muted); font-weight: 600; }
+html[data-skin] .pc-ai { background: linear-gradient(180deg, var(--accent-soft), transparent 60%), var(--card); border-color: var(--accent-line); }
+
+/* ---------- lesson path ---------- */
+html[data-skin] .sec-head {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+html[data-skin] .sec-eyebrow { color: var(--accent); opacity: 1; letter-spacing: 0.06em; }
+html[data-skin] .sec-head h2 { font-size: calc(1.4rem * var(--display-scale)); }
+html[data-skin] .sec-meta { color: var(--muted); opacity: 1; }
+html[data-skin] .sec-bar { background: var(--surface-2); height: 4px; }
+html[data-skin] .sec-bar .progress-fill { background: var(--accent); }
+html[data-skin] .unit-head::before,
+html[data-skin] .unit-head::after { height: 1px; background: var(--line); }
+html[data-skin] .unit-head strong { font-family: var(--display); font-weight: var(--display-weight); font-size: calc(1rem * var(--display-scale)); }
+html[data-skin] .node {
+  background: var(--card);
+  color: var(--accent);
+  border: 1.5px solid var(--accent-line);
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.6);
+}
+html[data-skin] .node:active { transform: translateX(var(--x)) scale(0.97); box-shadow: none; }
+html[data-skin] .node.is-current {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  outline: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 7px;
+  animation: none;
+}
+html[data-skin] .node.is-done { background: var(--accent-soft); color: var(--accent); filter: none; }
+html[data-skin] .node.is-locked { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
+html[data-skin] .node.is-locked .node-ico { opacity: 0.6; }
+html[data-skin] .node-bubble { background: var(--card); color: var(--accent); border: 1px solid var(--accent-line); box-shadow: none; letter-spacing: 0.12em; font-weight: 600; }
+html[data-skin] .node-bubble::after { border-top-color: var(--accent-line); }
+html[data-skin] .node-stars { color: var(--accent); }
+html[data-skin] .node-pop { background: var(--card); color: var(--text); border: 1px solid var(--accent-line); box-shadow: var(--shadow); }
+html[data-skin] .node-pop .btn-3d { background: var(--accent); color: var(--accent-ink); }
+html[data-skin] .pop-words span { background: var(--surface-2); color: var(--text); }
+html[data-skin] .path-strip > * { background: var(--card); border: 1px solid var(--line); }
+html[data-skin] .goal-card .ring-fg { stroke: var(--accent); }
+html[data-skin] .goal-card .ring-bg { stroke: var(--surface-2); }
+html[data-skin] .wk.on i { background: var(--accent-soft); }
+html[data-skin] .wk.today i { border-color: var(--accent-line); }
+
+/* ---------- lesson player ---------- */
+html[data-skin] .lesson { background: var(--bg); }
+html[data-skin] .lesson-bar { background: var(--surface-2); }
+html[data-skin] .lesson-bar-fill { background: var(--accent); box-shadow: none; }
+html[data-skin] .lesson-combo { color: var(--accent); }
+html[data-skin] .choice,
+html[data-skin] .tile,
+html[data-skin] .match-btn,
+html[data-skin] .intro-card,
+html[data-skin] .tip-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  color: var(--text);
+}
+html[data-skin] .choice:hover,
+html[data-skin] .tile:hover,
+html[data-skin] .match-btn:hover { border-color: var(--line-strong); background: var(--card); }
+html[data-skin] .choice-key { border: 1px solid var(--line); color: var(--muted); }
+html[data-skin] .choice.is-sel,
+html[data-skin] .match-btn.is-sel { border-color: var(--accent); background: var(--accent-soft); box-shadow: none; }
+html[data-skin] .choice.is-sel .choice-key { border-color: var(--accent); color: var(--accent); }
+html[data-skin] .choice.is-ok { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, var(--card)); box-shadow: none; }
+html[data-skin] .choice.is-bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, var(--card)); }
+html[data-skin] .intro-badge { background: var(--accent-soft); color: var(--accent); }
+html[data-skin] .intro-kk,
+html[data-skin] .meaning { color: var(--accent); }
+html[data-skin] .say {
+  background: transparent;
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  box-shadow: none;
+}
+html[data-skin] .say:hover { background: var(--accent-soft); }
+html[data-skin] .mic-big { background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 0 8px var(--accent-soft); }
+html[data-skin] .mic-big:active { box-shadow: 0 0 0 4px var(--accent-soft); }
+html[data-skin] .ex-input,
+html[data-skin] .build-answer { background: var(--card); border-color: var(--line); }
+html[data-skin] .lesson-foot { background: var(--bg); border-top: 1px solid var(--line); }
+html[data-skin] .lesson-foot.is-ok { background: color-mix(in srgb, var(--ok) 9%, var(--bg)); border-top-color: color-mix(in srgb, var(--ok) 30%, var(--line)); }
+html[data-skin] .lesson-foot.is-bad { background: color-mix(in srgb, var(--bad) 8%, var(--bg)); border-top-color: color-mix(in srgb, var(--bad) 30%, var(--line)); }
+html[data-skin] .lesson-foot.is-ok .btn-3d { background: var(--ok); color: #fff; }
+html[data-skin] .lesson-foot.is-bad .btn-3d { background: var(--bad); color: #fff; }
+html[data-skin] .summary-stars .on { color: var(--accent); }
+html[data-skin] .sum-tile { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .sum-tile strong { font-family: var(--display); font-weight: var(--display-weight); }
+
+/* ---------- review, vocab, quiz, charts ---------- */
+html[data-skin] .flash-card .flash-front,
+html[data-skin] .flash-card .flash-back { background: var(--card); border: 1px solid var(--line); }
+html[data-skin] .stat-card { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .stat-card strong,
+html[data-skin] .rev-count strong,
+html[data-skin] .big-num { font-family: var(--display); font-weight: var(--display-weight); }
+html[data-skin] .mode-card { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .mode-card:hover { border-color: var(--accent-line); }
+html[data-skin] .col-bar { background: var(--accent) !important; }
+html[data-skin] .legend-line { background: var(--muted); }
+html[data-skin] .data-table th { color: var(--muted); font-weight: 600; }
+
+/* ---------- chat, stories ---------- */
+html[data-skin] .scenario-card { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .scenario-card:hover { border-color: var(--accent-line); }
+html[data-skin] .msg-ai .bubble { background: var(--surface-2); border: 1px solid var(--line); }
+html[data-skin] .msg-me .bubble { background: var(--accent); color: var(--accent-ink); }
+html[data-skin] .story-card { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .story-card:hover { border-color: var(--accent-line); }
+html[data-skin] .story-card strong { font-family: var(--display); font-weight: var(--display-weight); font-size: calc(1.08rem * var(--display-scale)); }
+html[data-skin] .story-lvl { color: var(--accent); }
+html[data-skin] .st-title em { color: var(--accent); }
+html[data-skin] .st-bubble { background: var(--card); border: 1px solid var(--line); }
+html[data-skin] .st-right .st-bubble { background: var(--accent-soft); border-color: var(--accent-line); }
+html[data-skin] .st-kk { color: var(--accent); }
+html[data-skin] .st-avatar.is-f { background: color-mix(in srgb, #d7869f 20%, var(--card)); color: #e3a1b5; box-shadow: inset 0 0 0 1px color-mix(in srgb, #d7869f 40%, transparent); }
+html[data-skin] .st-avatar.is-m { background: color-mix(in srgb, #7fa3d9 20%, var(--card)); color: #9fbbe6; box-shadow: inset 0 0 0 1px color-mix(in srgb, #7fa3d9 40%, transparent); }
+html[data-skin][data-theme="light"] .st-avatar.is-f { color: #a34a66; }
+html[data-skin][data-theme="light"] .st-avatar.is-m { color: #3a65a8; }
+
+/* ---------- exams, cloud ---------- */
+html[data-skin] .exam-steps li,
+html[data-skin] .band-cell,
+html[data-skin] .task,
+html[data-skin] .lg-row,
+html[data-skin] .auth-perks li { background: var(--card); border: 1px solid var(--line); }
+html[data-skin] .exam-clock { background: var(--surface-2); font-family: var(--font); }
+html[data-skin] .band-badge { background: radial-gradient(closest-side, var(--card) 80%, transparent 82% 100%), conic-gradient(var(--accent) var(--p), var(--surface-2) 0); }
+html[data-skin] .band-badge strong,
+html[data-skin] .band-cell strong,
+html[data-skin] .class-code { font-family: var(--display); font-weight: var(--display-weight); }
+html[data-skin] .class-code { color: var(--accent); }
+html[data-skin] .lg-row.is-me { border-color: var(--accent-line); background: var(--accent-soft); }
+html[data-skin] .lg-row.top1 { border-color: var(--accent-line); background: var(--card); }
+html[data-skin] .seg { background: var(--surface-2); border-color: var(--line); }
+html[data-skin] .seg-btn.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+html[data-skin] .avatar { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-line); }
+html[data-skin] .unt-opt.is-right { background: color-mix(in srgb, var(--ok) 12%, transparent); }
+
+/* ---------- chrome: dock, sheet, toast, dialogs ---------- */
+html[data-skin] .dock { background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(14px); border-top: 1px solid var(--line); box-shadow: none; }
+html[data-skin] .dock-item { color: var(--muted); }
+html[data-skin] .dock-item.active { color: var(--accent); background: transparent; }
+html[data-skin] .dock-item.active .dock-txt { color: var(--text); }
+html[data-skin] .due-badge { background: var(--accent); color: var(--accent-ink); }
+html[data-skin] .more-panel { background: var(--card); border: 1px solid var(--line); }
+html[data-skin] .more-grid button { background: var(--surface-2); border: 1px solid var(--line); color: var(--text); }
+html[data-skin] .toast { background: var(--text); color: var(--bg); border: 0; box-shadow: var(--shadow); font-weight: 500; }
+html[data-skin] .ask-panel { background: var(--card); border: 1px solid var(--line); }
+html[data-skin] .music-toggle { background: var(--card); color: var(--accent); border: 1px solid var(--line); box-shadow: var(--shadow); }
+html[data-skin] .music-panel { background: var(--card); }
+html[data-skin] .settings { background: var(--card); }
+html[data-skin] input,
+html[data-skin] select,
+html[data-skin] textarea { border-color: var(--line); }
+html[data-skin] .vocab-toolbar input,
+html[data-skin] .vocab-toolbar select,
+html[data-skin] .write-area,
+html[data-skin] .cloud-main input[type="text"],
+html[data-skin] .cloud-main input[type="email"],
+html[data-skin] .cloud-main input[type="date"],
+html[data-skin] .cloud-main select { background: var(--bg-elev); }
+html[data-skin] .vocab-toolbar input:focus,
+html[data-skin] .write-area:focus,
+html[data-skin] .cloud-main input:focus { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-soft); }
+html[data-skin] .footer { border-top: 1px solid var(--line); }
+
+/* Lining numerals everywhere, so figures line up in stats and timers. */
+html[data-skin] body { font-feature-settings: "lnum" 1; font-variant-numeric: lining-nums; }
+html[data-skin] .hero { padding-top: 0.6rem; }
+html[data-skin] .hero-cta { gap: 0.65rem; }
+html[data-skin] .freeze-chip b { color: inherit; }
+
+/* logo: inverted square with the route mark */
+html[data-skin] .logo-mark { background: var(--text); color: var(--bg); border: 0; padding: 8px; }
+html[data-skin] .logo-mark svg { width: 100%; height: 100%; display: block; }
+
+/* answer feedback: colour stays in the message, the button keeps its usual look */
+html[data-skin] .lesson-foot.is-ok .btn-3d,
+html[data-skin] .lesson-foot.is-bad .btn-3d { background: var(--accent); color: var(--accent-ink); }
+html[data-skin] .logo-mark { padding: 7px; }
+html[data-skin] .logo-mark svg path,
+html[data-skin] .logo-mark svg circle { stroke-width: 48px; }
+
+
+/* =====================================================================
+   Colour accents on top of the minimal base (data-accent on <html>)
+   ===================================================================== */
+html[data-skin][data-accent] { --hot: #fb923c; --gold: #fbbf24; --ice: #7dd3fc; }
+html[data-skin][data-accent][data-theme="light"] { --hot: #ea580c; --gold: #d97706; --ice: #0284c7; }
+
+/* brand colour: sky blue of the Kazakh flag, gold for highlights */
+html[data-skin][data-accent="sky"] { --accent: #38bdf8; --accent-ink: #04131c; --gold: #f5c242; }
+html[data-skin][data-accent="sky"][data-theme="light"] { --accent: #0369a1; --accent-ink: #ffffff; --gold: #c08a00; }
+html[data-skin][data-accent="sky"] .eyebrow,
+html[data-skin][data-accent="sky"] .level-id { color: var(--gold); }
+
+/* warm stats in every colour option: flame orange, points gold, freeze ice */
+html[data-skin][data-accent] .chip-streak .ic,
+html[data-skin][data-accent] .st-flame .ic,
+html[data-skin][data-accent] .wk i .ic,
+html[data-skin][data-accent] .lg-streak .ic { color: var(--hot); fill: color-mix(in srgb, var(--hot) 25%, transparent); }
+html[data-skin][data-accent] .chip-xp .ic,
+html[data-skin][data-accent] .st-zap .ic,
+html[data-skin][data-accent] .ring-label .ic,
+html[data-skin][data-accent] .lg-mine .ic { color: var(--gold); fill: color-mix(in srgb, var(--gold) 25%, transparent); }
+html[data-skin][data-accent] .freeze-chip .ic { color: var(--ice); }
+html[data-skin][data-accent] .wk.on i { background: color-mix(in srgb, var(--hot) 16%, transparent); }
+html[data-skin][data-accent] .goal-card .ring-fg { stroke: var(--gold); }
+html[data-skin][data-accent] .node-stars,
+html[data-skin][data-accent] .summary-stars .on { color: var(--gold); }
+
+/* data-icons="color": every section keeps its own colour (works with or without a brand colour) */
+html[data-skin][data-icons="color"] .pc-ico,
+html[data-skin][data-icons="color"] .level-ico { color: var(--c, var(--sec)); background: color-mix(in srgb, var(--c, var(--sec)) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--sec)) 28%, transparent); }
+html[data-skin][data-icons="color"] .level-ico { background: none; box-shadow: none; }
+html[data-skin][data-icons="color"] .pc-card:hover { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); }
+html[data-skin][data-icons="color"] .pc-card em { color: var(--c); }
+html[data-skin][data-icons="color"] .pc-ai { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, transparent), transparent 60%), var(--card); border-color: color-mix(in srgb, var(--c) 35%, var(--line)); }
+html[data-skin][data-icons="color"] .level-id,
+html[data-skin][data-icons="color"] .sec-eyebrow,
+html[data-skin][data-icons="color"] .cont-eyebrow { color: var(--sec); }
+html[data-skin][data-icons="color"] .level-card .progress-fill,
+html[data-skin][data-icons="color"] .sec-bar .progress-fill,
+html[data-skin][data-icons="color"] .cont-card .progress-fill { background: var(--sec); }
+html[data-skin][data-icons="color"] .cont-card { border-color: color-mix(in srgb, var(--sec) 40%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--sec) 10%, transparent), transparent 55%), var(--card); }
+html[data-skin][data-icons="color"] .node { color: var(--sec); border-color: color-mix(in srgb, var(--sec) 45%, var(--line)); }
+html[data-skin][data-icons="color"] .node.is-current { background: var(--sec); border-color: var(--sec); color: #0b0f14; outline-color: color-mix(in srgb, var(--sec) 45%, transparent); }
+html[data-skin][data-icons="color"] .node.is-done { background: color-mix(in srgb, var(--sec) 15%, var(--card)); }
+html[data-skin][data-icons="color"] .node.is-locked { color: var(--muted); border-color: var(--line); }
+html[data-skin][data-icons="color"] .node-bubble { color: var(--sec); border-color: color-mix(in srgb, var(--sec) 40%, var(--line)); }
+html[data-skin][data-icons="color"] .feature:nth-child(1) .feature-icon { --c: #60a5fa; }
+html[data-skin][data-icons="color"] .feature:nth-child(2) .feature-icon { --c: #c084fc; }
+html[data-skin][data-icons="color"] .feature:nth-child(3) .feature-icon { --c: #34d399; }
+html[data-skin][data-icons="color"] .feature:nth-child(4) .feature-icon { --c: #fbbf24; }
+html[data-skin][data-icons="color"] .feature-icon,
+html[data-skin][data-icons="color"] .story-ico { color: var(--c, #fb923c); background: color-mix(in srgb, var(--c, #fb923c) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, #fb923c) 28%, transparent); }
+html[data-skin][data-icons="color"][data-theme="light"] .pc-ico,
+html[data-skin][data-icons="color"][data-theme="light"] .feature-icon,
+html[data-skin][data-icons="color"][data-theme="light"] .story-ico,
+html[data-skin][data-icons="color"][data-theme="light"] .pc-card em,
+html[data-skin][data-icons="color"][data-theme="light"] .level-id,
+html[data-skin][data-icons="color"][data-theme="light"] .sec-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .cont-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .node:not(.is-locked) { filter: saturate(1.2) brightness(0.78); }
+
+/* =====================================================================
+   Cards v2: each card glows softly in its own colour, gradient icon tiles,
+   badge for the count, lift + arrow on hover
+   ===================================================================== */
+html[data-skin] .scenario-card[data-sc="cafe"] { --c: #fbbf24; }
+html[data-skin] .scenario-card[data-sc="airport"] { --c: #38bdf8; }
+html[data-skin] .scenario-card[data-sc="shop"] { --c: #f472b6; }
+html[data-skin] .scenario-card[data-sc="interview"] { --c: #a78bfa; }
+html[data-skin] .scenario-card[data-sc="ielts1"] { --c: #34d399; }
+html[data-skin] .scenario-card[data-sc="free"] { --c: #2dd4bf; }
+html[data-skin] .mode-card[data-quiz="placement"] { --c: #a78bfa; }
+html[data-skin] .mode-card[data-quiz="vocab"] { --c: #38bdf8; }
+html[data-skin] .mode-card[data-quiz="grammar"] { --c: #7c9bff; }
+html[data-skin] .mode-card[data-quiz="mixed"] { --c: #f472b6; }
+html[data-skin] .feature:nth-child(1) { --c: #60a5fa; }
+html[data-skin] .feature:nth-child(2) { --c: #c084fc; }
+html[data-skin] .feature:nth-child(3) { --c: #34d399; }
+html[data-skin] .feature:nth-child(4) { --c: #fbbf24; }
+html[data-skin] .level-card { --c: var(--sec); }
+
+html[data-skin] .pc-card,
+html[data-skin] .scenario-card,
+html[data-skin] .story-card,
+html[data-skin] .mode-card,
+html[data-skin] .feature,
+html[data-skin] .level-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 16%, var(--line));
+  background:
+    radial-gradient(130% 90% at 0% 0%, color-mix(in srgb, var(--c, var(--accent)) 12%, transparent), transparent 60%),
+    var(--card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 12px 32px -24px rgba(0, 0, 0, 0.9);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+}
+html[data-skin] .pc-card:hover,
+html[data-skin] .scenario-card:hover,
+html[data-skin] .story-card:hover,
+html[data-skin] .mode-card:hover,
+html[data-skin] .feature:hover,
+html[data-skin] .level-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--c, var(--accent)) 48%, var(--line));
+  border-top-color: color-mix(in srgb, var(--c, var(--accent)) 48%, var(--line));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 46px -26px color-mix(in srgb, var(--c, var(--accent)) 60%, transparent);
+}
+html[data-skin] .pc-card:active,
+html[data-skin] .scenario-card:active,
+html[data-skin] .story-card:active,
+html[data-skin] .mode-card:active { transform: translateY(-1px); }
+html[data-skin][data-theme="light"] .pc-card,
+html[data-skin][data-theme="light"] .scenario-card,
+html[data-skin][data-theme="light"] .story-card,
+html[data-skin][data-theme="light"] .mode-card,
+html[data-skin][data-theme="light"] .feature,
+html[data-skin][data-theme="light"] .level-card {
+  background:
+    radial-gradient(130% 90% at 0% 0%, color-mix(in srgb, var(--c, var(--accent)) 9%, transparent), transparent 60%),
+    var(--card);
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 14px 30px -24px rgba(9, 9, 11, 0.25);
+}
+
+/* arrow that slides in on hover (always faintly visible on touch screens) */
+html[data-skin] .pc-card::after,
+html[data-skin] .scenario-card::after,
+html[data-skin] .mode-card::after,
+html[data-skin] .feature::after {
+  content: "";
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  width: 18px;
+  height: 18px;
+  background: var(--c, var(--accent));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M7 7h10v10'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M7 7h10v10'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0;
+  transform: translate(-5px, 5px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+html[data-skin] .pc-card:hover::after,
+html[data-skin] .scenario-card:hover::after,
+html[data-skin] .mode-card:hover::after,
+html[data-skin] .feature:hover::after { opacity: 1; transform: none; }
+@media (hover: none) {
+  html[data-skin] .pc-card::after,
+  html[data-skin] .scenario-card::after,
+  html[data-skin] .mode-card::after,
+  html[data-skin] .feature::after { opacity: 0.45; transform: none; }
+}
+
+/* gradient icon tiles */
+html[data-skin] .pc-ico,
+html[data-skin][data-icons="color"] .pc-ico,
+html[data-skin] .sc-ico,
+html[data-skin] .story-ico,
+html[data-skin][data-icons="color"] .story-ico,
+html[data-skin] .mode-emoji,
+html[data-skin] .feature-icon,
+html[data-skin][data-icons="color"] .feature-icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.55rem;
+  border-radius: 15px;
+  font-size: 1.4rem;
+  color: var(--c, var(--accent));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--c, var(--accent)) 30%, transparent), color-mix(in srgb, var(--c, var(--accent)) 9%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--accent)) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+html[data-skin] .pc-ico .ic,
+html[data-skin] .sc-ico .ic,
+html[data-skin] .story-ico .ic,
+html[data-skin] .mode-emoji .ic,
+html[data-skin] .feature-icon .ic { width: 24px; height: 24px; stroke-width: 1.9; }
+html[data-skin][data-theme="light"] .pc-ico,
+html[data-skin][data-theme="light"] .sc-ico,
+html[data-skin][data-theme="light"] .story-ico,
+html[data-skin][data-theme="light"] .mode-emoji,
+html[data-skin][data-theme="light"] .feature-icon { filter: saturate(1.25) brightness(0.8); }
+html[data-skin] .feature:nth-child(n) .feature-icon { color: var(--c); }
+
+/* text inside the cards */
+html[data-skin] .pc-card strong,
+html[data-skin] .scenario-card strong,
+html[data-skin] .story-card strong,
+html[data-skin] .mode-card h3,
+html[data-skin] .feature h3 { font-family: var(--display); font-weight: 600; font-size: 1.12rem; letter-spacing: -0.012em; margin: 0; }
+html[data-skin] .pc-desc,
+html[data-skin] .scenario-card span:not(.sc-ico),
+html[data-skin] .mode-card p,
+html[data-skin] .feature p { color: var(--muted); line-height: 1.45; }
+html[data-skin] .pc-card em,
+html[data-skin][data-icons="color"] .pc-card em {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0.28rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 22%, transparent);
+}
+html[data-skin][data-theme="light"] .pc-card em { filter: saturate(1.2) brightness(0.8); }
+html[data-skin] .pc-card .pc-desc { margin-bottom: 0.7rem; }
+html[data-skin] .story-lvl {
+  top: 1rem;
+  right: 1rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+html[data-skin] .story-card.is-done { border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+
+/* grids: even rhythm; an odd last card spans the row and lies flat */
+html[data-skin] .practice-grid,
+html[data-skin] .scenario-grid,
+html[data-skin] .story-grid,
+html[data-skin] .quiz-modes { gap: 0.9rem; }
+@media (min-width: 761px) {
+  html[data-skin] .practice-sub + .practice-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 760px) {
+  html[data-skin] .practice-grid > .pc-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 1rem;
+    align-items: center;
+  }
+  html[data-skin] .practice-grid > .pc-card:last-child:nth-child(odd) .pc-ico { grid-row: 1 / span 3; margin: 0; }
+  html[data-skin] .practice-grid > .pc-card:last-child:nth-child(odd) .pc-desc { margin-bottom: 0.4rem; }
+}
+
+/* section headings get a small colour bar */
+html[data-skin] .practice-sub { display: flex; align-items: center; gap: 0.6rem; margin-top: 2.2rem; }
+html[data-skin] .practice-sub::before {
+  content: "";
+  width: 4px;
+  height: 1.05em;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--accent), #a78bfa);
+}
+
+/* list rows (listening, reading, grammar, speaking, writing): chevron and soft hover */
+html[data-skin] .listening-pick button,
+html[data-skin] .reading-pick button,
+html[data-skin] .tool-list button,
+html[data-skin] .lesson-list button {
+  position: relative;
+  padding-right: 2.6rem;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+html[data-skin] .listening-pick button:hover,
+html[data-skin] .reading-pick button:hover,
+html[data-skin] .tool-list button:hover,
+html[data-skin] .lesson-list button:hover {
+  transform: none;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+}
+html[data-skin] .listening-pick button::after,
+html[data-skin] .reading-pick button::after,
+html[data-skin] .tool-list button::after,
+html[data-skin] .lesson-list button::after {
+  content: "";
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  background: var(--muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+html[data-skin] .listening-pick button:hover::after,
+html[data-skin] .reading-pick button:hover::after,
+html[data-skin] .tool-list button:hover::after,
+html[data-skin] .lesson-list button:hover::after { background: var(--accent); transform: translateX(3px); }
+html[data-skin] .listening-pick .track-title .ic,
+html[data-skin] .reading-pick .track-title .ic {
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border-radius: 11px;
+  flex-shrink: 0;
+}
+html[data-skin] .listening-pick .track-title .ic { color: #22d3ee; background: color-mix(in srgb, #22d3ee 14%, transparent); }
+html[data-skin] .reading-pick .track-title .ic { color: #34d399; background: color-mix(in srgb, #34d399 14%, transparent); }
+html[data-skin] .tool-list button.active,
+html[data-skin] .lesson-list button.active { border-color: var(--accent); background: var(--accent-soft); }
+
+/* light mode: deeper icon and badge colours instead of a filter, so tiles stay crisp */
+html[data-skin][data-theme="light"] .pc-ico,
+html[data-skin][data-theme="light"] .sc-ico,
+html[data-skin][data-theme="light"] .story-ico,
+html[data-skin][data-theme="light"] .mode-emoji,
+html[data-skin][data-theme="light"] .feature-icon,
+html[data-skin][data-theme="light"] .pc-card em,
+html[data-skin][data-icons="color"][data-theme="light"] .pc-ico,
+html[data-skin][data-icons="color"][data-theme="light"] .feature-icon,
+html[data-skin][data-icons="color"][data-theme="light"] .story-ico,
+html[data-skin][data-icons="color"][data-theme="light"] .pc-card em { filter: none; color: color-mix(in srgb, var(--c, var(--accent)) 72%, #000); }
+html[data-skin][data-theme="light"] .pc-ico,
+html[data-skin][data-theme="light"] .sc-ico,
+html[data-skin][data-theme="light"] .story-ico,
+html[data-skin][data-theme="light"] .mode-emoji,
+html[data-skin][data-theme="light"] .feature-icon {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--c, var(--accent)) 26%, #fff), color-mix(in srgb, var(--c, var(--accent)) 10%, #fff));
+}
+html[data-skin][data-theme="light"] .story-lvl { color: color-mix(in srgb, var(--c) 72%, #000); }
+
+/* the flat full-width card keeps its badge compact */
+html[data-skin] .practice-grid > .pc-card:last-child:nth-child(odd) em { justify-self: start; }
+
+/* listening and reading rows: title on top, details underneath, aligned after the icon */
+html[data-skin] .listening-pick button,
+html[data-skin] .reading-pick button { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+html[data-skin] .listening-pick .track-meta,
+html[data-skin] .reading-pick .track-meta { margin-left: calc(34px + 0.55rem); color: var(--muted); font-size: 0.82rem; }
+
+/* level cards: the slim bar keeps its height and sits at the bottom of every card */
+html[data-skin] .level-card .progress-bar { flex: none; height: 6px; margin-top: auto; }
+html[data-skin] .level-card .level-meta { margin-bottom: 0.55rem; }
+
+/* light mode: text in level colours is darkened enough to read on white (WCAG AA) */
+html[data-skin][data-icons="color"][data-theme="light"] .sec-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .cont-eyebrow,
+html[data-skin][data-icons="color"][data-theme="light"] .level-id,
+html[data-skin][data-icons="color"][data-theme="light"] .node-bubble { filter: none; color: color-mix(in srgb, var(--sec) 55%, #000); }
+
+/* =====================================================================
+   Write to us, mistake reports, consent, account deletion
+   ===================================================================== */
+.fbk { position: fixed; inset: 0; z-index: 225; display: grid; place-items: center; padding: 1rem; }
+.fbk.hidden { display: none; }
+.fbk-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); }
+.fbk-panel {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.2rem 1.2rem 1.1rem;
+  border-radius: 20px;
+  background: var(--card-solid, var(--card));
+  border: 1px solid var(--line);
+  animation: rise 0.18s ease;
+}
+.fbk-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.fbk-head h2 { margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; }
+.fbk-head h2 .ic { color: var(--accent); }
+.fbk-panel p { margin: 0; }
+.fbk-label { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+.fbk-panel textarea,
+.fbk-panel input[type="text"] {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  resize: vertical;
+}
+.fbk-panel textarea:focus,
+.fbk-panel input[type="text"]:focus { outline: 2px solid var(--accent-line, var(--accent)); outline-offset: 1px; }
+.fbk-context {
+  font-size: 0.82rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  overflow-wrap: anywhere;
+}
+.fbk-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.fbk .form-err.hidden { display: none; }
+
+.fb-report {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.fb-report .ic { width: 14px; height: 14px; }
+.fb-report:hover { color: var(--text); text-decoration: underline; }
+
+.footer-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0.5rem 0 0; font-size: 0.88rem; }
+.footer-links a,
+.footer-links .link-btn { color: var(--muted); text-decoration: none; padding: 0; }
+.footer-links a:hover,
+.footer-links .link-btn:hover { color: var(--text); text-decoration: underline; }
+
+.consent { display: flex; align-items: flex-start; gap: 0.55rem; font-size: 0.86rem; color: var(--muted); line-height: 1.45; cursor: pointer; }
+.consent input { width: 18px; height: 18px; margin: 0.1rem 0 0; flex: none; accent-color: var(--accent); }
+.consent a { color: var(--accent); }
+
+.acc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.acc-delete { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--danger); }
+.acc-delete .ic { width: 15px; height: 15px; }

@@ -1,9 +1,38 @@
 # FluentPath — static site
 [build]
   publish = "."
+  # Makes the link-preview image URL absolute (scripts/prepare-deploy.mjs). No dependencies to install.
+  command = "node scripts/prepare-deploy.mjs"
+
+# Server functions: AI proxy (GEMINI_API_KEY), public config, account deletion, daily reminders.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Daily streak reminder at 19:00 Kazakhstan time (14:00 UTC). Needs the Supabase + VAPID variables (see README).
+[functions.reminders]
+  schedule = "0 14 * * *"
 
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# The service worker must never be served stale, or users get stuck on an old version.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
+# Voice clips are named by a hash of their text, so a file never changes: let browsers keep them.
+[[headers]]
+  for = "/audio/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

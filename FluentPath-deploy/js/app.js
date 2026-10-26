@@ -1,37 +1,53 @@
 /* FluentPath — premium app logic */
 (() => {
   const DATA = window.FP_DATA;
+  const SRS = window.FP_SRS;
   const STORAGE_KEY = "fluentpath_v2";
+  const LANGS = ["kk", "ru"];
+  const LOCALES = { kk: "kk-KZ", ru: "ru-RU" };
+  const GOALS = [10, 20, 30, 50];
 
   const defaultState = () => ({
     xp: 0,
     streak: 0,
+    bestStreak: 0,
     lastActive: null,
-    dailyDone: 0,
-    dailyDate: null,
+    xpLog: {},
+    goalXp: 20,
+    goalHitDate: null,
     known: {},
     learning: {},
     lessonDone: {},
     quizHistory: [],
     drafts: {},
+    path: {},
+    srs: {},
+    awarded: { date: null, keys: {} },
+    lessonsDone: 0,
+    perfectLessons: 0,
+    listenOffUntil: 0,
+    sound: true,
+    srsMigrated: false,
     theme: "dark",
     lang: "kk",
   });
 
   let state = loadState();
+  let currentView = "home";
   let vocabQueue = [];
   let vocabIndex = 0;
   let flashFlipped = false;
   let quiz = null;
   let listenTrack = null;
+  let listenQs = []; // the open track's questions, options mixed
   let listenRate = 1;
   let listenShowText = false;
-  let utter = null;
   let speakTimer = null;
   let listenSentences = [];
   let listenSentIndex = 0;
   let listenPlayingAll = false;
   let vocabMode = "all"; // all | weak | known
+  let vocabTopic = "all";
   let speakTimerId = null;
   let speakLeft = 0;
   let speakPhase = null; // prep | talk
@@ -43,6 +59,8 @@
   let focusRunning = false;
   let currentSpeak = null;
   let currentWrite = null;
+  let installPrompt = null;
+  let audioCtx = null;
 
   function t(key) {
     const pack = (window.FP_I18N && window.FP_I18N[state.lang]) || {};
@@ -50,9 +68,51 @@
     return pack[key] || fallback[key] || key;
   }
 
+  // Learning content in the interface language: the Russian versions live in fields such as ru, bodyRu, expRu (js/content-ru.js).
+  const isRu = () => state.lang === "ru";
+  const meaning = (w) => (isRu() && w.ru) || w.kk;
+  function local(o, key) {
+    if (!o) return "";
+    const alt = isRu() ? o[key === "kk" ? "ru" : `${key}Ru`] : null;
+    return alt != null ? alt : o[key];
+  }
+
+  function fmt(s, vars = {}) {
+    return String(s).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ""));
+  }
+
+  const locale = () => LOCALES[state.lang] || "kk-KZ";
+
+  // Own weekday names: some browsers ship without Kazakh locale data.
+  // Points: «15 ұпай» in Kazakh, «15 баллов» in Russian.
+  function xpText(n) {
+    if (state.lang !== "ru") return `${n} ${t("xp_unit")}`;
+    const a = Math.abs(n) % 10;
+    const b = Math.abs(n) % 100;
+    const form = a === 1 && b !== 11 ? "балл" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "балла" : "баллов";
+    return `${n} ${form}`;
+  }
+
+  // Data labels written in English: "Part 2" → «2-бөлім», "≈1.5 min" → «≈1.5 мин».
+  const partLabel = (p) => String(p || "").replace(/Part\s*(\d)/i, (_, n) => fmt(t("part_n"), { n }));
+  const minLabel = (d) => String(d || "").replace(/\bmin\b/, t("write_min"));
+  const taskLabel = (x) =>
+    String(x || "").replace(/Task\s*(\d)( practice)?/i, (_, n, pr) => fmt(t(pr ? "task_n_practice" : "task_n"), { n }));
+
+  // Icons from the sprite in js/icons.js; iconLabel(el, icon, text) fills a button with an icon and a caption.
+  const ic = (name, cls) => window.FP_IC(name, cls);
+  function iconLabel(el, icon, text) {
+    if (el) el.innerHTML = `${ic(icon)}<span>${escapeHtml(text)}</span>`;
+  }
+
+  function weekday(d, style = "short") {
+    const names = t(style === "long" ? "wd_long" : "wd_short").split(",");
+    return names[d.getDay()] || d.toLocaleDateString(locale(), { weekday: style });
+  }
+  const course = () => window.FP_COURSE;
+
   function applyI18n() {
-    document.documentElement.lang =
-      state.lang === "zh" ? "zh" : state.lang === "es" ? "es" : state.lang === "ru" ? "ru" : "kk";
+    document.documentElement.lang = state.lang;
     $all("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       if (key) el.textContent = t(key);
@@ -60,78 +120,185 @@
     $all("[data-i18n-placeholder]").forEach((el) => {
       const key = el.getAttribute("data-i18n-placeholder");
       if (key) el.setAttribute("placeholder", t(key));
+      if (key && el.hasAttribute("aria-label")) el.setAttribute("aria-label", t(key));
     });
     $all("[data-i18n-title]").forEach((el) => {
       const key = el.getAttribute("data-i18n-title");
-      if (key) el.setAttribute("title", t(key));
+      if (key) {
+        el.setAttribute("title", t(key));
+        el.setAttribute("aria-label", t(key));
+      }
     });
     const sel = $("#langSelect");
     if (sel) sel.value = state.lang;
-    // refresh dynamic bits
+    initWotd();
     updateChrome();
-    if ($("#view-vocab")?.classList.contains("active")) initVocab();
-    if ($("#view-listening")?.classList.contains("active")) {
-      if (listenTrack) openListening(listenTrack.id, true);
-      else initListeningList();
+    if (currentView === "listening" && listenTrack && !$("#listeningActive").classList.contains("hidden")) {
+      openListening(listenTrack.id, true);
+    } else {
+      renderView(currentView);
     }
-    if ($("#view-speaking")?.classList.contains("active")) initSpeaking();
-    if ($("#view-writing")?.classList.contains("active")) initWriting();
-    if ($("#view-phrases")?.classList.contains("active")) initPhrases();
   }
 
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("fluentpath_v1");
       if (!raw) return defaultState();
-      return { ...defaultState(), ...JSON.parse(raw) };
+      return normalizeState(JSON.parse(raw));
     } catch {
       return defaultState();
     }
   }
 
+  function normalizeState(data) {
+    const base = defaultState();
+    const s = { ...base, ...(data && typeof data === "object" ? data : {}) };
+    ["known", "learning", "lessonDone", "drafts", "path", "srs", "xpLog"].forEach((k) => {
+      if (!s[k] || typeof s[k] !== "object" || Array.isArray(s[k])) s[k] = {};
+    });
+    if (!Array.isArray(s.quizHistory)) s.quizHistory = [];
+    if (!s.awarded || typeof s.awarded !== "object") s.awarded = base.awarded;
+    if (!GOALS.includes(s.goalXp)) s.goalXp = base.goalXp;
+    if (!LANGS.includes(s.lang)) s.lang = "kk";
+    return s;
+  }
+
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
-
-  function todayStr() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function refreshDaily() {
-    const t = todayStr();
-    if (state.dailyDate !== t) {
-      if (state.lastActive) {
-        const prev = new Date(state.lastActive);
-        const now = new Date(t);
-        const diff = Math.round((now - prev) / 86400000);
-        if (diff === 1) state.streak += 1;
-        else if (diff > 1) state.streak = 0;
-      }
-      state.dailyDate = t;
-      state.dailyDone = 0;
-      saveState();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage full or blocked — keep working in memory */
     }
+    window.FP_CLOUD?.onLocalChange();
   }
 
-  function markActivity(xp = 5) {
-    refreshDaily();
+  // Cloud sync hands back a merged save; keep this device's settings and redraw.
+  function replaceState(next) {
+    state = normalizeState(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* ignore */
+    }
+    updateChrome();
+    renderView(currentView);
+  }
+
+  // Local calendar day (YYYY-MM-DD). toISOString() would switch days at 05:00 in Kazakhstan.
+  function localDay(d = new Date()) {
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+
+  function dayDiff(a, b) {
+    const [y1, m1, d1] = a.split("-").map(Number);
+    const [y2, m2, d2] = b.split("-").map(Number);
+    return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+  }
+
+  // A streak survives until the end of the day after the last active day.
+  // Streak freezes (earned every 7 days, max 2) cover missed days automatically.
+  function refreshStreak() {
+    if (!state.lastActive || !state.streak) return;
+    const missed = dayDiff(state.lastActive, localDay()) - 1;
+    if (missed <= 0) return;
+    if ((state.freezes || 0) >= missed) {
+      state.freezes -= missed;
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      state.lastActive = localDay(y);
+      toast(fmt(t("freeze_used"), { n: missed }));
+    } else {
+      state.streak = 0;
+    }
+    saveState();
+  }
+
+  function todayXp() {
+    return (state.xpLog || {})[localDay()] || 0;
+  }
+
+  function goalReached() {
+    return todayXp() >= state.goalXp;
+  }
+
+  function markActivity(xp = 5, opts = {}) {
+    const today = localDay();
+    if (state.lastActive !== today) {
+      const diff = state.lastActive ? dayDiff(state.lastActive, today) : null;
+      state.streak = diff === 1 ? (state.streak || 0) + 1 : 1;
+      state.lastActive = today;
+      if (state.streak % 7 === 0 && (state.freezes || 0) < 2) {
+        state.freezes = (state.freezes || 0) + 1;
+        setTimeout(() => toast(t("freeze_earned")), 2800);
+      }
+    }
+    if (!state.streak) state.streak = 1;
+    state.bestStreak = Math.max(state.bestStreak || 0, state.streak);
     state.xp += xp;
-    state.lastActive = todayStr();
-    if (state.streak === 0) state.streak = 1;
+    state.xpLog[today] = (state.xpLog[today] || 0) + xp;
+    const keys = Object.keys(state.xpLog).sort();
+    keys.slice(0, Math.max(0, keys.length - 90)).forEach((k) => delete state.xpLog[k]);
+    if (state.xpLog[today] >= state.goalXp && state.goalHitDate !== today) {
+      state.goalHitDate = today;
+      if (!course()?.isLessonOpen()) {
+        toast(t("goal_done"));
+        burstConfetti();
+      }
+    }
     saveState();
     updateChrome();
+    if (!opts.noQuest) window.FP_QUESTS?.onXp(xp);
   }
 
-  function completeDailyTask() {
-    refreshDaily();
-    if (state.dailyDone < 3) {
-      state.dailyDone += 1;
-      state.xp += 10;
-      saveState();
-      toast(`${t("toast_task")} · ${state.dailyDone}/3 · +10 XP`);
-      if (state.dailyDone >= 3) burstConfetti();
-    }
-    updateChrome();
+  // XP for tools that can be re-submitted (speaking, writing, reading…) is paid once per item per day.
+  function awardOnce(key, xp) {
+    const today = localDay();
+    if (!state.awarded || state.awarded.date !== today) state.awarded = { date: today, keys: {} };
+    if (state.awarded.keys[key]) return false;
+    state.awarded.keys[key] = true;
+    markActivity(xp);
+    return true;
+  }
+
+  // In-page confirmation (native confirm() is blocked in some embedded viewers and looks out of place).
+  function askConfirm(text, { yes = t("ask_yes"), no = t("ask_no"), danger = false } = {}) {
+    const box = $("#askDialog");
+    if (!box) return Promise.resolve(window.confirm(text));
+    return new Promise((resolve) => {
+      const yesBtn = $("#askYes");
+      const noBtn = $("#askNo");
+      $("#askText").textContent = text;
+      yesBtn.textContent = yes;
+      noBtn.textContent = no;
+      yesBtn.classList.toggle("is-danger", danger);
+      box.classList.remove("hidden");
+      document.body.classList.add("ask-open");
+      const done = (val) => {
+        box.classList.add("hidden");
+        document.body.classList.remove("ask-open");
+        yesBtn.onclick = noBtn.onclick = $("#askBackdrop").onclick = null;
+        document.removeEventListener("keydown", onKey, true);
+        resolve(val);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          done(false);
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          done(true);
+        }
+      };
+      yesBtn.onclick = () => done(true);
+      noBtn.onclick = () => done(false);
+      $("#askBackdrop").onclick = () => done(false);
+      document.addEventListener("keydown", onKey, true);
+      setTimeout(() => noBtn.focus(), 30);
+    });
   }
 
   function toast(msg) {
@@ -139,7 +306,7 @@
     el.textContent = msg;
     el.classList.remove("hidden");
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.add("hidden"), 2400);
+    toast._t = setTimeout(() => el.classList.add("hidden"), 2600);
   }
 
   function $(sel) {
@@ -160,7 +327,7 @@
   /* Confetti */
   function burstConfetti() {
     const c = $("#fxCanvas");
-    if (!c) return;
+    if (!c || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = c.getContext("2d");
     c.width = window.innerWidth;
     c.height = window.innerHeight;
@@ -171,10 +338,8 @@
       vy: Math.random() * -9 - 3,
       g: 0.18 + Math.random() * 0.08,
       s: 4 + Math.random() * 6,
-      color: ["#7c9bff", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24"][
-        (Math.random() * 5) | 0
-      ],
-      life: 70 + (Math.random() * 30) | 0,
+      color: ["#7c9bff", "#a78bfa", "#22d3ee", "#34d399", "#fbbf24"][(Math.random() * 5) | 0],
+      life: (70 + Math.random() * 30) | 0,
     }));
     let frame = 0;
     function tick() {
@@ -198,7 +363,76 @@
     tick();
   }
 
-  const DOCK_MAIN = new Set(["home", "learn", "vocab", "listening", "quiz"]);
+  /* Sound effects (generated, no audio files) */
+  function playSfx(kind) {
+    if (state.sound === false) return;
+    const notes = {
+      ok: [[660, 0], [880, 0.09]],
+      bad: [[220, 0], [165, 0.12]],
+      done: [[523, 0], [659, 0.1], [784, 0.2], [1047, 0.32]],
+      tap: [[520, 0]],
+    }[kind];
+    if (!notes) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      notes.forEach(([freq, at]) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = kind === "bad" ? "triangle" : "sine";
+        osc.frequency.value = freq;
+        const t0 = audioCtx.currentTime + at;
+        const peak = kind === "tap" ? 0.05 : 0.16;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + (kind === "tap" ? 0.08 : 0.2));
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.22);
+      });
+    } catch {
+      /* audio not available */
+    }
+  }
+
+  /* Text to speech — recorded voices with a device-voice fallback (js/voice.js) */
+  const VOICE = window.FP_VOICE;
+  const canSpeakAloud = () => !!window.speechSynthesis || VOICE.hasClips();
+
+  function speakText(text, opts = {}) {
+    if (!text) return false;
+    listenPlayingAll = false;
+    return VOICE.say(text, opts);
+  }
+
+  function stopSpeech() {
+    VOICE.stop();
+  }
+
+  /* Hover / tap tooltips for charts */
+  function bindTips(root) {
+    const tip = $("#vizTip");
+    if (!tip || !root) return;
+    root.querySelectorAll("[data-tip]").forEach((el) => {
+      const show = () => {
+        tip.textContent = el.dataset.tip;
+        tip.classList.remove("hidden");
+        const r = el.getBoundingClientRect();
+        const w = tip.offsetWidth;
+        const x = Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2));
+        tip.style.left = `${x}px`;
+        tip.style.top = `${Math.max(8, r.top - tip.offsetHeight - 8)}px`;
+      };
+      const hide = () => tip.classList.add("hidden");
+      el.addEventListener("mouseenter", show);
+      el.addEventListener("mouseleave", hide);
+      el.addEventListener("click", show);
+      el.setAttribute("tabindex", "0");
+      el.addEventListener("focus", show);
+      el.addEventListener("blur", hide);
+    });
+  }
+
+  const DOCK_MAIN = new Set(["home", "learn", "review", "vocab", "practice"]);
 
   function closeMoreSheet() {
     $("#moreSheet")?.classList.add("hidden");
@@ -209,102 +443,150 @@
   }
 
   /* Navigation */
-  function showView(name) {
+  function showView(name, opts = {}) {
+    if (!document.getElementById(`view-${name}`)) name = "home";
     $all(".view").forEach((v) => v.classList.remove("active"));
-    const view = document.getElementById(`view-${name}`);
-    if (view) view.classList.add("active");
-    $all(".nav button").forEach((b) => {
-      b.classList.toggle("active", b.dataset.nav === name);
-    });
-    // bottom dock active state
-    $all(".dock-item[data-nav]").forEach((b) => {
-      b.classList.toggle("active", b.dataset.nav === name);
-    });
-    const moreBtn = $("#dockMoreBtn");
-    if (moreBtn) {
-      moreBtn.classList.toggle("active", !DOCK_MAIN.has(name));
-    }
+    document.getElementById(`view-${name}`).classList.add("active");
+    $all(".nav button").forEach((b) => b.classList.toggle("active", b.dataset.nav === name));
+    $all(".dock-item[data-nav]").forEach((b) => b.classList.toggle("active", b.dataset.nav === name));
+    $("#dockMoreBtn")?.classList.toggle("active", !DOCK_MAIN.has(name));
     closeMoreSheet();
+    if (name !== "chat") document.body.classList.remove("chat-open");
     $("#mainNav")?.classList.remove("open");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    $("#burger")?.setAttribute("aria-expanded", "false");
+    const changed = currentView !== name;
+    if (changed && (currentView === "mock" || currentView === "unt")) window.FP_EXAMS?.leave(currentView);
+    currentView = name;
+    if (opts.push !== false && location.hash !== `#${name}`) {
+      try {
+        history.pushState({ view: name }, "", `#${name}`);
+      } catch {
+        /* file:// may block history */
+      }
+    }
+    if (changed || opts.scroll) window.scrollTo({ top: 0 });
+    stopListening();
+    if (name === "listening") initListeningList();
+    renderView(name);
+  }
 
+  function renderView(name) {
+    if (name === "home") course()?.renderHome();
+    if (name === "learn") course()?.renderPath();
+    if (name === "review") course()?.renderReview();
     if (name === "vocab") initVocab();
     if (name === "grammar") initGrammar();
     if (name === "reading") initReadingList();
-    if (name === "listening") {
-      stopListening();
-      initListeningList();
-    }
     if (name === "speaking") initSpeaking();
     if (name === "writing") initWriting();
     if (name === "phrases") initPhrases();
+    if (name === "practice") renderPractice();
+    if (name === "chat") window.FP_AIUI?.render();
+    if (name === "stories") window.FP_STORIES?.render();
+    if (name === "mock") window.FP_EXAMS?.renderMock();
+    if (name === "unt") window.FP_EXAMS?.renderUnt();
+    if (name === "account" || name === "league" || name === "class") window.FP_CLOUD_UI?.render(name);
+    if (name !== "speaking" && speakPhase === "talk") {
+      clearSpeakTimer();
+      stopSpeakRec();
+      speakPhase = "idle";
+    }
     if (name === "progress") renderProgress();
-    if (name === "learn" || name === "home") updateChrome();
-    if (name === "quiz") resetQuizUI();
-    if (name !== "listening") stopListening();
+    if (name === "quiz" && !quiz) resetQuizUI();
+  }
+
+  function viewFromHash() {
+    const name = (location.hash || "").replace(/^#/, "");
+    return document.getElementById(`view-${name}`) ? name : "home";
   }
 
   function applyTheme() {
-    document.documentElement.setAttribute(
-      "data-theme",
-      state.theme === "light" ? "light" : "dark"
-    );
+    const theme = state.theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+    const meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "light" ? "#fafafa" : "#09090b");
+    const btn = $("#themeToggle");
+    if (btn) btn.innerHTML = ic(theme === "light" ? "moon" : "sun");
   }
 
   /* Word of day */
   function initWotd() {
-    const day = new Date().getDate();
-    const pool = DATA.wordOfDayPool || [];
-    const item = pool[day % pool.length] || {
-      word: "crucial",
-      ipa: "",
-      meaning: "",
-      example: "",
-    };
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((Date.now() - start) / 86400000);
+    // A word from the learner's own level (a beginner gets A1 words), a different one each day.
+    const level = course()?.currentLevel?.() || "A1";
+    const words = DATA.vocab.filter((w) => w.level === level && w.example);
+    const found = words.length ? words[(dayOfYear * 37) % words.length] : DATA.vocab[0];
+    const extra = (DATA.wordOfDayPool || []).find((x) => x.word.toLowerCase() === found.en.toLowerCase());
+    const item = { word: found.en, ipa: extra?.ipa || "", meaning: meaning(found), example: found.example };
     $("#wotdWord").textContent = item.word;
     $("#wotdIpa").textContent = item.ipa;
+    $("#wotdIpa").classList.toggle("hidden", !item.ipa);
     $("#wotdMeaning").textContent = item.meaning;
-    $("#wotdExample").textContent = item.example;
+    $("#wotdExample").textContent = `“${item.example}”`;
+    $("#wotdLevel").textContent = `${found.level} · ${t(`topic_${found.topic}`)}`;
+    $("#wotdSay").onclick = () => speakText(item.word);
     $("#wotdSave").onclick = () => {
-      const found = DATA.vocab.find(
-        (w) => w.en.toLowerCase() === item.word.toLowerCase()
-      );
       if (found) {
+        SRS.grade(state.srs, found.id, false);
         state.learning[found.id] = true;
         delete state.known[found.id];
       }
-      markActivity(3);
-      toast(`“${item.word}” ${t("toast_saved")} ✨`);
+      awardOnce("wotd", 3);
       saveState();
+      updateChrome();
+      toast(`“${item.word}” ${t("toast_saved")}`);
     };
   }
 
   /* Vocab */
+  function wordStatus(w) {
+    const card = state.srs[w.id];
+    if (card) return card.b >= 4 ? "known" : "learning";
+    if (state.known[w.id]) return "known";
+    if (state.learning[w.id]) return "learning";
+    return "new";
+  }
+
+  // Search the Kazakh translation, and in the Russian interface the Russian one too.
+  const translations = (w) => (isRu() && w.ru ? `${w.kk}, ${w.ru}` : w.kk);
+
   function filteredVocab() {
     const level = $("#vocabLevel")?.value || "all";
-    const topic = $("#vocabTopic")?.value || "all";
+    const topic = vocabTopic;
     const q = ($("#vocabSearch")?.value || "").trim().toLowerCase();
-    return DATA.vocab.filter((w) => {
+    const list = DATA.vocab.filter((w) => {
       if (level !== "all" && w.level !== level) return false;
       if (topic !== "all" && w.topic !== topic) return false;
-      if (vocabMode === "weak" && !state.learning[w.id]) return false;
-      if (vocabMode === "known" && !state.known[w.id]) return false;
+      const st = wordStatus(w);
+      if (vocabMode === "weak" && st !== "learning") return false;
+      if (vocabMode === "known" && st !== "known") return false;
       if (q) {
-        const hay = `${w.en} ${w.kk} ${w.topic} ${w.example}`.toLowerCase();
+        const hay = `${w.en} ${translations(w)} ${w.topic} ${w.example}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
+    if (!q) return list;
+    // The word itself first, then words that start with the search, then matches inside examples.
+    const rank = (w) => {
+      const en = w.en.toLowerCase();
+      const tr = translations(w).toLowerCase();
+      const parts = tr.split(/[,;]\s*/);
+      if (en === q || parts.includes(q)) return 0;
+      if (en.startsWith(q) || parts.some((x) => x.startsWith(q))) return 1;
+      if (en.includes(q) || tr.includes(q)) return 2;
+      return 3;
+    };
+    return list.map((w) => [rank(w), w]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
   }
 
   function setVocabMode(mode) {
     vocabMode = mode;
-    $all(".vocab-modes .chip-btn").forEach((b) => b.classList.remove("active"));
-    if (mode === "all") $("#modeAll")?.classList.add("active");
-    if (mode === "weak") $("#modeWeak")?.classList.add("active");
-    if (mode === "known") $("#modeKnown")?.classList.add("active");
+    $("#modeAll")?.classList.toggle("active", mode === "all");
+    $("#modeWeak")?.classList.toggle("active", mode === "weak");
+    $("#modeKnown")?.classList.toggle("active", mode === "known");
     initVocab();
-    if (mode === "weak" && !filteredVocab().length) toast(t("empty_weak"));
   }
 
   function shuffle(arr) {
@@ -316,22 +598,39 @@
     return a;
   }
 
+  // Easiest first; IELTS tasks without a level come last. The data order stays as it is (it picks each track's voice).
+  const LEVEL_RANK = { A1: 1, "A1–A2": 1.5, A2: 2, "A2–B1": 2.5, B1: 3, "B1–B2": 3.5, B2: 4 };
+  const byLevel = (list) => list.slice().sort((a, b) => (LEVEL_RANK[a.level] || 5) - (LEVEL_RANK[b.level] || 5));
+
+  // A copy of a question with its options in random order, so the right answer is not always in the same place.
+  function mixOptions(q) {
+    const key = "a" in q ? "a" : "answer";
+    const order = shuffle(q.options.map((_, i) => i));
+    return { ...q, options: order.map((i) => q.options[i]), [key]: order.indexOf(q[key]) };
+  }
+
+  function topicLabel(id) {
+    const key = `topic_${id}`;
+    const label = t(key);
+    if (label !== key) return label;
+    return (DATA.topics.find((x) => x.id === id) || {}).label || id;
+  }
+
   function buildTopicChips() {
     const box = $("#topicChips");
     if (!box) return;
-    const topics = DATA.topics || [{ id: "all", label: "Барлығы" }];
-    const current = $("#vocabTopic")?.value || "all";
-    box.innerHTML = topics
+    const current = vocabTopic;
+    box.innerHTML = DATA.topics
       .map(
-        (t) =>
-          `<button type="button" data-topic="${t.id}" class="${
-            t.id === current ? "active" : ""
-          }">${escapeHtml(t.label)}</button>`
+        (x) =>
+          `<button type="button" data-topic="${x.id}" class="${x.id === current ? "active" : ""}">${escapeHtml(
+            x.id === "all" ? t("mode_all") : topicLabel(x.id)
+          )}</button>`
       )
       .join("");
     box.querySelectorAll("button").forEach((btn) => {
       btn.onclick = () => {
-        $("#vocabTopic").value = btn.dataset.topic;
+        vocabTopic = btn.dataset.topic;
         initVocab();
       };
     });
@@ -340,60 +639,83 @@
   function initVocab() {
     buildTopicChips();
     const list = filteredVocab();
-    vocabQueue = shuffle(list.length ? list : DATA.vocab);
+    vocabQueue = shuffle(list);
     vocabIndex = 0;
     flashFlipped = false;
     $("#flashCard")?.classList.remove("flipped");
     renderFlash();
-    renderVocabTable();
-    const n = list.length;
+    renderVocabTable(list);
     if ($("#vocabStats")) {
-      $("#vocabStats").textContent = `${DATA.vocab.length} · ${n}`;
+      $("#vocabStats").textContent = fmt(t("vocab_count"), { n: list.length, total: DATA.vocab.length });
     }
-    if ($("#listCount")) $("#listCount").textContent = String(n);
+    if ($("#listCount")) $("#listCount").textContent = String(list.length);
   }
 
   function renderFlash() {
     const w = vocabQueue[vocabIndex];
-    if (!w) return;
-    $("#flashMeta").textContent = `${w.level} · ${w.topic}`;
+    const empty = !w;
+    $("#flashWrap")?.classList.toggle("is-empty", empty);
+    if (empty) {
+      $("#flashEmpty").textContent =
+        vocabMode === "weak" ? t("empty_weak") : vocabMode === "known" ? t("empty_known") : t("empty_search");
+      $("#flashCount").textContent = "0 / 0";
+      return;
+    }
+    $("#flashMeta").textContent = `${w.level} · ${topicLabel(w.topic)}`;
     $("#flashWord").textContent = w.en;
-    $("#flashTr").textContent = w.kk;
+    $("#flashTr").textContent = meaning(w);
     $("#flashEx").textContent = w.example;
     $("#flashCount").textContent = `${vocabIndex + 1} / ${vocabQueue.length}`;
   }
 
   function nextFlash() {
+    if (!vocabQueue.length) return;
     flashFlipped = false;
     $("#flashCard").classList.remove("flipped");
     vocabIndex = (vocabIndex + 1) % vocabQueue.length;
     renderFlash();
   }
 
-  function renderVocabTable() {
+  function gradeFlash(ok) {
+    const w = vocabQueue[vocabIndex];
+    if (!w) return;
+    SRS.grade(state.srs, w.id, ok);
+    if (ok) {
+      state.known[w.id] = true;
+      delete state.learning[w.id];
+      toast(w.en);
+    } else {
+      state.learning[w.id] = true;
+      delete state.known[w.id];
+    }
+    saveState();
+    markActivity(ok ? 2 : 1);
+    nextFlash();
+    renderVocabTable(filteredVocab());
+  }
+
+  function renderVocabTable(list) {
     const tbody = $("#vocabTable tbody");
     if (!tbody) return;
-    const rows = filteredVocab().slice(0, 200);
+    const rows = list.slice(0, 200);
     tbody.innerHTML = rows
       .map((w) => {
-        let status = "new";
-        let label = t("status_new");
-        if (state.known[w.id]) {
-          status = "known";
-          label = t("status_known");
-        } else if (state.learning[w.id]) {
-          status = "learning";
-          label = t("status_learning");
-        }
+        const status = wordStatus(w);
         return `<tr>
-          <td><strong>${escapeHtml(w.en)}</strong></td>
-          <td>${escapeHtml(w.kk)}</td>
+          <td><button type="button" class="say small" data-say="${escapeHtml(w.en)}" aria-label="Play">${ic("volume-2")}</button><strong>${escapeHtml(
+            w.en
+          )}</strong></td>
+          <td>${escapeHtml(meaning(w))}</td>
           <td>${w.level}</td>
-          <td>${escapeHtml(w.topic)}</td>
-          <td><span class="badge badge-${status}">${label}</span></td>
+          <td>${escapeHtml(topicLabel(w.topic))}</td>
+          <td><span class="badge badge-${status}">${t(`status_${status}`)}</span></td>
         </tr>`;
       })
       .join("");
+    tbody.querySelectorAll("[data-say]").forEach((b) => (b.onclick = () => speakText(b.dataset.say)));
+    if ($("#listMore")) {
+      $("#listMore").textContent = list.length > rows.length ? fmt(t("list_more"), { n: rows.length, total: list.length }) : "";
+    }
   }
 
   /* Grammar */
@@ -402,9 +724,9 @@
     list.innerHTML = DATA.lessons
       .map(
         (l, i) =>
-          `<button type="button" data-i="${i}">${
-            state.lessonDone[l.id] ? "✓ " : ""
-          }${escapeHtml(l.title)} <span class="muted">· ${l.level}</span></button>`
+          `<button type="button" data-i="${i}"><span class="lesson-check">${
+            state.lessonDone[l.id] ? ic("check") : ""
+          }</span>${escapeHtml(l.title)} <span class="muted">· ${l.level}</span></button>`
       )
       .join("");
     list.querySelectorAll("button").forEach((btn) => {
@@ -415,24 +737,17 @@
 
   function openLesson(i) {
     const l = DATA.lessons[i];
-    $all("#lessonList button").forEach((b, idx) =>
-      b.classList.toggle("active", idx === i)
-    );
+    $all("#lessonList button").forEach((b, idx) => b.classList.toggle("active", idx === i));
     const body = $("#lessonBody");
-    const p = l.practice;
+    const p = mixOptions(l.practice);
     body.innerHTML = `
-      ${l.body}
+      ${local(l, "body")}
       <div class="mini-q">
         <h3>${escapeHtml(t("mini_practice"))}</h3>
         <p><strong>${escapeHtml(p.q)}</strong></p>
         <div class="options" id="lessonOptions">
           ${p.options
-            .map(
-              (o, idx) =>
-                `<button type="button" class="option" data-i="${idx}">${escapeHtml(
-                  o
-                )}</button>`
-            )
+            .map((o, idx) => `<button type="button" class="option" data-i="${idx}">${escapeHtml(o)}</button>`)
             .join("")}
         </div>
         <p class="explain hidden" id="lessonExplain"></p>
@@ -448,20 +763,24 @@
           else if (+b.dataset.i === choice) b.classList.add("wrong");
         });
         const exp = $("#lessonExplain");
-        exp.textContent = (correct ? t("correct") + " " : t("wrong") + " ") + p.explain;
+        exp.textContent = (correct ? t("correct") + " " : t("wrong") + " ") + local(p, "explain");
         exp.classList.remove("hidden");
-        if (correct && !state.lessonDone[l.id]) {
+        playSfx(correct ? "ok" : "bad");
+        if (correct) {
+          // Update the list in place — re-rendering here used to wipe the feedback.
           state.lessonDone[l.id] = true;
-          markActivity(15);
-          completeDailyTask();
-          initGrammar();
-          openLesson(i);
-        } else if (correct) markActivity(5);
+          const mark = $(`#lessonList button[data-i="${i}"] .lesson-check`);
+          if (mark) mark.innerHTML = ic("check");
+          awardOnce(`gram:${l.id}`, 15);
+          saveState();
+        }
       };
     });
   }
 
   /* Quiz */
+  const QUIZ_NAMES = { placement: "quiz_place", vocab: "quiz_vocab", grammar: "quiz_gram", mixed: "quiz_mixed" };
+
   function resetQuizUI() {
     $("#quizSetup").classList.remove("hidden");
     $("#quizPlay").classList.add("hidden");
@@ -475,16 +794,11 @@
     else if (mode === "vocab") bank = DATA.quizBanks.vocab;
     else if (mode === "grammar") bank = DATA.quizBanks.grammar;
     else {
-      bank = shuffle([
-        ...DATA.quizBanks.vocab,
-        ...DATA.quizBanks.grammar,
-        ...DATA.quizBanks.placement.slice(0, 5),
-      ]);
+      bank = shuffle([...DATA.quizBanks.vocab, ...DATA.quizBanks.grammar, ...DATA.quizBanks.placement.slice(0, 5)]);
     }
-    const questions = shuffle(bank).slice(
-      0,
-      mode === "placement" ? 15 : mode === "mixed" ? 12 : 10
-    );
+    const questions = shuffle(bank)
+      .slice(0, mode === "placement" ? 15 : mode === "mixed" ? 12 : 10)
+      .map((q) => mixOptions({ ...q, options: local(q, "options"), exp: local(q, "exp") }));
     quiz = { mode, questions, i: 0, score: 0, answered: false };
     $("#quizSetup").classList.add("hidden");
     $("#quizResult").classList.add("hidden");
@@ -502,12 +816,7 @@
     $("#quizNext").classList.add("hidden");
     const box = $("#quizOptions");
     box.innerHTML = item.options
-      .map(
-        (o, idx) =>
-          `<button type="button" class="option" data-i="${idx}">${escapeHtml(
-            o
-          )}</button>`
-      )
+      .map((o, idx) => `<button type="button" class="option" data-i="${idx}">${escapeHtml(o)}</button>`)
       .join("");
     box.querySelectorAll(".option").forEach((btn) => {
       btn.onclick = () => answerQuiz(+btn.dataset.i);
@@ -520,6 +829,7 @@
     const item = quiz.questions[quiz.i];
     const correct = choice === item.a;
     if (correct) quiz.score += 1;
+    playSfx(correct ? "ok" : "bad");
     $all("#quizOptions .option").forEach((b) => {
       b.disabled = true;
       if (+b.dataset.i === item.a) b.classList.add("correct");
@@ -527,12 +837,10 @@
     });
     const exp = $("#quizExplain");
     exp.textContent = item.exp || "";
-    exp.classList.remove("hidden");
+    exp.classList.toggle("hidden", !item.exp);
     $("#quizNext").classList.remove("hidden");
-    $("#quizNext").textContent =
-      quiz.i + 1 >= quiz.questions.length
-        ? t("quiz_result") + " 🎉"
-        : t("quiz_next");
+    const last = quiz.i + 1 >= quiz.questions.length;
+    $("#quizNext").innerHTML = `<span>${escapeHtml(last ? t("quiz_result") : t("quiz_next"))}</span>${ic(last ? "flag" : "arrow-right")}`;
   }
 
   function nextQuiz() {
@@ -550,28 +858,29 @@
     $("#quizPlay").classList.add("hidden");
     $("#quizResult").classList.remove("hidden");
     $("#quizScore").textContent = `${pct}%`;
-    let hint = `${quiz.score} / ${total} дұрыс. `;
+    let key;
+    let level = null;
     if (quiz.mode === "placement") {
-      if (pct >= 85) hint += "Деңгей: B2-ге жақын 💪";
-      else if (pct >= 70) hint += "Деңгей: B1";
-      else if (pct >= 50) hint += "Деңгей: A2";
-      else hint += "Деңгей: A1 — academic сөзден баста!";
-    } else if (pct >= 80) hint += "Керемет! IELTS vocabulary сенікі.";
-    else if (pct >= 60) hint += "Жақсы — weak сөздерді қайтала.";
-    else hint += "Сөздік + грамматикаға орал.";
-    $("#quizLevelHint").textContent = hint;
+      level = pct >= 85 ? "B2" : pct >= 70 ? "B1" : pct >= 50 ? "A2" : "A1";
+      key = `quiz_lvl_${level.toLowerCase()}`;
+    } else key = pct >= 80 ? "quiz_hint_great" : pct >= 60 ? "quiz_hint_good" : "quiz_hint_low";
+    $("#quizLevelHint").textContent = `${fmt(t("quiz_correct_of"), { n: quiz.score, total })} ${t(key)}`;
+    // Above A1 the result leads straight to that part of the path, where the learner can skip ahead.
+    const go = $("#quizGoLevel");
+    if (go) {
+      go.classList.toggle("hidden", !level || level === "A1");
+      go.dataset.level = level || "";
+      go.innerHTML = `<span>${escapeHtml(fmt(t("quiz_go_level"), { level: level || "" }))}</span>${ic("arrow-right")}`;
+    }
+    $("#quizRetry")?.classList.toggle("btn-primary", !level || level === "A1");
+    $("#quizRetry")?.classList.toggle("btn-ghost", !!level && level !== "A1");
 
-    state.quizHistory.unshift({
-      mode: quiz.mode,
-      score: pct,
-      date: todayStr(),
-      detail: `${quiz.score}/${total}`,
-    });
+    state.quizHistory.unshift({ mode: quiz.mode, score: pct, date: localDay(), detail: `${quiz.score}/${total}` });
     state.quizHistory = state.quizHistory.slice(0, 20);
     markActivity(Math.max(10, Math.round(pct / 4)));
-    completeDailyTask();
     saveState();
     if (pct >= 70) burstConfetti();
+    quiz = null;
   }
 
   /* Speaking */
@@ -581,20 +890,79 @@
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  let speakRec = null;
+  let speakTalkStart = 0;
+
   function clearSpeakTimer() {
     clearInterval(speakTimerId);
     speakTimerId = null;
   }
 
+  function stopSpeakRec() {
+    const rec = speakRec;
+    speakRec = null;
+    if (rec) {
+      try {
+        rec.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+  }
+
+  // Live speech-to-text (Chrome/Edge/Safari). Chrome ends the session on silence, so restart it.
+  function startSpeechRec(onText, { continuous = true } = {}) {
+    if (!SpeechRec) return null;
+    const rec = new SpeechRec();
+    rec.lang = "en-US";
+    rec.continuous = continuous;
+    rec.interimResults = true;
+    let finalText = "";
+    let restarts = 0;
+    let dead = false;
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) finalText += `${r[0].transcript.trim()} `;
+        else interim += r[0].transcript;
+      }
+      onText(finalText.trim(), interim.trim());
+    };
+    rec.onerror = (e) => {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") toast(t("mic_denied"));
+      if (e.error !== "no-speech") dead = true;
+    };
+    rec.onend = () => {
+      if (continuous && !dead && speakRec === rec && restarts++ < 40) {
+        try {
+          rec.start();
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    try {
+      rec.start();
+      return rec;
+    } catch {
+      return null;
+    }
+  }
+
   function initSpeaking() {
     const list = $("#speakList");
-    const items = DATA.speaking || [];
+    const items = byLevel(DATA.speaking || []);
+    const bands = state.speakBands || {};
     list.innerHTML = items
       .map(
         (s) =>
-          `<button type="button" data-id="${s.id}"><strong>${escapeHtml(
-            s.part
-          )}</strong><br/><span class="muted">${escapeHtml(s.title)}</span></button>`
+          `<button type="button" data-id="${s.id}" class="${currentSpeak && currentSpeak.id === s.id ? "active" : ""}"><strong>${escapeHtml(
+            s.title
+          )}</strong><span class="muted small">${escapeHtml(partLabel(s.part))}${
+            bands[s.id] ? ` · <b class="band-chip">${bands[s.id]}</b>` : ""
+          }</span></button>`
       )
       .join("");
     list.querySelectorAll("button").forEach((b) => {
@@ -602,8 +970,10 @@
         list.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
         b.classList.add("active");
         openSpeak(b.dataset.id);
+        revealPanel("#speakPanel");
       };
     });
+    if (currentSpeak && speakPhase !== "talk") openSpeak(currentSpeak.id);
   }
 
   function openSpeak(id) {
@@ -611,76 +981,129 @@
     if (!s) return;
     currentSpeak = s;
     clearSpeakTimer();
-    speakPhase = null;
+    stopSpeakRec();
     const panel = $("#speakPanel");
     panel.innerHTML = `
-      <span class="pill">${escapeHtml(s.part)}</span>
+      <span class="pill">${escapeHtml(partLabel(s.part))}</span>
       <h2>${escapeHtml(s.title)}</h2>
-      <p class="muted" data-dyn="speak_tip">${escapeHtml(t("speak_tip"))}</p>
+      <p class="muted small">${escapeHtml(t("speak_cue"))}</p>
       <ul class="cue-list">
         ${s.cue.map((c) => `<li>${escapeHtml(c)}</li>`).join("")}
       </ul>
       <div class="timer-box">
-        <div class="timer-labels">
-          <span>${escapeHtml(t("speak_prep"))}: ${s.prep}s</span>
-          <span>${escapeHtml(t("speak_talk"))}: ${s.speak}s</span>
+        <p class="phase-label" id="speakPhaseLabel"></p>
+        <div class="timer-display" id="speakClock"></div>
+        <div class="progress-bar slim"><div class="progress-fill" id="speakFill" style="width:0%"></div></div>
+        <div class="speak-actions">
+          <button type="button" class="btn-3d" id="speakMain"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="speakReset">${ic("rotate-ccw")}<span>${escapeHtml(t("speak_reset"))}</span></button>
         </div>
-        <div class="timer-display" id="speakClock">${fmtTime(s.prep)}</div>
-        <p class="muted" id="speakPhaseLabel">—</p>
-        <div class="focus-actions">
-          <button type="button" class="btn btn-secondary btn-sm" id="speakPrepBtn">${escapeHtml(
-            t("speak_start_prep")
-          )}</button>
-          <button type="button" class="btn btn-primary btn-sm" id="speakTalkBtn">${escapeHtml(
-            t("speak_start_talk")
-          )}</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="speakResetBtn">${escapeHtml(
-            t("speak_reset")
-          )}</button>
-          <button type="button" class="btn btn-success btn-sm" id="speakDoneBtn">${escapeHtml(
-            t("speak_done")
-          )}</button>
+        <p class="speak-live hidden" id="speakLive"></p>
+      </div>
+      <div class="speak-after hidden" id="speakAfter">
+        <label class="muted small" for="speakText">${escapeHtml(t(SpeechRec ? "speak_transcript" : "speak_type"))}</label>
+        <textarea id="speakText" class="write-area" rows="5" placeholder="${escapeHtml(t("speak_text_ph"))}"></textarea>
+        <div class="speak-actions">
+          <button type="button" class="btn-3d" id="speakAi">${ic("sparkles")}<span>${escapeHtml(t("ai_check_speak"))}</span></button>
         </div>
+        <div id="speakFb"></div>
       </div>
     `;
-    $("#speakPrepBtn").onclick = () => startSpeakPhase("prep", s.prep);
-    $("#speakTalkBtn").onclick = () => startSpeakPhase("talk", s.speak);
-    $("#speakResetBtn").onclick = () => {
-      clearSpeakTimer();
-      speakPhase = null;
-      $("#speakClock").textContent = fmtTime(s.prep);
-      $("#speakPhaseLabel").textContent = "—";
-    };
-    $("#speakDoneBtn").onclick = () => {
-      clearSpeakTimer();
-      markActivity(20);
-      completeDailyTask();
-      toast(t("speak_done"));
-    };
-  }
+    const main = $("#speakMain");
+    const label = $("#speakPhaseLabel");
+    const clock = $("#speakClock");
+    const fill = $("#speakFill");
+    const live = $("#speakLive");
 
-  function startSpeakPhase(phase, seconds) {
-    clearSpeakTimer();
-    speakPhase = phase;
-    speakLeft = seconds;
-    $("#speakClock").textContent = fmtTime(speakLeft);
-    $("#speakPhaseLabel").textContent =
-      phase === "prep" ? t("speak_prep") : t("speak_talk");
-    speakTimerId = setInterval(() => {
-      speakLeft -= 1;
-      if (speakLeft <= 0) {
-        clearSpeakTimer();
-        $("#speakClock").textContent = "00:00";
-        toast(phase === "prep" ? t("speak_start_talk") : "✓");
-        if (phase === "prep" && currentSpeak) {
-          // auto-suggest starting talk
-          $("#speakPhaseLabel").textContent = t("speak_talk");
+    const runTimer = (seconds, onDone) => {
+      clearSpeakTimer();
+      speakLeft = seconds;
+      clock.textContent = fmtTime(speakLeft);
+      fill.style.width = "0%";
+      speakTimerId = setInterval(() => {
+        speakLeft -= 1;
+        clock.textContent = fmtTime(Math.max(0, speakLeft));
+        fill.style.width = `${((seconds - speakLeft) / seconds) * 100}%`;
+        if (speakLeft <= 0) {
+          clearSpeakTimer();
+          onDone();
         }
-        burstConfetti();
+      }, 1000);
+    };
+
+    const setPhase = (phase) => {
+      speakPhase = phase;
+      $("#speakPanel .timer-box").dataset.phase = phase;
+      main.classList.toggle("hidden", phase === "done");
+      if (phase === "idle") {
+        label.textContent = t("speak_ready");
+        clock.textContent = fmtTime(s.prep);
+        fill.style.width = "0%";
+        iconLabel(main, "play", fmt(t("speak_start_prep"), { n: Math.round(s.prep / 60) || 1 }));
+        live.classList.add("hidden");
+        $("#speakAfter").classList.add("hidden");
+      } else if (phase === "prep") {
+        label.textContent = t("speak_prep");
+        iconLabel(main, "mic", t("speak_start_talk"));
+        runTimer(s.prep, () => {
+          playSfx("tap");
+          setPhase("talk");
+        });
+      } else if (phase === "talk") {
+        label.textContent = t("speak_talk");
+        iconLabel(main, "square", t("speak_finish"));
+        speakTalkStart = Date.now();
+        const area = $("#speakText");
+        area.value = "";
+        speakRec = startSpeechRec((final, interim) => {
+          area.value = final;
+          live.textContent = `${final} ${interim}`.trim() || "…";
+        });
+        live.classList.toggle("hidden", !speakRec);
+        if (speakRec) live.textContent = t("speak_listening");
+        runTimer(s.speak, () => setPhase("done"));
+      } else if (phase === "done") {
+        clearSpeakTimer();
+        stopSpeakRec();
+        label.textContent = t("speak_done_label");
+        fill.style.width = "100%";
+        live.classList.add("hidden");
+        $("#speakAfter").classList.remove("hidden");
+        playSfx("done");
+        if (awardOnce(`speak:${s.id}`, 20)) toast(`${t("speak_done_ok")} +${xpText(20)}`);
+      }
+    };
+
+    main.onclick = () => {
+      if (speakPhase === "idle") setPhase("prep");
+      else if (speakPhase === "prep") setPhase("talk");
+      else if (speakPhase === "talk") setPhase("done");
+    };
+    $("#speakReset").onclick = () => {
+      clearSpeakTimer();
+      stopSpeakRec();
+      setPhase("idle");
+    };
+    $("#speakAi").onclick = async () => {
+      const transcript = $("#speakText").value;
+      if (countWords(transcript) < 15) {
+        toast(t("ai_err_short"));
         return;
       }
-      $("#speakClock").textContent = fmtTime(speakLeft);
-    }, 1000);
+      const seconds = speakTalkStart ? Math.round((Date.now() - speakTalkStart) / 1000) : s.speak;
+      const data = await window.FP_AIUI.runFeedback(
+        "speaking",
+        { topic: s.title, cue: s.cue, transcript, seconds: Math.min(seconds, s.speak), level: s.level },
+        $("#speakFb"),
+        $("#speakAi")
+      );
+      if (data) {
+        if (!state.speakBands) state.speakBands = {};
+        state.speakBands[s.id] = data.overall;
+        saveState();
+      }
+    };
+    setPhase("idle");
   }
 
   /* Writing */
@@ -692,13 +1115,16 @@
 
   function initWriting() {
     const list = $("#writeList");
-    const items = DATA.writing || [];
+    const items = byLevel(DATA.writing || []);
+    const bands = state.writeBands || {};
     list.innerHTML = items
       .map(
         (w) =>
-          `<button type="button" data-id="${w.id}"><strong>${escapeHtml(
-            w.task
-          )}</strong><br/><span class="muted">${escapeHtml(w.title)}</span></button>`
+          `<button type="button" data-id="${w.id}" class="${currentWrite && currentWrite.id === w.id ? "active" : ""}"><strong>${escapeHtml(
+            w.title
+          )}</strong><span class="muted small">${escapeHtml(taskLabel(w.task))}${
+            bands[w.id] ? ` · <b class="band-chip">${bands[w.id]}</b>` : ""
+          }</span></button>`
       )
       .join("");
     list.querySelectorAll("button").forEach((b) => {
@@ -706,12 +1132,19 @@
         list.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
         b.classList.add("active");
         openWrite(b.dataset.id);
+        revealPanel("#writePanel");
       };
     });
+    if (currentWrite && !writeRunning) openWrite(currentWrite.id);
+  }
+
+  // On phones the topic list sits above the panel, so bring the panel into view after a pick.
+  function revealPanel(sel) {
+    if (window.innerWidth <= 900) $(sel)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function countWords(text) {
-    return (text.trim().match(/\S+/g) || []).length;
+    return (String(text).trim().match(/\S+/g) || []).length;
   }
 
   function openWrite(id) {
@@ -723,82 +1156,110 @@
     const saved = (state.drafts && state.drafts[w.id]) || "";
     const panel = $("#writePanel");
     panel.innerHTML = `
-      <span class="pill">${escapeHtml(w.task)}</span>
+      <span class="pill">${escapeHtml(taskLabel(w.task))} · ${w.minutes || 40} ${escapeHtml(t("write_min"))}</span>
       <h2>${escapeHtml(w.title)}</h2>
       <p class="prompt-box">${escapeHtml(w.prompt)}</p>
       <div class="write-meta">
-        <span id="writeClock">${fmtTime(writeLeft)}</span>
-        <span id="writeWordCount">0 / ${w.minWords} ${escapeHtml(t("write_words"))}</span>
+        <div class="write-timer">
+          <button type="button" class="btn btn-ghost btn-sm" id="writeTimer"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="writeReset" aria-label="${escapeHtml(t("write_reset"))}" title="${escapeHtml(
+            t("write_reset")
+          )}">${ic("rotate-ccw")}</button>
+        </div>
+        <span id="writeWordCount"></span>
       </div>
-      <div class="focus-actions">
-        <button type="button" class="btn btn-primary btn-sm" id="writeStart">${escapeHtml(
-          t("write_start")
-        )}</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="writePause">${escapeHtml(
-          t("write_pause")
-        )}</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="writeReset">${escapeHtml(
-          t("write_reset")
-        )}</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="writeSave">${escapeHtml(
-          t("write_save")
-        )}</button>
-        <button type="button" class="btn btn-success btn-sm" id="writeDone">${escapeHtml(
-          t("write_done")
-        )}</button>
+      <textarea id="writeArea" class="write-area" rows="12" placeholder="${escapeHtml(t("write_ph"))}">${escapeHtml(saved)}</textarea>
+      <p class="muted small" id="writeAutosave">${escapeHtml(saved ? t("write_autosaved") : t("write_autosave_hint"))}</p>
+      <div class="write-actions">
+        <button type="button" class="btn-3d" id="writeAi">${ic("sparkles")}<span>${escapeHtml(t("ai_check_write"))}</span></button>
+        <button type="button" class="btn btn-ghost" id="writeDone">${escapeHtml(t("write_done"))}</button>
       </div>
-      <textarea id="writeArea" class="write-area" rows="12" placeholder="Write your answer here...">${escapeHtml(
-        saved
-      )}</textarea>
-      <div class="tips-box">
-        <h3>${escapeHtml(t("write_tips"))}</h3>
-        <ul>${w.tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
-      </div>
+      <div id="writeFb"></div>
+      <details class="tips-box">
+        <summary>${escapeHtml(t("write_tips"))}</summary>
+        <ul>${local(w, "tips").map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
+      </details>
     `;
     const area = $("#writeArea");
+    const timerBtn = $("#writeTimer");
+    let saveT;
+    const persist = () => {
+      state.drafts[w.id] = area.value;
+      saveState();
+    };
+    const drawTimer = () => {
+      iconLabel(timerBtn, writeRunning ? "pause" : "timer", fmtTime(Math.max(0, writeLeft)));
+      timerBtn.classList.toggle("is-running", writeRunning);
+    };
     const updateCount = () => {
       const n = countWords(area.value);
       const el = $("#writeWordCount");
       el.textContent = `${n} / ${w.minWords} ${t("write_words")}`;
       el.classList.toggle("ok", n >= w.minWords);
     };
-    area.addEventListener("input", updateCount);
+    area.addEventListener("input", () => {
+      updateCount();
+      clearTimeout(saveT);
+      saveT = setTimeout(() => {
+        persist();
+        $("#writeAutosave").textContent = t("write_autosaved");
+      }, 800);
+    });
     updateCount();
+    drawTimer();
 
-    $("#writeStart").onclick = () => {
-      if (writeRunning) return;
+    timerBtn.onclick = () => {
+      if (writeRunning) {
+        clearWriteTimer();
+        drawTimer();
+        return;
+      }
+      if (writeLeft <= 0) writeLeft = (w.minutes || 40) * 60;
       writeRunning = true;
+      drawTimer();
       writeTimerId = setInterval(() => {
         writeLeft -= 1;
         if (writeLeft <= 0) {
           clearWriteTimer();
-          $("#writeClock").textContent = "00:00";
-          toast("Time!");
-          burstConfetti();
-          return;
+          toast(t("write_time_up"));
+          playSfx("done");
         }
-        $("#writeClock").textContent = fmtTime(writeLeft);
+        drawTimer();
       }, 1000);
     };
-    $("#writePause").onclick = () => clearWriteTimer();
     $("#writeReset").onclick = () => {
       clearWriteTimer();
       writeLeft = (w.minutes || 40) * 60;
-      $("#writeClock").textContent = fmtTime(writeLeft);
+      drawTimer();
     };
-    $("#writeSave").onclick = () => {
-      if (!state.drafts) state.drafts = {};
-      state.drafts[w.id] = area.value;
-      saveState();
-      toast(t("write_saved"));
+    const longEnough = () => {
+      const min = Math.min(50, w.minWords);
+      if (countWords(area.value) >= min) return true;
+      toast(fmt(t("write_too_short"), { n: min }));
+      return false;
     };
     $("#writeDone").onclick = () => {
-      if (!state.drafts) state.drafts = {};
-      state.drafts[w.id] = area.value;
-      saveState();
-      markActivity(25);
-      completeDailyTask();
-      toast(t("write_done"));
+      persist();
+      if (!longEnough()) return;
+      clearWriteTimer();
+      drawTimer();
+      toast(awardOnce(`write:${w.id}`, 25) ? `${t("write_done_ok")} +${xpText(25)}` : t("toast_already"));
+    };
+    $("#writeAi").onclick = async () => {
+      persist();
+      if (!longEnough()) return;
+      const data = await window.FP_AIUI.runFeedback(
+        "writing",
+        { text: area.value, prompt: w.prompt, minWords: w.minWords, task: w.task, level: w.level },
+        $("#writeFb"),
+        $("#writeAi")
+      );
+      if (data) {
+        if (!state.writeBands) state.writeBands = {};
+        state.writeBands[w.id] = data.overall;
+        saveState();
+        if (awardOnce(`write:${w.id}`, 25)) toast(`${t("write_done_ok")} +${xpText(25)}`);
+      }
     };
   }
 
@@ -811,11 +1272,12 @@
         (p) => `
       <article class="phrase-card glass">
         <p class="phrase-en">${escapeHtml(p.en)}</p>
-        <p class="muted">${escapeHtml(p.kk)}</p>
+        <p class="muted">${escapeHtml(local(p, "kk"))}</p>
         <p class="phrase-use">${escapeHtml(p.use)}</p>
-        <button type="button" class="btn btn-secondary btn-sm" data-copy="${escapeHtml(
-          p.en
-        )}">${escapeHtml(t("phrase_copy"))}</button>
+        <div class="phrase-actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-say="${escapeHtml(p.en)}" aria-label="Play">${ic("volume-2")}</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-copy="${escapeHtml(p.en)}">${escapeHtml(t("phrase_copy"))}</button>
+        </div>
       </article>`
       )
       .join("");
@@ -829,6 +1291,23 @@
         }
       };
     });
+    grid.querySelectorAll("[data-say]").forEach((btn) => (btn.onclick = () => speakText(btn.dataset.say)));
+  }
+
+  /* Practice hub */
+  function renderPractice() {
+    const set = (sel, v) => {
+      const el = $(sel);
+      if (el) el.textContent = v;
+    };
+    set("#pcGrammar", fmt(t("pc_lessons"), { n: DATA.lessons.length }));
+    set("#pcListening", fmt(t("pc_tracks"), { n: (DATA.listening || []).length }));
+    set("#pcReading", fmt(t("pc_texts"), { n: (DATA.readings || []).length }));
+    set("#pcSpeaking", fmt(t("pc_topics"), { n: (DATA.speaking || []).length }));
+    set("#pcWriting", fmt(t("pc_tasks"), { n: (DATA.writing || []).length }));
+    set("#pcPhrases", fmt(t("pc_phrases"), { n: (DATA.phrases || []).length }));
+    set("#pcVocab", fmt(t("pc_words"), { n: DATA.vocab.length }));
+    set("#pcStories", fmt(t("pc_stories"), { n: (DATA.stories || []).length }));
   }
 
   /* Focus pomodoro */
@@ -844,14 +1323,12 @@
 
   /* Export / import */
   function exportProgress() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], {
-      type: "application/json",
-    });
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `fluentpath-progress-${todayStr()}.json`;
+    a.download = `fluentpath-progress-${localDay()}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast(t("export_ok"));
   }
 
@@ -860,11 +1337,11 @@
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        state = { ...defaultState(), ...data };
+        if (!data || typeof data !== "object" || typeof data.xp !== "number") throw new Error("bad file");
+        state = normalizeState(data);
         saveState();
         applyTheme();
         applyI18n();
-        renderProgress();
         toast(t("import_ok"));
       } catch {
         toast(t("import_fail"));
@@ -883,21 +1360,10 @@
 
   function stopListening() {
     listenPlayingAll = false;
-    if (window.speechSynthesis) speechSynthesis.cancel();
-    utter = null;
+    VOICE.stop();
     clearInterval(speakTimer);
     $("#eqAnim")?.classList.remove("playing");
     if ($("#listenFill")) $("#listenFill").style.width = "0%";
-  }
-
-  function pickEnglishVoice() {
-    const voices = speechSynthesis.getVoices() || [];
-    return (
-      voices.find((v) => /en(-|_)GB/i.test(v.lang)) ||
-      voices.find((v) => /en(-|_)US/i.test(v.lang)) ||
-      voices.find((v) => /^en/i.test(v.lang)) ||
-      null
-    );
   }
 
   function updateListenProgress() {
@@ -905,14 +1371,11 @@
     const p = Math.min(100, (listenSentIndex / total) * 100);
     if ($("#listenFill")) $("#listenFill").style.width = `${p}%`;
     if ($("#listenSentInfo")) {
-      $("#listenSentInfo").textContent = `Sentence ${Math.min(
-        listenSentIndex + 1,
-        total
-      )} / ${total}`;
+      $("#listenSentInfo").textContent = fmt(t("listen_sentence"), { n: Math.min(listenSentIndex + 1, total), total });
     }
     const cur = $("#listenCurrentSent");
     if (cur && listenSentences[listenSentIndex]) {
-      cur.classList.remove("hidden");
+      cur.classList.toggle("hidden", !listenShowText);
       cur.textContent = listenSentences[listenSentIndex];
     }
   }
@@ -933,15 +1396,13 @@
     if (!box) return;
     box.classList.remove("hidden");
     $("#listeningActive")?.classList.add("hidden");
-    const tracks = DATA.listening || [];
+    const tracks = byLevel(DATA.listening || []);
     box.innerHTML = tracks
       .map(
         (tr, i) => `
       <button type="button" data-id="${tr.id}">
-        <span><strong>🎧 ${i + 1}. ${escapeHtml(tr.title)}</strong></span>
-        <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(
-          tr.duration || ""
-        )}</span>
+        <span class="track-title">${ic("headphones")}<strong>${i + 1}. ${escapeHtml(tr.title)}</strong></span>
+        <span class="track-meta">${escapeHtml(tr.level)} · ${escapeHtml(minLabel(tr.duration))}</span>
       </button>`
       )
       .join("");
@@ -953,6 +1414,7 @@
   function openListening(id, keepLangOnly = false) {
     const tr = (DATA.listening || []).find((x) => x.id === id);
     if (!tr) return;
+    if (!keepLangOnly || listenTrack !== tr) listenQs = tr.questions.map(mixOptions);
     listenTrack = tr;
     listenSentences = splitSentences(tr.text);
     if (!keepLangOnly) {
@@ -962,103 +1424,104 @@
     }
     $("#listeningPick").classList.add("hidden");
     $("#listeningActive").classList.remove("hidden");
+    updatePlayBtn();
     $("#listenTitle").textContent = tr.title;
-    $("#listenMeta").textContent = `${tr.level} · ${tr.duration || ""} · ${
-      listenSentences.length
-    } sentences`;
+    $("#listenMeta").textContent = `${tr.level} · ${minLabel(tr.duration)} · ${fmt(t("listen_sentences"), {
+      n: listenSentences.length,
+    })}`;
     renderTranscriptHighlight();
     $("#listenTranscript").classList.toggle("hidden", !listenShowText);
     const tog = $("#listenToggleText");
     if (tog) tog.textContent = listenShowText ? t("listen_hide") : t("listen_show");
     $("#listenScore")?.classList.add("hidden");
     updateListenProgress();
-    $("#listenQs").innerHTML = tr.questions
+    $("#listenQs").innerHTML = listenQs
       .map(
         (qq, qi) => `
       <div class="rq">
         <p>${qi + 1}. ${escapeHtml(qq.q)}</p>
         ${qq.options
-          .map(
-            (o, oi) =>
-              `<label><input type="radio" name="lq${qi}" value="${oi}" /> ${escapeHtml(
-                o
-              )}</label>`
-          )
+          .map((o, oi) => `<label><input type="radio" name="lq${qi}" value="${oi}" /> ${escapeHtml(o)}</label>`)
           .join("")}
       </div>`
       )
       .join("");
   }
 
+  const trackVoice = () => VOICE.trackVoice(Math.max(0, (DATA.listening || []).indexOf(listenTrack)));
+
   function speakSentence(index, thenNext) {
-    if (!listenTrack || !window.speechSynthesis) {
+    if (!listenTrack || !canSpeakAloud()) {
       toast(t("speek_unsupported"));
       return;
     }
     if (index < 0 || index >= listenSentences.length) {
       listenPlayingAll = false;
+      listenSentIndex = Math.max(0, listenSentences.length - 1);
       $("#eqAnim")?.classList.remove("playing");
       if ($("#listenFill")) $("#listenFill").style.width = "100%";
+      updatePlayBtn();
       return;
     }
-    speechSynthesis.cancel();
     listenSentIndex = index;
     updateListenProgress();
     renderTranscriptHighlight();
-
-    utter = new SpeechSynthesisUtterance(listenSentences[index]);
-    utter.lang = "en-GB";
-    utter.rate = listenRate;
-    utter.pitch = 1;
-    const voice = pickEnglishVoice();
-    if (voice) utter.voice = voice;
-
-    utter.onstart = () => $("#eqAnim")?.classList.add("playing");
-    utter.onend = () => {
-      if (thenNext && listenPlayingAll) {
-        speakSentence(index + 1, true);
-      } else {
-        $("#eqAnim")?.classList.remove("playing");
-      }
-    };
-    utter.onerror = () => {
-      $("#eqAnim")?.classList.remove("playing");
-      listenPlayingAll = false;
-    };
-    speechSynthesis.speak(utter);
+    const voice = trackVoice();
+    VOICE.say(listenSentences[index], {
+      voice,
+      rate: listenRate,
+      onstart: () => {
+        $("#eqAnim")?.classList.add("playing");
+        updatePlayBtn();
+        if (listenSentences[index + 1]) VOICE.preload(voice, listenSentences[index + 1]);
+      },
+      onend: () => {
+        if (thenNext && listenPlayingAll) {
+          speakSentence(index + 1, true);
+        } else {
+          $("#eqAnim")?.classList.remove("playing");
+          updatePlayBtn();
+        }
+      },
+    });
   }
 
   function playListening() {
     if (!listenTrack) return;
-    if (!window.speechSynthesis) {
+    if (!canSpeakAloud()) {
       toast(t("speek_unsupported"));
       return;
     }
-    // resume if paused
-    if (speechSynthesis.paused) {
-      speechSynthesis.resume();
+    if (VOICE.isPaused()) {
+      VOICE.resume();
+      listenPlayingAll = true;
       $("#eqAnim")?.classList.add("playing");
+      updatePlayBtn();
       return;
     }
     listenPlayingAll = true;
-    const startAt =
-      listenSentIndex >= listenSentences.length - 1 && !speechSynthesis.speaking
-        ? 0
-        : listenSentIndex;
+    const startAt = listenSentIndex >= listenSentences.length - 1 && !VOICE.isSpeaking() ? 0 : listenSentIndex;
     speakSentence(startAt, true);
   }
 
   function pauseListening() {
-    if (!window.speechSynthesis) return;
-    if (speechSynthesis.speaking && !speechSynthesis.paused) {
-      speechSynthesis.pause();
+    if (VOICE.isSpeaking()) {
+      VOICE.pause();
       $("#eqAnim")?.classList.remove("playing");
       listenPlayingAll = false;
-    } else if (speechSynthesis.paused) {
-      speechSynthesis.resume();
+    } else if (VOICE.isPaused()) {
+      VOICE.resume();
       $("#eqAnim")?.classList.add("playing");
       listenPlayingAll = true;
     }
+    updatePlayBtn();
+  }
+
+  function updatePlayBtn() {
+    const btn = $("#listenPlay");
+    if (!btn) return;
+    const playing = VOICE.isSpeaking() && listenPlayingAll;
+    iconLabel(btn, playing ? "pause" : "play", playing ? t("listen_pause") : t("listen_play"));
   }
 
   function replaySentence() {
@@ -1068,29 +1531,34 @@
 
   function checkListening() {
     if (!listenTrack) return;
-    let score = 0;
-    listenTrack.questions.forEach((qq, qi) => {
-      const picked = document.querySelector(`input[name="lq${qi}"]:checked`);
-      if (picked && +picked.value === qq.a) score += 1;
-    });
+    const picks = listenQs.map((_, qi) => document.querySelector(`input[name="lq${qi}"]:checked`));
+    if (picks.some((x) => !x)) {
+      toast(t("answer_all"));
+      return;
+    }
+    const score = listenQs.filter((qq, qi) => +picks[qi].value === qq.a).length;
     const el = $("#listenScore");
     el.classList.remove("hidden");
-    el.textContent = `${t("result_score")}: ${score} / ${listenTrack.questions.length}`;
-    markActivity(score * 6 + 8);
-    completeDailyTask();
-    if (score === listenTrack.questions.length) burstConfetti();
+    el.textContent = `${t("result_score")}: ${score} / ${listenQs.length}`;
+    awardOnce(`listen:${listenTrack.id}`, score * 6 + 8);
+    window.FP_QUESTS?.bump("listen");
+    playSfx(score === listenQs.length ? "done" : "ok");
+    if (score === listenQs.length) burstConfetti();
   }
 
   /* Reading */
   function initReadingList() {
     $("#readingPick").classList.remove("hidden");
     $("#readingActive").classList.add("hidden");
+    const done = state.readDone || {};
     $("#readingPick").innerHTML = DATA.readings
       .map(
         (r) =>
           `<button type="button" data-id="${r.id}">
-            <strong>${escapeHtml(r.title)}</strong>
-            <span class="muted"> · ${r.level}</span>
+            <span class="track-title">${ic("book-open-text")}<strong>${escapeHtml(r.title)}</strong></span>
+            <span class="track-meta">${r.level} · ${fmt(t("read_questions"), { n: r.questions.length })}${
+              done[r.id] != null ? ` · <b class="done-chip">${ic("check")} ${done[r.id]}/${r.questions.length}</b>` : ""
+            }</span>
           </button>`
       )
       .join("");
@@ -1105,52 +1573,123 @@
     $("#readingPick").classList.add("hidden");
     $("#readingActive").classList.remove("hidden");
     $("#readingScore").classList.add("hidden");
-    $("#passageText").innerHTML = `<h2>${escapeHtml(
-      r.title
-    )}</h2><p>${escapeHtml(r.text).replace(/\n\n/g, "</p><p>")}</p>`;
-    $("#readingQs").innerHTML = r.questions
+    $("#passageText").innerHTML = `<h2>${escapeHtml(r.title)}</h2><p>${escapeHtml(r.text).replace(
+      /\n\n/g,
+      "</p><p>"
+    )}</p>`;
+    const qs = r.questions.map(mixOptions);
+    $("#readingQs").innerHTML = qs
       .map(
         (qq, qi) => `
       <div class="rq">
         <p>${qi + 1}. ${escapeHtml(qq.q)}</p>
         ${qq.options
-          .map(
-            (o, oi) =>
-              `<label><input type="radio" name="rq${qi}" value="${oi}" /> ${escapeHtml(
-                o
-              )}</label>`
-          )
+          .map((o, oi) => `<label><input type="radio" name="rq${qi}" value="${oi}" /> ${escapeHtml(o)}</label>`)
           .join("")}
       </div>`
       )
       .join("");
     $("#readingCheck").onclick = () => {
-      let score = 0;
-      r.questions.forEach((qq, qi) => {
-        const picked = document.querySelector(`input[name="rq${qi}"]:checked`);
-        if (picked && +picked.value === qq.a) score += 1;
-      });
+      const picks = qs.map((_, qi) => document.querySelector(`input[name="rq${qi}"]:checked`));
+      if (picks.some((x) => !x)) {
+        toast(t("answer_all"));
+        return;
+      }
+      const score = qs.filter((qq, qi) => +picks[qi].value === qq.a).length;
       const el = $("#readingScore");
       el.classList.remove("hidden");
-      el.textContent = `${t("result_score")}: ${score} / ${r.questions.length}`;
-      markActivity(score * 5 + 5);
-      completeDailyTask();
-      if (score === r.questions.length) burstConfetti();
+      el.textContent = `${t("result_score")}: ${score} / ${qs.length}`;
+      awardOnce(`read:${r.id}`, score * 5 + 5);
+      if (!state.readDone) state.readDone = {};
+      state.readDone[r.id] = Math.max(state.readDone[r.id] || 0, score);
+      saveState();
+      window.FP_QUESTS?.bump("read");
+      playSfx(score === qs.length ? "done" : "ok");
+      if (score === qs.length) burstConfetti();
     };
   }
 
   /* Progress */
+  const ACHIEVEMENTS = [
+    { id: "first", icon: "footprints", test: (s) => (s.lessonsDone || 0) >= 1 },
+    { id: "lessons10", icon: "book-check", test: (s) => (s.lessonsDone || 0) >= 10 },
+    { id: "perfect", icon: "badge-check", test: (s) => (s.perfectLessons || 0) >= 1 },
+    { id: "streak3", icon: "flame", test: (s) => (s.bestStreak || 0) >= 3 },
+    { id: "streak7", icon: "calendar-check", test: (s) => (s.bestStreak || 0) >= 7 },
+    { id: "words50", icon: "brain", test: (s) => Object.keys(s.srs || {}).length >= 50 },
+    { id: "words200", icon: "library", test: (s) => Object.keys(s.srs || {}).length >= 200 },
+    { id: "xp1000", icon: "gem", test: (s) => (s.xp || 0) >= 1000 },
+    { id: "a1", icon: "sprout", test: () => (course()?.sectionsDone() || []).includes("A1") },
+    { id: "b2", icon: "graduation-cap", test: () => (course()?.sectionsDone() || []).includes("B2") },
+  ];
+
+  function renderWeekChart() {
+    const box = $("#weekChart");
+    if (!box) return;
+    const days = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) days.push(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i));
+    const vals = days.map((d) => state.xpLog[localDay(d)] || 0);
+    const max = Math.max(state.goalXp, ...vals);
+    const labels = days.map((d, i) =>
+      i === 6 ? t("c_today_short") : weekday(d)
+    );
+    const total = vals.reduce((a, b) => a + b, 0);
+    $("#weekTotal").textContent = fmt(t("week_total"), { n: total });
+    $("#weekGoal").textContent = fmt(t("week_goal_legend"), { n: state.goalXp });
+    box.innerHTML = `<div class="cols" role="img" aria-label="${escapeHtml(
+      labels.map((l, i) => `${l}: ${xpText(vals[i])}`).join(", ")
+    )}">
+      <div class="cols-plot">
+        <span class="goal-line" style="bottom:calc((100% - 18px) * ${state.goalXp / max})"></span>
+        ${vals
+          .map(
+            (v, i) => `<div class="col" data-tip="${escapeHtml(labels[i])}: ${xpText(v)}">
+              <span class="col-val">${i === 6 && v ? v : ""}</span>
+              <span class="col-bar" style="height:${v ? Math.max(4, (v / max) * 100) : 0}%"></span>
+            </div>`
+          )
+          .join("")}
+      </div>
+      <div class="cols-lbls">${labels
+        .map((l, i) => `<span class="${i === 6 ? "is-today" : ""}">${escapeHtml(l)}</span>`)
+        .join("")}</div>
+    </div>
+    <table class="sr-only"><tr>${labels.map((l) => `<th>${escapeHtml(l)}</th>`).join("")}</tr><tr>${vals
+      .map((v) => `<td>${v}</td>`)
+      .join("")}</tr></table>`;
+    bindTips(box);
+  }
+
   function renderProgress() {
     $("#pXp").textContent = state.xp;
     $("#pStreak").textContent = state.streak;
-    $("#pKnown").textContent = Object.keys(state.known).length;
+    $("#pBest").textContent = fmt(t("progress_best"), { n: state.bestStreak || 0 });
+    $("#pKnown").textContent = Object.keys(state.srs).length;
     if (state.quizHistory.length) {
-      const avg = Math.round(
-        state.quizHistory.reduce((s, h) => s + h.score, 0) /
-          state.quizHistory.length
-      );
+      const avg = Math.round(state.quizHistory.reduce((s, h) => s + h.score, 0) / state.quizHistory.length);
       $("#pQuiz").textContent = `${avg}%`;
     } else $("#pQuiz").textContent = "—";
+
+    const cs = course()?.courseStats();
+    if (cs) {
+      $("#pCourse").textContent = `${cs.pct}%`;
+      $("#pCourseFill").style.width = `${cs.pct}%`;
+      $("#pCourseMeta").textContent = fmt(t("c_course_lessons"), { d: cs.done, n: cs.total });
+    }
+    renderWeekChart();
+
+    const ach = $("#achGrid");
+    if (ach) {
+      ach.innerHTML = ACHIEVEMENTS.map((a) => {
+        const on = a.test(state);
+        return `<div class="ach${on ? " on" : ""}">
+          <span class="ach-ico">${ic(a.icon)}</span>
+          <strong>${escapeHtml(t(`ach_${a.id}_t`))}</strong>
+          <span class="muted">${escapeHtml(t(`ach_${a.id}_d`))}</span>
+        </div>`;
+      }).join("");
+    }
 
     const hist = $("#quizHistory");
     if (!state.quizHistory.length) {
@@ -1159,49 +1698,136 @@
       hist.innerHTML = state.quizHistory
         .map(
           (h) =>
-            `<li><span>${escapeHtml(h.mode)} · ${h.date}</span><strong>${
-              h.score
-            }% <span class="muted">(${h.detail})</span></strong></li>`
+            `<li><span>${escapeHtml(t(QUIZ_NAMES[h.mode] || h.mode))} · ${h.date}</span><strong>${h.score}% <span class="muted">(${
+              h.detail
+            })</span></strong></li>`
         )
         .join("");
     }
+    renderGoalChips();
+    renderAiSettings();
+  }
+
+  function renderAiSettings() {
+    const AI = window.FP_AI;
+    if (!AI || !$("#aiStatus")) return;
+    const key = AI.getKey();
+    $("#aiStatus").textContent = key ? t("ai_status_own") : t("ai_status_server");
+    $("#aiKey").value = key ? "••••••••" + key.slice(-4) : "";
+    $("#aiModel").value = AI.getModel();
+    $("#aiModel").placeholder = AI.defaultModel;
+    $("#aiKeyClear").classList.toggle("hidden", !key);
+    // When the site already has AI on its server, a personal key is not needed: keep the settings simple.
+    window.FP_CLOUD?.config().then((c) => $("#aiBlock")?.classList.toggle("hidden", !!(c && c.ai) && !key));
+  }
+
+  function renderGoalChips() {
+    $all("[data-goal]").forEach((b) => b.classList.toggle("active", +b.dataset.goal === state.goalXp));
   }
 
   function updateChrome() {
-    refreshDaily();
-    const n = DATA.vocab?.length || 0;
-    if ($("#statWords")) $("#statWords").textContent = `${n}+`;
-    if ($("#statLessons"))
-      $("#statLessons").textContent = String(DATA.lessons?.length || 0);
-    if ($("#statStreak")) $("#statStreak").textContent = String(state.streak);
-    if ($("#heroStreak"))
-      $("#heroStreak").textContent = `${state.streak} ${t("days")}`;
-    if ($("#xpChip")) $("#xpChip").textContent = String(state.xp);
-    if ($("#xpLabel")) $("#xpLabel").textContent = String(state.xp);
+    refreshStreak();
+    const set = (sel, v) => {
+      const el = $(sel);
+      if (el) el.textContent = v;
+    };
+    set("#statWords", String(DATA.vocab.length));
+    set("#statLessons", String(course()?.totalLessons() || DATA.lessons.length));
+    set("#statStreak", String(state.streak));
+    set("#xpChip", String(state.xp));
+    set("#streakChip", String(state.streak));
+    set("#xpLabel", String(todayXp()));
+    $all(".js-streak").forEach((el) => (el.textContent = String(state.streak)));
+    $all(".js-xp-today").forEach((el) => (el.textContent = String(todayXp())));
+    $all(".js-goal").forEach((el) => (el.textContent = String(state.goalXp)));
 
-    const goal = 3;
-    const done = state.dailyDone || 0;
-    if ($("#dailyDone")) $("#dailyDone").textContent = String(done);
-    if ($("#dailyGoal")) $("#dailyGoal").textContent = String(goal);
-    if ($("#dailyFill"))
-      $("#dailyFill").style.width = `${Math.min(100, (done / goal) * 100)}%`;
-    // ring: circumference ~ 100 with path design using dasharray percent
-    const ring = $("#dailyRing");
-    if (ring) {
-      const pct = Math.min(100, (done / goal) * 100);
-      ring.setAttribute("stroke-dasharray", `${pct}, 100`);
+    const goal = state.goalXp;
+    const done = todayXp();
+    const pct = Math.min(100, (done / goal) * 100);
+    set("#dailyDone", String(Math.min(done, 999)));
+    set("#dailyGoal", String(goal));
+    if ($("#dailyFill")) $("#dailyFill").style.width = `${pct}%`;
+    $("#dailyRing")?.setAttribute("stroke-dasharray", `${pct}, 100`);
+    $("#goalCard")?.classList.toggle("is-hit", done >= goal);
+
+    const due = course()?.dueCount() || 0;
+    $all(".due-badge").forEach((b) => {
+      b.textContent = due > 99 ? "99+" : String(due);
+      b.classList.toggle("hidden", due === 0);
+    });
+    $all(".js-due").forEach((el) => (el.textContent = String(due)));
+    $all(".js-freeze").forEach((el) => (el.textContent = String(state.freezes || 0)));
+    window.FP_QUESTS?.render();
+    course()?.updateSide();
+    renderGoalChips();
+  }
+
+  // Older saves only had known/learning flags — give those words SRS cards once.
+  function migrateToSrs() {
+    if (state.srsMigrated) return;
+    const now = Date.now();
+    Object.keys(state.known).forEach((id) => {
+      if (!state.srs[id]) state.srs[id] = { b: 4, due: now + 3 * SRS.DAY, n: 1, w: 0, last: now };
+    });
+    Object.keys(state.learning).forEach((id) => {
+      if (!state.srs[id]) state.srs[id] = { b: 1, due: now, n: 1, w: 1, last: now };
+    });
+    state.srsMigrated = true;
+    saveState();
+  }
+
+  /* PWA */
+  function setupPwa() {
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
     }
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const showInstall = (on) => $all(".install-btn").forEach((b) => b.classList.toggle("hidden", !on));
+    showInstall(!standalone && isIos);
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      installPrompt = e;
+      showInstall(true);
+    });
+    window.addEventListener("appinstalled", () => {
+      installPrompt = null;
+      showInstall(false);
+      toast(t("install_done"));
+    });
+    $all(".install-btn").forEach((b) =>
+      b.addEventListener("click", async () => {
+        if (installPrompt) {
+          installPrompt.prompt();
+          await installPrompt.userChoice.catch(() => null);
+          installPrompt = null;
+          showInstall(false);
+        } else if (isIos) {
+          toast(t("install_ios"));
+        }
+      })
+    );
   }
 
   function bind() {
-    $all("[data-nav]").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        const name = el.getAttribute("data-nav");
-        if (name) {
-          e.preventDefault();
-          showView(name);
-        }
-      });
+    // Delegated so buttons rendered later (path, review, home cards) navigate too.
+    document.addEventListener("click", (e) => {
+      const el = e.target.closest("[data-nav]");
+      if (!el) return;
+      const name = el.getAttribute("data-nav");
+      if (!name) return;
+      e.preventDefault();
+      if (name === "quiz") resetQuizUI();
+      showView(name, { scroll: true });
+    });
+
+    window.addEventListener("popstate", (e) => {
+      if (course()?.isLessonOpen()) return;
+      const name = (e.state && e.state.view) || viewFromHash();
+      showView(name, { push: false });
     });
 
     $("#dockMoreBtn")?.addEventListener("click", (e) => {
@@ -1214,7 +1840,8 @@
     $("#moreClose")?.addEventListener("click", closeMoreSheet);
 
     $("#burger")?.addEventListener("click", () => {
-      $("#mainNav").classList.toggle("open");
+      const open = $("#mainNav").classList.toggle("open");
+      $("#burger").setAttribute("aria-expanded", String(open));
     });
 
     // YouTube study music widget
@@ -1249,14 +1876,21 @@
       applyI18n();
     });
 
+    $all("[data-goal]").forEach((b) =>
+      b.addEventListener("click", () => {
+        state.goalXp = +b.dataset.goal;
+        saveState();
+        updateChrome();
+        if (currentView === "progress") renderWeekChart();
+        toast(fmt(t("goal_set"), { n: state.goalXp }));
+      })
+    );
+
     // Listening controls
-    $("#listenPlay")?.addEventListener("click", playListening);
-    $("#listenPause")?.addEventListener("click", pauseListening);
-    $("#listenStop")?.addEventListener("click", () => {
-      stopListening();
-      listenSentIndex = 0;
-      updateListenProgress();
-      renderTranscriptHighlight();
+    $("#listenPlay")?.addEventListener("click", () => {
+      if ((VOICE.isSpeaking() || VOICE.isPaused()) && listenTrack) pauseListening();
+      else playListening();
+      updatePlayBtn();
     });
     $("#listenReplaySent")?.addEventListener("click", replaySentence);
     $("#listeningBack")?.addEventListener("click", () => {
@@ -1268,57 +1902,35 @@
       listenShowText = !listenShowText;
       $("#listenTranscript")?.classList.toggle("hidden", !listenShowText);
       if (listenShowText) renderTranscriptHighlight();
+      updateListenProgress();
       const tog = $("#listenToggleText");
       if (tog) tog.textContent = listenShowText ? t("listen_hide") : t("listen_show");
     });
     $all("[data-rate]").forEach((btn) => {
+      if (btn.closest("#lesson")) return;
       btn.addEventListener("click", () => {
         listenRate = parseFloat(btn.dataset.rate) || 1;
-        $all("[data-rate]").forEach((b) =>
-          b.classList.toggle("active", b === btn)
-        );
-        if (speechSynthesis.speaking || speechSynthesis.pending) {
+        $all(".speed-row [data-rate]").forEach((b) => b.classList.toggle("active", b === btn));
+        if (VOICE.isSpeaking() || VOICE.isPaused()) {
           listenPlayingAll = true;
           speakSentence(listenSentIndex, true);
         }
       });
     });
 
-    // Chrome/Safari load voices async
-    if (window.speechSynthesis) {
-      speechSynthesis.onvoiceschanged = () => pickEnglishVoice();
-    }
-
-    $("#flashCard")?.addEventListener("click", () => {
+    const flip = () => {
+      if (!vocabQueue.length) return;
       flashFlipped = !flashFlipped;
       $("#flashCard").classList.toggle("flipped", flashFlipped);
-    });
-
-    $("#flashEasy")?.addEventListener("click", () => {
+    };
+    $("#flashCard")?.addEventListener("click", flip);
+    $("#flashSay")?.addEventListener("click", (e) => {
+      e.stopPropagation();
       const w = vocabQueue[vocabIndex];
-      if (w) {
-        state.known[w.id] = true;
-        delete state.learning[w.id];
-        saveState();
-        markActivity(4);
-        toast(`✓ ${w.en}`);
-      }
-      nextFlash();
-      renderVocabTable();
+      if (w) speakText(w.en);
     });
-
-    $("#flashHard")?.addEventListener("click", () => {
-      const w = vocabQueue[vocabIndex];
-      if (w) {
-        state.learning[w.id] = true;
-        delete state.known[w.id];
-        saveState();
-        markActivity(2);
-      }
-      nextFlash();
-      renderVocabTable();
-    });
-
+    $("#flashEasy")?.addEventListener("click", () => gradeFlash(true));
+    $("#flashHard")?.addEventListener("click", () => gradeFlash(false));
     $("#flashSkip")?.addEventListener("click", nextFlash);
 
     $("#modeAll")?.addEventListener("click", () => setVocabMode("all"));
@@ -1327,19 +1939,18 @@
 
     // Flashcard keyboard shortcuts
     document.addEventListener("keydown", (e) => {
-      if (!$("#view-vocab")?.classList.contains("active")) return;
+      if (currentView !== "vocab" || document.body.classList.contains("lesson-open")) return;
       const tag = (e.target && e.target.tagName) || "";
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return;
       if (e.code === "Space") {
         e.preventDefault();
-        flashFlipped = !flashFlipped;
-        $("#flashCard")?.classList.toggle("flipped", flashFlipped);
+        flip();
       } else if (e.code === "ArrowLeft") {
         e.preventDefault();
-        $("#flashHard")?.click();
+        gradeFlash(false);
       } else if (e.code === "ArrowRight") {
         e.preventDefault();
-        $("#flashEasy")?.click();
+        gradeFlash(true);
       }
     });
 
@@ -1354,8 +1965,8 @@
         if (focusLeft <= 0) {
           clearFocus();
           toast(t("focus_done"));
+          playSfx("done");
           markActivity(30);
-          completeDailyTask();
           burstConfetti();
           focusLeft = 25 * 60;
           updateFocusClock();
@@ -1367,6 +1978,20 @@
       clearFocus();
       focusLeft = 25 * 60;
       updateFocusClock();
+    });
+
+    // AI settings (personal Gemini key, saved only on this device)
+    $("#aiKeySave")?.addEventListener("click", () => {
+      const key = $("#aiKey").value.trim();
+      if (key && !key.startsWith("••")) window.FP_AI.setKey(key);
+      window.FP_AI.setModel($("#aiModel").value);
+      renderAiSettings();
+      toast(t("ai_key_saved"));
+    });
+    $("#aiKeyClear")?.addEventListener("click", () => {
+      window.FP_AI.setKey("");
+      renderAiSettings();
+      toast(t("ai_key_removed"));
     });
 
     // Export / import
@@ -1383,18 +2008,23 @@
       searchT = setTimeout(initVocab, 120);
     });
     $("#vocabLevel")?.addEventListener("change", initVocab);
-    $("#vocabTopic")?.addEventListener("change", initVocab);
 
     $all("[data-quiz]").forEach((btn) => {
       btn.addEventListener("click", () => startQuiz(btn.dataset.quiz));
     });
     $("#quizNext")?.addEventListener("click", nextQuiz);
     $("#quizRetry")?.addEventListener("click", resetQuizUI);
+    $("#quizGoLevel")?.addEventListener("click", (e) => {
+      const level = e.currentTarget.dataset.level;
+      showView("learn");
+      setTimeout(() => $(`#sec-${level}`)?.scrollIntoView({ behavior: "smooth" }), 380);
+    });
     $("#readingBack")?.addEventListener("click", initReadingList);
 
-    $("#resetProgress")?.addEventListener("click", () => {
-      if (confirm("Барлық прогресс өшеді. Жалғастырасың ба?")) {
-        state = defaultState();
+    $("#resetProgress")?.addEventListener("click", async () => {
+      if (await askConfirm(t("reset_confirm"), { yes: t("progress_reset"), no: t("ask_no"), danger: true })) {
+        const keep = { theme: state.theme, lang: state.lang };
+        state = { ...defaultState(), ...keep, srsMigrated: true };
         saveState();
         applyTheme();
         updateChrome();
@@ -1404,29 +2034,76 @@
     });
 
     // scroll top progress
-    window.addEventListener("scroll", () => {
-      const el = $("#scrollProgress");
-      if (!el) return;
-      const h = document.documentElement;
-      const max = h.scrollHeight - h.clientHeight;
-      const p = max > 0 ? (h.scrollTop / max) * 100 : 0;
-      el.style.width = `${p}%`;
-    });
+    window.addEventListener(
+      "scroll",
+      () => {
+        const el = $("#scrollProgress");
+        if (!el) return;
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        el.style.width = `${max > 0 ? (h.scrollTop / max) * 100 : 0}%`;
+      },
+      { passive: true }
+    );
   }
+
+  // Core API for course.js (lesson path, player, review).
+  window.FP = {
+    get state() {
+      return state;
+    },
+    save: saveState,
+    replaceState,
+    t,
+    toast,
+    confirm: askConfirm,
+    escapeHtml,
+    shuffle,
+    mixOptions,
+    meaning,
+    local,
+    addXp: markActivity,
+    awardOnce,
+    fmt,
+    xp: xpText,
+    startSpeechRec,
+    hasSpeechRec: () => !!SpeechRec,
+    goalReached,
+    confetti: burstConfetti,
+    speak: speakText,
+    stopSpeech,
+    hasTTS: canSpeakAloud,
+    sfx: playSfx,
+    showView,
+    refresh: updateChrome,
+    localDay,
+    locale,
+    weekday,
+    bindTips,
+  };
 
   function init() {
     if (!DATA || !DATA.vocab) {
       console.error("FP_DATA missing");
       return;
     }
-    if (!["kk", "ru", "es", "zh"].includes(state.lang)) state.lang = "kk";
-    refreshDaily();
+    migrateToSrs();
+    refreshStreak();
     applyTheme();
     bind();
-    initWotd();
+    course()?.init();
+    setupPwa();
+    const first = viewFromHash();
+    currentView = first;
+    try {
+      history.replaceState({ view: first }, "", `#${first}`);
+    } catch {
+      /* ignore */
+    }
     applyI18n();
     updateFocusClock();
-    showView("home");
+    showView(first, { push: false });
+    window.FP_CLOUD_UI?.init();
   }
 
   document.addEventListener("DOMContentLoaded", init);
