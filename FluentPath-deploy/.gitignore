@@ -2,3 +2,4 @@
 *.onnx
 voices-*.bin
 .tts/
+.netlify/

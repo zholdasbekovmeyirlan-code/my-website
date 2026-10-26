@@ -181,6 +181,21 @@ window.FP_CLOUD = (() => {
     emit();
   }
 
+  // Deletes the account and everything stored with it; the server function holds the admin key.
+  async function deleteAccount() {
+    const tok = await token();
+    if (!tok) throw new CloudError("auth");
+    let res;
+    try {
+      res = await fetch("/.netlify/functions/delete-account", { method: "POST", headers: { Authorization: `Bearer ${tok}` } });
+    } catch {
+      throw new CloudError("network");
+    }
+    if (!res.ok) throw new CloudError(res.status === 401 ? "auth" : "upstream", res.status);
+    signOutLocal();
+    emit();
+  }
+
   function takeRedirect() {
     if (!/access_token=/.test(landingHash)) return false;
     const p = new URLSearchParams(landingHash.slice(1));
@@ -527,6 +542,7 @@ window.FP_CLOUD = (() => {
     sendCode,
     verifyCode,
     signOut,
+    deleteAccount,
     sync,
     onLocalChange,
     setName,

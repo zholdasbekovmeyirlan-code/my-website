@@ -15,18 +15,23 @@
   <meta property="og:locale" content="kk_KZ" />
   <meta property="og:title" content="FluentPath — ағылшын тілін қазақша үйрен" />
   <meta property="og:description" content="Күніне 10 минут: A1-ден B2-ге дейінгі қысқа сабақтар, сөз қайталау, AI-мен сөйлесу, IELTS және ҰБТ дайындық. Тегін." />
-  <meta name="twitter:card" content="summary" />
+  <meta property="og:image" content="/icons/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="FluentPath — ағылшын тілін қазақша үйрен" />
+  <!-- og:url -->
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=11" />
-  <link rel="stylesheet" href="css/theme.css?v=11" />
+  <link rel="stylesheet" href="css/style.css?v=12" />
+  <link rel="stylesheet" href="css/theme.css?v=12" />
 </head>
 <body>
-  <script src="js/icons.js?v=11"></script>
+  <script src="js/icons.js?v=12"></script>
   <div class="bg-scene" aria-hidden="true">
     <div class="orb orb-a"></div>
     <div class="orb orb-b"></div>
@@ -685,6 +690,10 @@
       <div>
         <strong>FluentPath</strong>
         <p class="muted" data-i18n="footer_tag">Ағылшын тілі · қазақша · offline</p>
+        <p class="footer-links">
+          <button type="button" class="link-btn" data-feedback data-i18n="nav_feedback">Бізге жаз</button>
+          <a href="privacy.html" data-i18n="privacy_title">Құпиялылық саясаты</a>
+        </p>
       </div>
       <div class="footer-cta">
         <button type="button" class="btn-3d btn-3d-sm" data-nav="learn" data-i18n="footer_cta">Үйренуді жалғастыру</button>
@@ -733,6 +742,7 @@
         <button type="button" class="cloud-only hidden" data-nav="league"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg><span data-i18n="nav_league">Лига</span></button>
         <button type="button" class="cloud-only hidden" data-nav="class"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span data-i18n="nav_class">Сынып</span></button>
         <button type="button" class="cloud-only hidden" data-nav="account"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg><span data-i18n="nav_account">Аккаунт</span></button>
+        <button type="button" data-feedback><svg class="ic" aria-hidden="true"><use href="#i-message-circle"/></svg><span data-i18n="nav_feedback">Бізге жаз</span></button>
       </div>
       <button type="button" class="btn-3d btn-3d-block install-btn hidden"><svg class="ic" aria-hidden="true"><use href="#i-smartphone"/></svg><span data-i18n="install_btn">Телефонға орнату</span></button>
       <button type="button" class="btn btn-ghost btn-sm more-close" id="moreClose" data-i18n="nav_close">Жабу</button>
@@ -800,26 +810,54 @@
     </div>
   </div>
 
+  <!-- Write to us: a Netlify form (Netlify → Forms shows the messages) -->
+  <div class="fbk hidden" id="fbk" role="dialog" aria-modal="true" aria-labelledby="fbkTitle">
+    <div class="fbk-backdrop" id="fbkBackdrop"></div>
+    <form class="fbk-panel glass" id="fbkForm" name="feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="feedback" />
+      <input type="hidden" name="context" id="fbkContextField" />
+      <input type="hidden" name="page" id="fbkPage" />
+      <input type="hidden" name="lang" id="fbkLang" />
+      <p class="fbk-hp" aria-hidden="true"><label>Leave empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+      <div class="fbk-head">
+        <h2 id="fbkTitle"><svg class="ic" aria-hidden="true"><use href="#i-message-circle"/></svg><span data-i18n="fbk_title">Бізге жаз</span></h2>
+        <button type="button" class="icon-btn" id="fbkClose" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+      </div>
+      <p class="muted small" data-i18n="fbk_sub">Қате таптың ба, әлде идеяң бар ма? Жаз — бәрін оқимыз.</p>
+      <p class="fbk-context hidden" id="fbkContext"></p>
+      <label class="fbk-label" for="fbkMsg" data-i18n="fbk_msg">Хабарлама</label>
+      <textarea id="fbkMsg" name="message" rows="4" maxlength="2000" required></textarea>
+      <label class="fbk-label" for="fbkContact" data-i18n="fbk_contact">Байланыс (міндетті емес): email не Telegram</label>
+      <input type="text" id="fbkContact" name="contact" maxlength="120" autocomplete="email" />
+      <p class="form-err hidden" id="fbkErr" role="alert" data-i18n="fbk_error">Жіберілмеді. Интернетті тексеріп, қайталап көр.</p>
+      <button type="submit" class="btn-3d btn-3d-block" id="fbkSend" data-i18n="fbk_send">Жіберу</button>
+    </form>
+  </div>
+
   <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
   <div class="viz-tip hidden" id="vizTip" role="tooltip"></div>
   <canvas id="fxCanvas" class="fx-canvas" aria-hidden="true"></canvas>
 
-  <script src="js/data.js?v=11"></script>
-  <script src="js/course-data.js?v=11"></script>
-  <script src="js/content-extra.js?v=11"></script>
-  <script src="js/i18n.js?v=11"></script>
-  <script src="js/srs.js?v=11"></script>
-  <script src="js/ai-prompts.js?v=11"></script>
-  <script src="js/ai.js?v=11"></script>
-  <script src="js/audio-index.js?v=11"></script>
-  <script src="js/voice.js?v=11"></script>
-  <script src="js/app.js?v=11"></script>
-  <script src="js/course.js?v=11"></script>
-  <script src="js/ai-ui.js?v=11"></script>
-  <script src="js/quests.js?v=11"></script>
-  <script src="js/stories.js?v=11"></script>
-  <script src="js/exams.js?v=11"></script>
-  <script src="js/cloud.js?v=11"></script>
-  <script src="js/cloud-ui.js?v=11"></script>
+  <script src="js/data.js?v=12"></script>
+  <script src="js/course-data.js?v=12"></script>
+  <script src="js/content-extra.js?v=12"></script>
+  <script src="js/content-more.js?v=12"></script>
+  <script src="js/content-ru.js?v=12"></script>
+  <script src="js/i18n.js?v=12"></script>
+  <script src="js/srs.js?v=12"></script>
+  <script src="js/ai-prompts.js?v=12"></script>
+  <script src="js/ai.js?v=12"></script>
+  <script src="js/audio-index.js?v=12"></script>
+  <script src="js/voice.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
+  <script src="js/course.js?v=12"></script>
+  <script src="js/ai-ui.js?v=12"></script>
+  <script src="js/quests.js?v=12"></script>
+  <script src="js/stories.js?v=12"></script>
+  <script src="js/exams.js?v=12"></script>
+  <script src="js/cloud.js?v=12"></script>
+  <script src="js/cloud-ui.js?v=12"></script>
+  <script src="js/feedback.js?v=12"></script>
+  <script src="js/stats.js?v=12"></script>
 </body>
 </html>

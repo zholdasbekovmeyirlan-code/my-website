@@ -1,6 +1,6 @@
 /* FluentPath service worker — offline cache.
    Bump VERSION together with the ?v= query strings in index.html on every release. */
-const VERSION = "11";
+const VERSION = "12";
 const CACHE = `fluentpath-v${VERSION}`;
 const FONT_CACHE = "fluentpath-fonts";
 const AUDIO_CACHE = "fluentpath-audio"; // recorded voice clips: named by content hash, so they never go stale
@@ -14,6 +14,8 @@ const ASSETS = [
   `js/data.js?v=${VERSION}`,
   `js/course-data.js?v=${VERSION}`,
   `js/content-extra.js?v=${VERSION}`,
+  `js/content-more.js?v=${VERSION}`,
+  `js/content-ru.js?v=${VERSION}`,
   `js/i18n.js?v=${VERSION}`,
   `js/srs.js?v=${VERSION}`,
   `js/ai-prompts.js?v=${VERSION}`,
@@ -28,6 +30,9 @@ const ASSETS = [
   `js/exams.js?v=${VERSION}`,
   `js/cloud.js?v=${VERSION}`,
   `js/cloud-ui.js?v=${VERSION}`,
+  `js/feedback.js?v=${VERSION}`,
+  `js/stats.js?v=${VERSION}`,
+  "privacy.html",
   "manifest.webmanifest",
   "icons/icon.svg",
   "icons/icon-192.png",

@@ -40,6 +40,8 @@ window.FP_AI = (() => {
     } catch {
       throw new AiError(navigator.onLine === false ? "offline" : "network");
     }
+    // Netlify's per-visitor limit (see netlify/functions/ai.mjs) answers 429 with its own page.
+    if (res.status === 429) throw new AiError("rate_limited");
     // A static host without the function answers 404 (or the SPA page with 200 HTML).
     const type = res.headers.get("content-type") || "";
     if (res.status === 404 || !type.includes("json")) throw new AiError("not_configured");
@@ -50,6 +52,8 @@ window.FP_AI = (() => {
 
   async function ask(task, payload) {
     if (navigator.onLine === false) throw new AiError("offline");
+    // Explanations come back in the interface language.
+    payload = { lang: window.FP?.state?.lang === "ru" ? "ru" : "kk", ...payload };
     const key = read(KEY_STORE);
     if (!key) return viaServer(task, payload);
     const out = await P.callGemini({ key, model: read(MODEL_STORE) || P.DEFAULT_MODEL, task, payload });

@@ -34,11 +34,12 @@
     return key ? t(key) : name;
   };
 
-  function feedbackHtml(d) {
+  // Beginner tasks are marked for their level, so the badge says "out of 9" instead of an IELTS band.
+  function feedbackHtml(d, beginner) {
     const list = (items, fn) => items.map(fn).join("");
     return `<div class="fb-card glass">
       <div class="fb-head">
-        <div class="band-badge" style="--p:${(d.overall / 9) * 100}%"><strong>${d.overall}</strong><span>Band</span></div>
+        <div class="band-badge" style="--p:${(d.overall / 9) * 100}%"><strong>${d.overall}</strong><span>${beginner ? "/ 9" : "Band"}</span></div>
         <div><h3>${esc(t("ai_result"))}</h3><p>${esc(d.summary)}</p></div>
       </div>
       <div class="fb-crit">${list(
@@ -89,7 +90,7 @@
     host.innerHTML = `<div class="ai-loading glass"><span class="spinner" aria-hidden="true"></span>${esc(t("ai_wait"))}</div>`;
     try {
       const data = await AI().ask(task, payload);
-      host.innerHTML = feedbackHtml(data);
+      host.innerHTML = feedbackHtml(data, ["A1", "A2"].includes(payload.level));
       $all("[data-say]", host).forEach((b) => b.addEventListener("click", () => FP().speak(b.dataset.say)));
       FP().sfx("done");
       host.scrollIntoView({ behavior: "smooth", block: "start" });

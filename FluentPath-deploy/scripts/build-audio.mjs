@@ -17,7 +17,7 @@ import vm from "node:vm";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ctx = { window: {} };
 vm.createContext(ctx);
-for (const f of ["data.js", "course-data.js", "content-extra.js", "voice.js"]) {
+for (const f of ["data.js", "course-data.js", "content-extra.js", "content-more.js", "voice.js"]) {
   vm.runInContext(readFileSync(join(ROOT, "js", f), "utf8"), ctx, { filename: f });
 }
 const D = ctx.window.FP_DATA;

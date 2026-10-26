@@ -1,8 +1,10 @@
 # FluentPath — static site
 [build]
   publish = "."
+  # Makes the link-preview image URL absolute (scripts/prepare-deploy.mjs). No dependencies to install.
+  command = "node scripts/prepare-deploy.mjs"
 
-# AI proxy for Gemini — needs GEMINI_API_KEY in the site's environment variables.
+# Server functions: AI proxy (GEMINI_API_KEY), public config, account deletion, daily reminders.
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"

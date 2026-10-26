@@ -163,6 +163,9 @@ window.FP_CLOUD_UI = (() => {
         : `<form class="auth-form" id="authEmailForm" novalidate>
             <label for="authEmail" class="muted small">${esc(t("auth_email"))}</label>
             <input type="email" id="authEmail" autocomplete="email" inputmode="email" placeholder="name@mail.kz" value="${esc(L.email)}" />
+            <label class="consent"><input type="checkbox" id="authConsent" ${L.consent ? "checked" : ""} /><span>${esc(t("auth_consent"))} <a href="privacy.html" target="_blank" rel="noopener">${esc(
+              t("privacy_link")
+            )}</a></span></label>
             <button type="submit" class="btn-3d btn-3d-block" ${L.busy ? "disabled" : ""}>${esc(L.busy ? t("auth_sending") : t("auth_send"))}</button>
           </form>
           ${err}${linkErr}
@@ -242,7 +245,10 @@ window.FP_CLOUD_UI = (() => {
           </button>
         </div>
 
-        <button type="button" class="btn btn-ghost btn-sm sign-out" id="signOut">${esc(t("acc_signout"))}</button>
+        <div class="acc-foot">
+          <button type="button" class="btn btn-ghost btn-sm sign-out" id="signOut">${esc(t("acc_signout"))}</button>
+          <button type="button" class="link-btn acc-delete" id="accDelete">${ic("trash-2")}<span>${esc(t("acc_delete"))}</span></button>
+        </div>
       </div>`;
   }
 
@@ -284,15 +290,18 @@ window.FP_CLOUD_UI = (() => {
     $("#authEmailForm", host)?.addEventListener("submit", (e) => {
       e.preventDefault();
       const email = $("#authEmail", host).value.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      login.consent = $("#authConsent", host).checked;
+      // The e-mail is personal data: no account without the learner's consent to the privacy policy.
+      const problem = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? "auth_bad_email" : !login.consent ? "auth_need_consent" : null;
+      if (problem) {
         login.error = null;
         login.email = email;
         renderAccount();
         const msg = document.createElement("p");
         msg.className = "form-err";
-        msg.textContent = t("auth_bad_email");
+        msg.textContent = t(problem);
         $("#authEmailForm").after(msg);
-        $("#authEmail").focus();
+        $(problem === "auth_bad_email" ? "#authEmail" : "#authConsent").focus();
         return;
       }
       send(email);
@@ -359,6 +368,20 @@ window.FP_CLOUD_UI = (() => {
       }
       pushBusy = false;
       renderAccount();
+    });
+    $("#accDelete", host)?.addEventListener("click", async () => {
+      const ok = await FP().confirm(t("acc_delete_q"), { yes: t("acc_delete_yes") });
+      if (!ok) return;
+      try {
+        await C.deleteAccount();
+        classes = null;
+        league = null;
+        pushOn = null;
+        renderAccount();
+        FP().toast(t("acc_deleted"));
+      } catch (e) {
+        FP().toast(errText(e.code));
+      }
     });
     $("#signOut", host)?.addEventListener("click", async () => {
       const ok = await FP().confirm(t("acc_signout_q"), { yes: t("acc_signout") });

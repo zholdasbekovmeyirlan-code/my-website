@@ -124,7 +124,8 @@
     const progress = run.shown + run.asked.size + (run.finished ? 0 : 0);
     const lines = s.lines
       .slice(0, run.shown)
-      .map(([who, en, kk], i) => {
+      .map(([who, en, kk, ru], i) => {
+        if (FP().state.lang === "ru" && ru) kk = ru;
         const me = who && Object.keys(s.cast).indexOf(who) % 2 === 1;
         if (!who) {
           return `<div class="st-line st-narr" data-line="${i}"><p>${esc(en)}</p><p class="st-kk hidden">${esc(kk)}</p></div>`;

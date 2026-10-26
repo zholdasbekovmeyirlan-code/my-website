@@ -21,7 +21,7 @@
   ];
   // Beginner units follow a teaching order; B1/B2 interleave topics instead.
   const TOPIC_ORDER = {
-    A1: ["daily", "family", "food", "home", "time", "describe", "actions"],
+    A1: ["daily", "family", "numbers", "food", "home", "clothes", "animals", "time", "describe", "actions"],
     A2: ["city", "shopping", "education", "work", "health", "nature", "feelings", "hobby"],
   };
   const WORDS_PER_LESSON = 6;
@@ -429,8 +429,8 @@
 
   function sameMeaning(a, b) {
     if (a.en.toLowerCase() === b.en.toLowerCase()) return true;
-    const A = meaningTokens(a.kk);
-    return meaningTokens(b.kk).some((x) => A.includes(x));
+    const A = meaningTokens(FP().meaning(a));
+    return meaningTokens(FP().meaning(b)).some((x) => A.includes(x));
   }
 
   function distractors(word, n, preferOtherTopic = false) {
@@ -473,12 +473,11 @@
 
   function exChoice(w, type) {
     const opts = shuffle([w, ...distractors(w, 3)]);
-    const field = type === "choose_kk" ? "kk" : "en";
     return {
       type,
       word: w,
       wordIds: [w.id],
-      options: opts.map((o) => o[field]),
+      options: opts.map((o) => (type === "choose_kk" ? FP().meaning(o) : o.en)),
       a: opts.indexOf(w),
       speakOption: type === "choose_en",
     };
@@ -537,7 +536,7 @@
     const extra = shuffle(GRAMMAR_TILES.filter((g) => !have.has(g))).slice(0, 3);
     return {
       type: "build_kk",
-      kk: d.kk,
+      kk: FP().local(d, "kk"),
       sentence: d.en,
       target: toks,
       tiles: shuffle([...toks, ...extra]),
@@ -551,7 +550,7 @@
       q: q.q,
       options: order.map((i) => q.options[i]),
       a: order.indexOf(q.a),
-      exp: q.exp || "",
+      exp: FP().local(q, "exp") || "",
     };
   }
 
@@ -634,7 +633,7 @@
     const items = [{ type: "tip", lesson, scored: false }];
     if (lesson.practice) {
       const p = lesson.practice;
-      items.push(exMcq({ q: p.q, options: p.options, a: p.answer, exp: p.explain }));
+      items.push(exMcq({ q: p.q, options: p.options, a: p.answer, exp: p.explain, expRu: p.explainRu }));
     }
     shuffle(lesson.drills || []).forEach((d) =>
       items.push(d.type === "build" ? exBuildKk(d) : exMcq(d))
@@ -898,7 +897,7 @@
       return `<div class="intro-card">
         <span class="intro-badge">${esc(t("c_new_word"))}</span>
         <div class="intro-word"><span>${esc(w.en)}</span>${speakBtn(w.en)}</div>
-        <p class="intro-kk">${esc(w.kk)}</p>
+        <p class="intro-kk">${esc(FP().meaning(w))}</p>
         <p class="intro-ex"><span>“${esc(w.example)}”</span>${speakBtn(w.example, "small")}</p>
         <p class="intro-meta">${esc(w.level)} · ${esc(t("topic_" + w.topic))}</p>
       </div>`;
@@ -907,14 +906,14 @@
       `<div class="prompt-word">${speakBtn(ex.word.en, "big")}<span>${esc(ex.word.en)}</span></div>${choicesHtml(
         ex.options
       )}`,
-    choose_en: (ex) => `<div class="prompt-kk">«${esc(ex.word.kk)}»</div>${choicesHtml(ex.options)}`,
+    choose_en: (ex) => `<div class="prompt-kk">«${esc(FP().meaning(ex.word))}»</div>${choicesHtml(ex.options)}`,
     listen_choose: (ex) => `${listenBtns(ex.word.en)}${choicesHtml(ex.options)}`,
     listen_type: (ex) =>
       `${listenBtns(ex.word.en)}<input type="text" class="ex-input" id="exInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${esc(
         t("c_type_ph")
       )}" />`,
     type_en: (ex) =>
-      `<div class="prompt-kk">«${esc(ex.word.kk)}»</div><input type="text" class="ex-input" id="exInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${esc(
+      `<div class="prompt-kk">«${esc(FP().meaning(ex.word))}»</div><input type="text" class="ex-input" id="exInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${esc(
         t("c_type_ph")
       )}" />`,
     fill: (ex) =>
@@ -932,12 +931,12 @@
         .map((w) => `<button type="button" class="match-btn" data-side="l" data-id="${w.id}">${esc(w.en)}</button>`)
         .join("")}</div>
       <div class="match-col">${ex.right
-        .map((w) => `<button type="button" class="match-btn" data-side="r" data-id="${w.id}">${esc(w.kk)}</button>`)
+        .map((w) => `<button type="button" class="match-btn" data-side="r" data-id="${w.id}">${esc(FP().meaning(w))}</button>`)
         .join("")}</div>
     </div>`,
-    tip: (ex) => `<div class="tip-card">${ex.lesson.body}</div>`,
+    tip: (ex) => `<div class="tip-card">${FP().local(ex.lesson, "body")}</div>`,
     speak: (ex) => `<div class="prompt-word speak-prompt">${speakBtn(ex.text, "big")}<span>${esc(ex.text)}</span></div>
-      ${ex.word ? `<p class="speak-kk">${esc(ex.word.kk)}</p>` : ""}
+      ${ex.word ? `<p class="speak-kk">${esc(FP().meaning(ex.word))}</p>` : ""}
       <button type="button" class="mic-big" id="micBtn" aria-label="Microphone">${ic("mic")}</button>
       <p class="mic-hint" id="micHint">${esc(t("c_mic_tap"))}</p>`,
   };
@@ -1179,14 +1178,14 @@
   const GRADERS = {
     choose_kk: (ex, stage) => gradeChoice(ex, stage),
     choose_en: (ex, stage) => gradeChoice(ex, stage),
-    listen_choose: (ex, stage) => ({ ...gradeChoice(ex, stage), note: `${ex.word.en} — ${ex.word.kk}` }),
+    listen_choose: (ex, stage) => ({ ...gradeChoice(ex, stage), note: `${ex.word.en} — ${FP().meaning(ex.word)}` }),
     mcq: (ex, stage) => ({ ...gradeChoice(ex, stage), note: ex.exp }),
     fill: (ex, stage) => {
       const r = gradeChoice(ex, stage);
       $("#fillBlank").textContent = ex.text;
       $("#fillBlank").classList.add(r.ok ? "is-ok" : "is-bad");
       FP().speak(ex.word.example);
-      return { ...r, answer: ex.word.en, note: `${ex.word.en} — ${ex.word.kk}` };
+      return { ...r, answer: ex.word.en, note: `${ex.word.en} — ${FP().meaning(ex.word)}` };
     },
     listen_type: (ex, stage) => gradeTyped(ex, stage),
     type_en: (ex, stage) => gradeTyped(ex, stage),
@@ -1207,7 +1206,7 @@
     else if (b.length >= 5 && lev(a, b) <= 1) res = { ok: true, note: fmt(t("c_typo"), { w: ex.word.en }) };
     else res = { ok: false, answer: ex.word.en };
     input.classList.add(res.ok ? "is-ok" : "is-bad");
-    res.note = res.note || `${ex.word.en} — ${ex.word.kk}`;
+    res.note = res.note || `${ex.word.en} — ${FP().meaning(ex.word)}`;
     return res;
   }
 
@@ -1257,14 +1256,30 @@
       }
     }
     const note = res.note ? `<p class="fb-note">${esc(res.note)}</p>` : "";
+    const report = `<button type="button" class="fb-report" data-report>${ic("flag")}<span>${esc(t("report_mistake"))}</span></button>`;
     const html = res.ok
-      ? `<span class="fb-ico">${ic("check")}</span><div><strong>${esc(t(pick(OK_TITLES)))}</strong>${note}</div>`
+      ? `<span class="fb-ico">${ic("check")}</span><div><strong>${esc(t(pick(OK_TITLES)))}</strong>${note}${report}</div>`
       : `<span class="fb-ico">${ic("x")}</span><div><strong>${esc(t("c_bad_title"))}</strong>${
           res.answer ? `<p class="fb-answer">${esc(res.answer)}</p>` : ""
-        }${note}</div>`;
+        }${note}${report}</div>`;
     setFoot("result", html, res.ok);
+    $("#lessonFeedback [data-report]")?.addEventListener("click", () => window.FP_FEEDBACK?.open(describeEx(ex)));
     renderBar();
     if (ex.type === "match" && res.ok) setTimeout(() => L && L.mode === "result" && L.step.ex === ex && nextStep(), 700);
+  }
+
+  // A short description of an exercise, sent with a mistake report.
+  function describeEx(ex) {
+    return [
+      ex.type,
+      ex.word && `${ex.word.en} — ${FP().meaning(ex.word)}`,
+      ex.q,
+      ex.kk,
+      ex.sentence,
+      ex.options && ex.options.join(" / "),
+    ]
+      .filter(Boolean)
+      .join(" | ");
   }
 
   function finish() {
@@ -1486,7 +1501,7 @@
                 const w = byId.get(id);
                 return `<li><button type="button" class="say small" data-say="${esc(w.en)}" aria-label="Play">${ic("volume-2")}</button><strong>${esc(
                   w.en
-                )}</strong><span>${esc(w.kk)}</span>${srs[id].w ? `<em>${ic("x")}${srs[id].w}</em>` : ""}</li>`;
+                )}</strong><span>${esc(FP().meaning(w))}</span>${srs[id].w ? `<em>${ic("x")}${srs[id].w}</em>` : ""}</li>`;
               })
               .join("")}</ul>
             <button type="button" class="btn-3d btn-3d-light btn-3d-block" id="revWeak">${esc(t("c_rev_weak_btn"))}</button>`

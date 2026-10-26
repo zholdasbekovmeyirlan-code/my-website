@@ -60,7 +60,7 @@
       properties: {
         wrong: S("The learner's exact words that contain the mistake."),
         right: S("The corrected English version."),
-        why: S("Short explanation in Kazakh (Cyrillic)."),
+        why: S("Short explanation in the explanation language."),
       },
       required: ["wrong", "right", "why"],
     },
@@ -72,7 +72,7 @@
       properties: {
         name: S("Criterion name in English, e.g. Task Response."),
         band: N("Band 0–9 in steps of 0.5."),
-        comment: S("1–2 sentences in Kazakh: what is good and what to improve."),
+        comment: S("1–2 sentences in the explanation language: what is good and what to improve."),
       },
       required: ["name", "band", "comment"],
     },
@@ -84,10 +84,10 @@
       properties: {
         overall: N("Overall band 0–9 in steps of 0.5."),
         criteria: CRITERIA,
-        summary: S("2–3 sentence overall feedback in Kazakh."),
+        summary: S("2–3 sentence overall feedback in the explanation language."),
         mistakes: MISTAKES,
-        improved: S("The learner's weakest paragraph rewritten at band 7+, in English."),
-        tips: { type: "ARRAY", items: S("A concrete next step in Kazakh."), description: "3 tips." },
+        improved: S("The learner's weakest paragraph rewritten better, in English."),
+        tips: { type: "ARRAY", items: S("A concrete next step in the explanation language."), description: "3 tips." },
       },
       required: ["overall", "criteria", "summary", "mistakes", "improved", "tips"],
     },
@@ -96,18 +96,18 @@
       properties: {
         overall: N("Estimated band 0–9 in steps of 0.5."),
         criteria: CRITERIA,
-        summary: S("2–3 sentence overall feedback in Kazakh."),
+        summary: S("2–3 sentence overall feedback in the explanation language."),
         mistakes: MISTAKES,
         phrases: {
           type: "ARRAY",
           description: "3–5 natural phrases the learner could use for this topic.",
           items: {
             type: "OBJECT",
-            properties: { phrase: S("English phrase."), use: S("When to use it, in Kazakh.") },
+            properties: { phrase: S("English phrase."), use: S("When to use it, in the explanation language.") },
             required: ["phrase", "use"],
           },
         },
-        tips: { type: "ARRAY", items: S("A concrete next step in Kazakh.") },
+        tips: { type: "ARRAY", items: S("A concrete next step in the explanation language.") },
       },
       required: ["overall", "criteria", "summary", "mistakes", "phrases", "tips"],
     },
@@ -115,36 +115,51 @@
       type: "OBJECT",
       properties: {
         reply: S("Your next message in English, 1–3 short sentences, ending with a question."),
-        reply_kk: S("Kazakh translation of reply."),
+        reply_kk: S("Translation of reply into the explanation language."),
         has_mistake: { type: "BOOLEAN", description: "True if the learner's last message had a mistake or was not in English." },
         original: S("The learner's last message, or empty."),
         corrected: S("Natural corrected English version of the learner's last message, or empty."),
-        explanation: S("Short Kazakh explanation of the correction, or empty."),
+        explanation: S("Short explanation of the correction in the explanation language, or empty."),
         suggestions: { type: "ARRAY", items: S("A short English reply the learner could send next."), description: "Exactly 2." },
       },
       required: ["reply", "reply_kk", "has_mistake", "original", "corrected", "explanation", "suggestions"],
     },
   };
 
-  const KAZAKH = "Write every explanation, comment, summary and tip in Kazakh (Cyrillic script). Keep English examples, corrections and phrases in English.";
+  // The explanation language follows the learner's interface language (Kazakh by default).
+  const LANGUAGE = (lang) =>
+    `The explanation language is ${lang === "ru" ? "Russian" : "Kazakh (Cyrillic script)"}: write every explanation, comment, summary, tip and translation in it. Keep English examples, corrections and phrases in English.`;
+  const BEGINNER = new Set(["A1", "A2"]);
 
   // Returns { error } or { system, contents, schema, temperature }.
   function buildRequest(task, p) {
     p = p || {};
     if (task === "writing") {
       const text = clip(p.text, LIMITS.essay);
-      if (words(text) < 30) return { error: "too_short" };
+      const beginner = BEGINNER.has(p.level);
+      if (words(text) < (beginner ? 20 : 30)) return { error: "too_short" };
       const n = words(text);
+      const rules = beginner
+        ? [
+            `You are a kind English teacher for a learner from Kazakhstan at CEFR level ${p.level}. This is a short beginner text, not an IELTS task.`,
+            "Use four criteria named exactly Task Response, Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.",
+            `Score each from 0 to 9 in steps of 0.5 for how well it meets the task at level ${p.level}: 9 means an excellent ${p.level} text, not IELTS band 9. The overall score is the average, rounded to the nearest 0.5.`,
+            "Praise what is right, correct only the most useful mistakes, and rewrite the weakest part as a short, correct, simple text the learner can understand.",
+          ]
+        : [
+            "You are a certified IELTS Writing examiner and a supportive teacher for learners from Kazakhstan.",
+            "Assess strictly with the official IELTS Writing band descriptors: Task Response (Task Achievement for Task 1), Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.",
+            "Give each criterion a band in steps of 0.5. The overall band is the average of the four, rounded to the nearest 0.5.",
+            "Rewrite the weakest paragraph at band 7+.",
+          ];
       return {
         temperature: 0.3,
         schema: SCHEMAS.writing,
         system: [
-          "You are a certified IELTS Writing examiner and a supportive teacher for Kazakh-speaking learners.",
-          "Assess strictly with the official IELTS Writing band descriptors: Task Response (Task Achievement for Task 1), Coherence and Cohesion, Lexical Resource, Grammatical Range and Accuracy.",
-          "Give each criterion a band in steps of 0.5. The overall band is the average of the four, rounded to the nearest 0.5.",
-          "If the essay is shorter than the minimum word count, lower Task Response and say so.",
+          ...rules,
+          "If the text is shorter than the minimum word count, lower Task Response and say so.",
           "Quote the learner's exact words in each mistake. Do not invent mistakes that are not in the text.",
-          KAZAKH,
+          LANGUAGE(p.lang),
         ].join(" "),
         contents: [
           {
@@ -163,16 +178,27 @@
 
     if (task === "speaking") {
       const text = clip(p.transcript, LIMITS.transcript);
-      if (words(text) < 15) return { error: "too_short" };
+      const beginner = BEGINNER.has(p.level);
+      if (words(text) < (beginner ? 10 : 15)) return { error: "too_short" };
+      const rules = beginner
+        ? [
+            `You are a kind English teacher for a learner from Kazakhstan at CEFR level ${p.level}.`,
+            "You receive a speech-recognition transcript of a short beginner talk (under a minute), not an IELTS test.",
+            `Use the criteria Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, each scored 0–9 in steps of 0.5 for level ${p.level} (9 = excellent for ${p.level}), and give the overall score.`,
+            "Suggest very simple, useful phrases.",
+          ]
+        : [
+            "You are an IELTS Speaking examiner and a supportive teacher for learners from Kazakhstan.",
+            "You receive a speech-recognition transcript of a Part 2 long turn (target 1–2 minutes).",
+            "Assess Fluency and Coherence, Lexical Resource, and Grammatical Range and Accuracy, each in steps of 0.5, and estimate an overall band.",
+          ];
       return {
         temperature: 0.3,
         schema: SCHEMAS.speaking,
         system: [
-          "You are an IELTS Speaking examiner and a supportive teacher for Kazakh-speaking learners.",
-          "You receive a speech-recognition transcript of a Part 2 long turn (target 1–2 minutes).",
+          ...rules,
           "Ignore punctuation, capitalisation and small recognition errors. You cannot hear the learner, so do not grade pronunciation; mention that once in the summary.",
-          "Assess Fluency and Coherence, Lexical Resource, and Grammatical Range and Accuracy, each in steps of 0.5, and estimate an overall band.",
-          KAZAKH,
+          LANGUAGE(p.lang),
         ].join(" "),
         contents: [
           {
@@ -205,14 +231,14 @@
         temperature: 0.8,
         schema: SCHEMAS.chat,
         system: [
-          `You are an English conversation partner for a Kazakh-speaking learner at CEFR level ${level}.`,
+          `You are an English conversation partner for a learner from Kazakhstan at CEFR level ${level}.`,
           `Role-play: you are ${sc.role}`,
           `Stay in character. Use vocabulary and grammar suitable for ${level}${level === "A1" || level === "A2" ? " (very simple, short sentences)" : ""}.`,
           "Reply with 1–3 short sentences and end with a question so the learner can answer.",
-          "Check only the learner's LAST message. If it has a grammar or vocabulary mistake, or is written in Kazakh or Russian, set has_mistake to true, copy it to original, give a natural English version in corrected and a short Kazakh explanation. Otherwise set has_mistake to false and leave those fields empty.",
+          "Check only the learner's LAST message. If it has a grammar or vocabulary mistake, or is written in Kazakh or Russian, set has_mistake to true, copy it to original, give a natural English version in corrected and a short explanation. Otherwise set has_mistake to false and leave those fields empty.",
           "A message that starts with '(' is an instruction from the app, not from the learner: never correct it.",
           "Give exactly two short suggestions the learner could reply with next.",
-          KAZAKH,
+          LANGUAGE(p.lang),
         ].join(" "),
         contents: history,
       };

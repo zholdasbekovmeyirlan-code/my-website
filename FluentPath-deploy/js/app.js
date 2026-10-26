@@ -68,6 +68,15 @@
     return pack[key] || fallback[key] || key;
   }
 
+  // Learning content in the interface language: the Russian versions live in fields such as ru, bodyRu, expRu (js/content-ru.js).
+  const isRu = () => state.lang === "ru";
+  const meaning = (w) => (isRu() && w.ru) || w.kk;
+  function local(o, key) {
+    if (!o) return "";
+    const alt = isRu() ? o[key === "kk" ? "ru" : `${key}Ru`] : null;
+    return alt != null ? alt : o[key];
+  }
+
   function fmt(s, vars = {}) {
     return String(s).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ""));
   }
@@ -509,7 +518,7 @@
     const words = DATA.vocab.filter((w) => w.level === level && w.example);
     const found = words.length ? words[(dayOfYear * 37) % words.length] : DATA.vocab[0];
     const extra = (DATA.wordOfDayPool || []).find((x) => x.word.toLowerCase() === found.en.toLowerCase());
-    const item = { word: found.en, ipa: extra?.ipa || "", meaning: found.kk, example: found.example };
+    const item = { word: found.en, ipa: extra?.ipa || "", meaning: meaning(found), example: found.example };
     $("#wotdWord").textContent = item.word;
     $("#wotdIpa").textContent = item.ipa;
     $("#wotdIpa").classList.toggle("hidden", !item.ipa);
@@ -539,6 +548,9 @@
     return "new";
   }
 
+  // Search the Kazakh translation, and in the Russian interface the Russian one too.
+  const translations = (w) => (isRu() && w.ru ? `${w.kk}, ${w.ru}` : w.kk);
+
   function filteredVocab() {
     const level = $("#vocabLevel")?.value || "all";
     const topic = vocabTopic;
@@ -550,7 +562,7 @@
       if (vocabMode === "weak" && st !== "learning") return false;
       if (vocabMode === "known" && st !== "known") return false;
       if (q) {
-        const hay = `${w.en} ${w.kk} ${w.topic} ${w.example}`.toLowerCase();
+        const hay = `${w.en} ${translations(w)} ${w.topic} ${w.example}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -559,10 +571,11 @@
     // The word itself first, then words that start with the search, then matches inside examples.
     const rank = (w) => {
       const en = w.en.toLowerCase();
-      const kk = w.kk.toLowerCase().split(/,\s*/);
-      if (en === q || kk.includes(q)) return 0;
-      if (en.startsWith(q) || kk.some((x) => x.startsWith(q))) return 1;
-      if (en.includes(q) || w.kk.toLowerCase().includes(q)) return 2;
+      const tr = translations(w).toLowerCase();
+      const parts = tr.split(/[,;]\s*/);
+      if (en === q || parts.includes(q)) return 0;
+      if (en.startsWith(q) || parts.some((x) => x.startsWith(q))) return 1;
+      if (en.includes(q) || tr.includes(q)) return 2;
       return 3;
     };
     return list.map((w) => [rank(w), w]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
@@ -584,6 +597,10 @@
     }
     return a;
   }
+
+  // Easiest first; IELTS tasks without a level come last. The data order stays as it is (it picks each track's voice).
+  const LEVEL_RANK = { A1: 1, "A1–A2": 1.5, A2: 2, "A2–B1": 2.5, B1: 3, "B1–B2": 3.5, B2: 4 };
+  const byLevel = (list) => list.slice().sort((a, b) => (LEVEL_RANK[a.level] || 5) - (LEVEL_RANK[b.level] || 5));
 
   // A copy of a question with its options in random order, so the right answer is not always in the same place.
   function mixOptions(q) {
@@ -646,7 +663,7 @@
     }
     $("#flashMeta").textContent = `${w.level} · ${topicLabel(w.topic)}`;
     $("#flashWord").textContent = w.en;
-    $("#flashTr").textContent = w.kk;
+    $("#flashTr").textContent = meaning(w);
     $("#flashEx").textContent = w.example;
     $("#flashCount").textContent = `${vocabIndex + 1} / ${vocabQueue.length}`;
   }
@@ -688,7 +705,7 @@
           <td><button type="button" class="say small" data-say="${escapeHtml(w.en)}" aria-label="Play">${ic("volume-2")}</button><strong>${escapeHtml(
             w.en
           )}</strong></td>
-          <td>${escapeHtml(w.kk)}</td>
+          <td>${escapeHtml(meaning(w))}</td>
           <td>${w.level}</td>
           <td>${escapeHtml(topicLabel(w.topic))}</td>
           <td><span class="badge badge-${status}">${t(`status_${status}`)}</span></td>
@@ -724,7 +741,7 @@
     const body = $("#lessonBody");
     const p = mixOptions(l.practice);
     body.innerHTML = `
-      ${l.body}
+      ${local(l, "body")}
       <div class="mini-q">
         <h3>${escapeHtml(t("mini_practice"))}</h3>
         <p><strong>${escapeHtml(p.q)}</strong></p>
@@ -746,7 +763,7 @@
           else if (+b.dataset.i === choice) b.classList.add("wrong");
         });
         const exp = $("#lessonExplain");
-        exp.textContent = (correct ? t("correct") + " " : t("wrong") + " ") + p.explain;
+        exp.textContent = (correct ? t("correct") + " " : t("wrong") + " ") + local(p, "explain");
         exp.classList.remove("hidden");
         playSfx(correct ? "ok" : "bad");
         if (correct) {
@@ -781,7 +798,7 @@
     }
     const questions = shuffle(bank)
       .slice(0, mode === "placement" ? 15 : mode === "mixed" ? 12 : 10)
-      .map(mixOptions);
+      .map((q) => mixOptions({ ...q, options: local(q, "options"), exp: local(q, "exp") }));
     quiz = { mode, questions, i: 0, score: 0, answered: false };
     $("#quizSetup").classList.add("hidden");
     $("#quizResult").classList.add("hidden");
@@ -936,7 +953,7 @@
 
   function initSpeaking() {
     const list = $("#speakList");
-    const items = DATA.speaking || [];
+    const items = byLevel(DATA.speaking || []);
     const bands = state.speakBands || {};
     list.innerHTML = items
       .map(
@@ -1076,7 +1093,7 @@
       const seconds = speakTalkStart ? Math.round((Date.now() - speakTalkStart) / 1000) : s.speak;
       const data = await window.FP_AIUI.runFeedback(
         "speaking",
-        { topic: s.title, cue: s.cue, transcript, seconds: Math.min(seconds, s.speak) },
+        { topic: s.title, cue: s.cue, transcript, seconds: Math.min(seconds, s.speak), level: s.level },
         $("#speakFb"),
         $("#speakAi")
       );
@@ -1098,7 +1115,7 @@
 
   function initWriting() {
     const list = $("#writeList");
-    const items = DATA.writing || [];
+    const items = byLevel(DATA.writing || []);
     const bands = state.writeBands || {};
     list.innerHTML = items
       .map(
@@ -1160,7 +1177,7 @@
       <div id="writeFb"></div>
       <details class="tips-box">
         <summary>${escapeHtml(t("write_tips"))}</summary>
-        <ul>${w.tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
+        <ul>${local(w, "tips").map((tip) => `<li>${escapeHtml(tip)}</li>`).join("")}</ul>
       </details>
     `;
     const area = $("#writeArea");
@@ -1233,7 +1250,7 @@
       if (!longEnough()) return;
       const data = await window.FP_AIUI.runFeedback(
         "writing",
-        { text: area.value, prompt: w.prompt, minWords: w.minWords, task: w.task },
+        { text: area.value, prompt: w.prompt, minWords: w.minWords, task: w.task, level: w.level },
         $("#writeFb"),
         $("#writeAi")
       );
@@ -1255,7 +1272,7 @@
         (p) => `
       <article class="phrase-card glass">
         <p class="phrase-en">${escapeHtml(p.en)}</p>
-        <p class="muted">${escapeHtml(p.kk)}</p>
+        <p class="muted">${escapeHtml(local(p, "kk"))}</p>
         <p class="phrase-use">${escapeHtml(p.use)}</p>
         <div class="phrase-actions">
           <button type="button" class="btn btn-ghost btn-sm" data-say="${escapeHtml(p.en)}" aria-label="Play">${ic("volume-2")}</button>
@@ -1379,7 +1396,7 @@
     if (!box) return;
     box.classList.remove("hidden");
     $("#listeningActive")?.classList.add("hidden");
-    const tracks = DATA.listening || [];
+    const tracks = byLevel(DATA.listening || []);
     box.innerHTML = tracks
       .map(
         (tr, i) => `
@@ -2043,6 +2060,8 @@
     escapeHtml,
     shuffle,
     mixOptions,
+    meaning,
+    local,
     addXp: markActivity,
     awardOnce,
     fmt,

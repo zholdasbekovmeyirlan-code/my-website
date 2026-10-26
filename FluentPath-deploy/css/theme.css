@@ -789,3 +789,82 @@ html[data-skin][data-icons="color"][data-theme="light"] .sec-eyebrow,
 html[data-skin][data-icons="color"][data-theme="light"] .cont-eyebrow,
 html[data-skin][data-icons="color"][data-theme="light"] .level-id,
 html[data-skin][data-icons="color"][data-theme="light"] .node-bubble { filter: none; color: color-mix(in srgb, var(--sec) 55%, #000); }
+
+/* =====================================================================
+   Write to us, mistake reports, consent, account deletion
+   ===================================================================== */
+.fbk { position: fixed; inset: 0; z-index: 225; display: grid; place-items: center; padding: 1rem; }
+.fbk.hidden { display: none; }
+.fbk-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55); }
+.fbk-panel {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.2rem 1.2rem 1.1rem;
+  border-radius: 20px;
+  background: var(--card-solid, var(--card));
+  border: 1px solid var(--line);
+  animation: rise 0.18s ease;
+}
+.fbk-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.fbk-head h2 { margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; }
+.fbk-head h2 .ic { color: var(--accent); }
+.fbk-panel p { margin: 0; }
+.fbk-label { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+.fbk-panel textarea,
+.fbk-panel input[type="text"] {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  resize: vertical;
+}
+.fbk-panel textarea:focus,
+.fbk-panel input[type="text"]:focus { outline: 2px solid var(--accent-line, var(--accent)); outline-offset: 1px; }
+.fbk-context {
+  font-size: 0.82rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  overflow-wrap: anywhere;
+}
+.fbk-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.fbk .form-err.hidden { display: none; }
+
+.fb-report {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.fb-report .ic { width: 14px; height: 14px; }
+.fb-report:hover { color: var(--text); text-decoration: underline; }
+
+.footer-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0.5rem 0 0; font-size: 0.88rem; }
+.footer-links a,
+.footer-links .link-btn { color: var(--muted); text-decoration: none; padding: 0; }
+.footer-links a:hover,
+.footer-links .link-btn:hover { color: var(--text); text-decoration: underline; }
+
+.consent { display: flex; align-items: flex-start; gap: 0.55rem; font-size: 0.86rem; color: var(--muted); line-height: 1.45; cursor: pointer; }
+.consent input { width: 18px; height: 18px; margin: 0.1rem 0 0; flex: none; accent-color: var(--accent); }
+.consent a { color: var(--accent); }
+
+.acc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.acc-delete { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--danger); }
+.acc-delete .ic { width: 15px; height: 15px; }
