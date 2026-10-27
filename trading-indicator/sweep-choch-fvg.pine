@@ -12,7 +12,9 @@
 //
 //  Decision aid only. Past signals are not a guarantee.
 // ═══════════════════════════════════════════════════════════════════════
-indicator("Sweep CHoCH FVG Entry", shorttitle = "SCF Entry", overlay = true, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 500)
+// scale.right pins every drawing to the price scale of the candles; on its own scale
+// the drawings float and drift when the chart is scrolled
+indicator("Sweep CHoCH FVG Entry", shorttitle = "SCF Entry", overlay = true, scale = scale.right, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 500)
 
 // ───────────────────────── Inputs ─────────────────────────
 grpHtf = "1 · Liquidity (higher timeframes)"
