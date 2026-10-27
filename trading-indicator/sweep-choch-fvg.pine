@@ -289,6 +289,8 @@ ready(Setup s) =>
         s.changed  := bar_index
         s.fvgBx    := box.new(s.fBar - 2, s.fTop, bar_index + 1, s.fBot, border_color = color.new(col, 50), bgcolor = color.new(col, 85), text = "FVG", text_size = size.tiny, text_color = col, text_halign = text.align_left)
         s.planLn   := line.new(bar_index, e, bar_index + 1, e, color = col, style = line.style_dashed)
+    // Return a plain value so the if/else above is not the function's return value
+    s.state
 
 run(Setup s, float brLvl, string brName) =>
     bool  b   = s.isBuy
@@ -418,6 +420,7 @@ run(Setup s, float brLvl, string brName) =>
         else
             s.riskBx.set_right(bar_index + 1)
             s.rewBx.set_right(bar_index + 1)
+    s.state
 
 var Setup sellS = Setup.new(false)
 var Setup buyS  = Setup.new(true)
