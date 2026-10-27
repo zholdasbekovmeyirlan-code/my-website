@@ -53,6 +53,10 @@ chartSec = timeframe.in_seconds()
 winTime  = time(timeframe.period, tradeWin, NY)
 inWin    = not useWin or not na(winTime)
 DRAW_LEN = 15   // how far plan lines and boxes reach to the right, in bars
+// Every drawing is anchored to candle time, not bar number: bar numbers shift when
+// TradingView loads more history, which made drawings jump to other candles
+barMs    = timeframe.in_seconds() * 1000
+ahead    = time + DRAW_LEN * barMs
 
 volAvg = ta.sma(nz(volume), 20)
 bigVol = volAvg > 0 and nz(volume) >= bigVolX * volAvg
@@ -65,22 +69,30 @@ sph = ta.pivothigh(high, chochLen, chochLen)
 spl = ta.pivotlow(low, chochLen, chochLen)
 var float lastSH    = na
 var int   lastSHBar = na
+var int   lastSHT   = na
 var float prevSH    = na
 var int   prevSHBar = na
+var int   prevSHT   = na
 var float lastSL    = na
 var int   lastSLBar = na
+var int   lastSLT   = na
 var float prevSL    = na
 var int   prevSLBar = na
+var int   prevSLT   = na
 if not na(sph)
     prevSH    := lastSH
     prevSHBar := lastSHBar
+    prevSHT   := lastSHT
     lastSH    := sph
     lastSHBar := bar_index - chochLen
+    lastSHT   := time[chochLen]
 if not na(spl)
     prevSL    := lastSL
     prevSLBar := lastSLBar
+    prevSLT   := lastSLT
     lastSL    := spl
     lastSLBar := bar_index - chochLen
+    lastSLT   := time[chochLen]
 
 fmt(float x) => str.tostring(x, format.mintick)
 
@@ -185,19 +197,23 @@ type Setup
     string cName
     float  cExt
     int    cExtBar
+    int    cExtT
     int    cBar
     bool   cBig    = false
     string lvlName = ""
     float  lvlPx
     float  ext
     int    extBar
+    int    extT
     int    sweepBar
     float  choch
     int    chochFrom
+    int    chochFromT
     int    chochBar
     float  fTop
     float  fBot
     int    fBar
+    int    fT
     int    readyBar
     float  entry
     float  sl
@@ -215,14 +231,14 @@ type Setup
     bool   evEntry = false
 
 planNew(Setup s, color col) =>
-    int    x2   = bar_index + DRAW_LEN
+    int    x2   = ahead
     string side = s.isBuy ? "BUY" : "SELL"
-    line   en   = line.new(bar_index, s.entry, x2, s.entry, color = col, width = 2)
-    line   sl   = line.new(bar_index, s.sl, x2, s.sl, color = sellCol, style = line.style_dashed)
-    line   tp   = line.new(bar_index, s.tp, x2, s.tp, color = buyCol, style = line.style_dashed)
-    label  enLb = label.new(x2, s.entry, side + " LIMIT " + fmt(s.entry), style = label.style_label_left, color = col, textcolor = color.white, size = size.small)
-    label  slLb = label.new(x2, s.sl, "SL " + fmt(s.sl), style = label.style_label_left, color = color.new(sellCol, 100), textcolor = sellCol, size = size.small)
-    label  tpLb = label.new(x2, s.tp, "TP " + fmt(s.tp), style = label.style_label_left, color = color.new(buyCol, 100), textcolor = buyCol, size = size.small)
+    line   en   = line.new(time, s.entry, x2, s.entry, xloc = xloc.bar_time, color = col, width = 2)
+    line   sl   = line.new(time, s.sl, x2, s.sl, xloc = xloc.bar_time, color = sellCol, style = line.style_dashed)
+    line   tp   = line.new(time, s.tp, x2, s.tp, xloc = xloc.bar_time, color = buyCol, style = line.style_dashed)
+    label  enLb = label.new(x2, s.entry, side + " LIMIT " + fmt(s.entry), xloc = xloc.bar_time, style = label.style_label_left, color = col, textcolor = color.white, size = size.small)
+    label  slLb = label.new(x2, s.sl, "SL " + fmt(s.sl), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(sellCol, 100), textcolor = sellCol, size = size.small)
+    label  tpLb = label.new(x2, s.tp, "TP " + fmt(s.tp), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(buyCol, 100), textcolor = buyCol, size = size.small)
     Plan.new(en, sl, tp, enLb, slLb, tpLb)
 
 planDelete(Plan p) =>
@@ -248,7 +264,7 @@ cancel(Setup s, string why, bool mark) =>
     s.plan    := na
     s.state   := 0
     if mark
-        label.new(bar_index, s.isBuy ? low : high, "NO TRADE", style = s.isBuy ? label.style_label_up : label.style_label_down, color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny, tooltip = why)
+        label.new(time, s.isBuy ? low : high, "NO TRADE", xloc = xloc.bar_time, style = s.isBuy ? label.style_label_up : label.style_label_down, color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny, tooltip = why)
 
 // FVG found after CHoCH: work out the limit order or reject it
 ready(Setup s) =>
@@ -277,7 +293,7 @@ ready(Setup s) =>
         s.tp       := t
         s.readyBar := bar_index
         s.evReady  := true
-        s.fvgBx    := box.new(s.fBar - 2, s.fTop, bar_index + DRAW_LEN, s.fBot, border_color = color.new(col, 30), bgcolor = color.new(col, 75), text = "FVG", text_size = size.small, text_color = col, text_halign = text.align_left)
+        s.fvgBx    := box.new(s.fT, s.fTop, ahead, s.fBot, xloc = xloc.bar_time, border_color = color.new(col, 30), bgcolor = color.new(col, 75), text = "FVG", text_size = size.small, text_color = col, text_halign = text.align_left)
         s.plan     := planNew(s, col)
     // Return a plain value so the if/else above is not the function's return value
     s.state
@@ -295,6 +311,7 @@ run(Setup s, float brLvl, string brName) =>
                 s.cName   := brName
                 s.cExt    := xt
                 s.cExtBar := bar_index
+                s.cExtT   := time
                 s.cBig    := bigVol
             else if b ? brLvl < s.cLvl : brLvl > s.cLvl
                 s.cLvl  := brLvl
@@ -304,6 +321,7 @@ run(Setup s, float brLvl, string brName) =>
             if b ? xt < s.cExt : xt > s.cExt
                 s.cExt    := xt
                 s.cExtBar := bar_index
+                s.cExtT   := time
                 s.cBig    := bigVol
             if b ? close > s.cLvl : close < s.cLvl
                 // CHoCH level = the swing that started the leg into the sweep
@@ -313,9 +331,11 @@ run(Setup s, float brLvl, string brName) =>
                 s.lvlPx     := s.cLvl
                 s.ext       := s.cExt
                 s.extBar    := s.cExtBar
+                s.extT      := s.cExtT
                 s.sweepBar  := bar_index
                 s.choch     := b ? (useLast ? lastSH : prevSH) : (useLast ? lastSL : prevSL)
                 s.chochFrom := b ? (useLast ? lastSHBar : prevSHBar) : (useLast ? lastSLBar : prevSLBar)
+                s.chochFromT := b ? (useLast ? lastSHT : prevSHT) : (useLast ? lastSLT : prevSLT)
                 s.fTop      := na
                 s.fBot      := na
                 s.chochLn   := na
@@ -323,7 +343,7 @@ run(Setup s, float brLvl, string brName) =>
                 s.fvgBx     := na
                 s.plan      := na
                 s.evSweep   := true
-                label.new(s.extBar, s.ext, "Sweep " + s.lvlName + (s.cBig ? " 🐋" : ""), style = b ? label.style_label_up : label.style_label_down, color = color.new(col, 100), textcolor = col, size = size.small, tooltip = "Stops " + (b ? "below " : "above ") + s.lvlName + " " + fmt(s.lvlPx) + " were taken" + (s.cBig ? "\nBig player volume" : "") + "\nNext: wait for CHoCH")
+                label.new(s.extT, s.ext, "Sweep " + s.lvlName + (s.cBig ? " 🐋" : ""), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = color.new(col, 100), textcolor = col, size = size.small, tooltip = "Stops " + (b ? "below " : "above ") + s.lvlName + " " + fmt(s.lvlPx) + " were taken" + (s.cBig ? "\nBig player volume" : "") + "\nNext: wait for CHoCH")
                 s.cLvl := na
             else if bar_index - s.cBar >= sweepWin
                 s.cLvl := na
@@ -336,12 +356,14 @@ run(Setup s, float brLvl, string brName) =>
             if b ? low < s.ext : high > s.ext
                 s.ext    := xt
                 s.extBar := bar_index
+                s.extT   := time
                 s.fTop   := na
                 s.fBot   := na
             if (b ? bullFvg : bearFvg) and bar_index - 2 >= s.extBar
                 s.fTop := b ? low : low[2]
                 s.fBot := b ? high[2] : high
                 s.fBar := bar_index
+                s.fT   := time[2]
             if not na(s.fTop) and (b ? close < s.fBot : close > s.fTop)
                 s.fTop := na
                 s.fBot := na
@@ -349,8 +371,8 @@ run(Setup s, float brLvl, string brName) =>
                 if not na(s.choch) and (b ? close > s.choch : close < s.choch)
                     s.state    := 2
                     s.chochBar := bar_index
-                    s.chochLn  := line.new(s.chochFrom, s.choch, bar_index, s.choch, color = col, style = line.style_dashed)
-                    s.chochLb  := label.new(math.round((s.chochFrom + bar_index) / 2), s.choch, "CHoCH", style = b ? label.style_label_down : label.style_label_up, color = color.new(col, 100), textcolor = col, size = size.tiny)
+                    s.chochLn  := line.new(s.chochFromT, s.choch, time, s.choch, xloc = xloc.bar_time, color = col, style = line.style_dashed)
+                    s.chochLb  := label.new(s.chochFromT, s.choch, "CHoCH", xloc = xloc.bar_time, style = b ? label.style_label_lower_left : label.style_label_upper_left, color = color.new(col, 100), textcolor = col, size = size.tiny)
                 else if bar_index - s.sweepBar > chochWin
                     cancel(s, "No CHoCH after the " + s.lvlName + " sweep", false)
             if s.state == 2
@@ -369,13 +391,13 @@ run(Setup s, float brLvl, string brName) =>
                 s.state    := 4
                 s.entryBar := bar_index
                 s.evEntry  := true
-                s.fvgBx.set_right(bar_index)
+                s.fvgBx.set_right(time)
                 planDelete(s.plan)
                 s.plan   := na
-                s.riskBx := box.new(bar_index, math.max(s.entry, s.sl), bar_index + DRAW_LEN, math.min(s.entry, s.sl), border_width = 0, bgcolor = color.new(sellCol, 80))
-                s.rewBx  := box.new(bar_index, math.max(s.entry, s.tp), bar_index + DRAW_LEN, math.min(s.entry, s.tp), border_width = 0, bgcolor = color.new(buyCol, 80))
+                s.riskBx := box.new(time, math.max(s.entry, s.sl), ahead, math.min(s.entry, s.sl), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(sellCol, 80))
+                s.rewBx  := box.new(time, math.max(s.entry, s.tp), ahead, math.min(s.entry, s.tp), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(buyCol, 80))
                 float planR = math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
-                label.new(bar_index, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(math.abs(s.entry - s.sl), "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
+                label.new(time, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(math.abs(s.entry - s.sl), "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
         else if b ? high >= s.tp : low <= s.tp
             cancel(s, "Missed: price reached the target without a retrace", false)
         else if bar_index - s.readyBar > entryWin
@@ -389,9 +411,9 @@ run(Setup s, float brLvl, string brName) =>
             s.resR  := hitSL ? -1.0 : math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
             s.state := 0
             if bar_index - s.entryBar < DRAW_LEN
-                s.riskBx.set_right(bar_index)
-                s.rewBx.set_right(bar_index)
-            label.new(bar_index, hitSL ? s.sl : s.tp, hitSL ? "✗ −1R" : "✓ +" + str.tostring(s.resR, "0.0") + "R", style = label.style_label_left, color = color.new(col, 100), textcolor = hitSL ? sellCol : buyCol, size = size.small)
+                s.riskBx.set_right(time)
+                s.rewBx.set_right(time)
+            label.new(time, hitSL ? s.sl : s.tp, xloc = xloc.bar_time, text = hitSL ? "✗ −1R" : "✓ +" + str.tostring(s.resR, "0.0") + "R", style = label.style_label_left, color = color.new(col, 100), textcolor = hitSL ? sellCol : buyCol, size = size.small)
     s.state
 
 resetEvents(Setup s) =>
