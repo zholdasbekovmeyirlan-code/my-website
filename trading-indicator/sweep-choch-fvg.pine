@@ -17,7 +17,7 @@
 //
 //  Decision aid only. Results shown on history are not a guarantee.
 // ═══════════════════════════════════════════════════════════════════════
-indicator("Sweep CHoCH FVG Entry", shorttitle = "SCF Entry", overlay = true, max_labels_count = 300, max_lines_count = 300, max_boxes_count = 300)
+indicator("Sweep CHoCH FVG Entry", shorttitle = "SCF Entry", overlay = true, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 500)
 
 // ───────────────────────── Inputs ─────────────────────────
 grpHtf = "1 · Liquidity (higher timeframes)"
@@ -47,11 +47,10 @@ useWin    = input.bool(false, "Only enter inside", inline = "w", group = grpTrd)
 tradeWin  = input.session("0830-1600", "", inline = "w", group = grpTrd, tooltip = "New York time")
 
 grpDsp    = "Display"
-showPanel = input.bool(true, "Show checklist", group = grpDsp)
-panelPos  = input.string("Bottom right", "Checklist position", options = ["Bottom right", "Top right", "Bottom left", "Top left"], group = grpDsp)
-buyCol    = input.color(#089981, "Buy", group = grpDsp)
-sellCol   = input.color(#F23645, "Sell", group = grpDsp)
-lvlCol    = input.color(#787B86, "Levels", group = grpDsp)
+showStatus = input.bool(true, "Show status next to price", group = grpDsp)
+buyCol     = input.color(#089981, "Buy", group = grpDsp)
+sellCol    = input.color(#F23645, "Sell", group = grpDsp)
+lvlCol     = input.color(#787B86, "Levels", group = grpDsp)
 
 // ───────────────────────── Core values ─────────────────────────
 tick     = syminfo.mintick
@@ -118,6 +117,7 @@ type Lvl
     bool   isHigh
     string tf
     int    rank
+    int    t
     line   ln
     label  lb
 
@@ -138,7 +138,7 @@ addLvl(float price, bool isHigh, string tf, int rank, int t) =>
         string nm = tf + (isHigh ? " High" : " Low")
         line   ln = line.new(t, price, time, price, xloc = xloc.bar_time, extend = extend.right, color = color.new(lvlCol, 20))
         label  lb = label.new(bar_index + 3, price, nm, style = label.style_label_left, color = color.new(color.black, 100), textcolor = lvlCol, size = size.small)
-        lvls.push(Lvl.new(price, nm, isHigh, tf, rank, ln, lb))
+        lvls.push(Lvl.new(price, nm, isHigh, tf, rank, t, ln, lb))
         int cnt = 0
         for i = lvls.size() - 1 to 0
             Lvl old = lvls.get(i)
@@ -198,6 +198,16 @@ if lvls.size() > 0
 
 // ───────────────────────── Setup state machine ─────────────────────────
 // state: 0 no setup · 1 swept, waiting CHoCH · 2 CHoCH, waiting FVG · 3 limit ready · 4 in trade
+
+// Limit order drawn while waiting for the retrace: entry, stop and target with their prices
+type Plan
+    line  en
+    line  sl
+    line  tp
+    label enLb
+    label slLb
+    label tpLb
+
 type Setup
     bool   isBuy
     int    state   = 0
@@ -230,7 +240,7 @@ type Setup
     line   chochLn
     label  chochLb
     box    fvgBx
-    line   planLn
+    Plan   plan
     box    riskBx
     box    rewBx
     bool   evSweep = false
@@ -239,6 +249,35 @@ type Setup
     bool   evWin   = false
     bool   evLoss  = false
 
+planNew(Setup s, color col) =>
+    int    x2   = bar_index + 8
+    string side = s.isBuy ? "BUY" : "SELL"
+    line   en   = line.new(bar_index, s.entry, x2, s.entry, color = col, width = 2)
+    line   sl   = line.new(bar_index, s.sl, x2, s.sl, color = sellCol, style = line.style_dashed)
+    line   tp   = line.new(bar_index, s.tp, x2, s.tp, color = buyCol, style = line.style_dashed)
+    label  enLb = label.new(x2, s.entry, side + " LIMIT " + fmt(s.entry), style = label.style_label_left, color = col, textcolor = color.white, size = size.small)
+    label  slLb = label.new(x2, s.sl, "SL " + fmt(s.sl), style = label.style_label_left, color = color.new(sellCol, 100), textcolor = sellCol, size = size.small)
+    label  tpLb = label.new(x2, s.tp, "TP " + fmt(s.tp), style = label.style_label_left, color = color.new(buyCol, 100), textcolor = buyCol, size = size.small)
+    Plan.new(en, sl, tp, enLb, slLb, tpLb)
+
+// Keep the plan a few bars ahead of the current candle
+planMove(Plan p) =>
+    int x2 = bar_index + 8
+    p.en.set_x2(x2)
+    p.sl.set_x2(x2)
+    p.tp.set_x2(x2)
+    p.enLb.set_x(x2)
+    p.slLb.set_x(x2)
+    p.tpLb.set_x(x2)
+
+planDelete(Plan p) =>
+    p.en.delete()
+    p.sl.delete()
+    p.tp.delete()
+    p.enLb.delete()
+    p.slLb.delete()
+    p.tpLb.delete()
+
 cancel(Setup s, string why, bool mark) =>
     if not na(s.chochLn)
         s.chochLn.delete()
@@ -246,12 +285,12 @@ cancel(Setup s, string why, bool mark) =>
         s.chochLb.delete()
     if not na(s.fvgBx)
         s.fvgBx.delete()
-    if not na(s.planLn)
-        s.planLn.delete()
+    if not na(s.plan)
+        planDelete(s.plan)
     s.chochLn := na
     s.chochLb := na
     s.fvgBx   := na
-    s.planLn  := na
+    s.plan    := na
     s.state   := 0
     s.note    := why
     s.noteBar := bar_index
@@ -287,8 +326,8 @@ ready(Setup s) =>
         s.readyBar := bar_index
         s.evReady  := true
         s.changed  := bar_index
-        s.fvgBx    := box.new(s.fBar - 2, s.fTop, bar_index + 1, s.fBot, border_color = color.new(col, 50), bgcolor = color.new(col, 85), text = "FVG", text_size = size.tiny, text_color = col, text_halign = text.align_left)
-        s.planLn   := line.new(bar_index, e, bar_index + 1, e, color = col, style = line.style_dashed)
+        s.fvgBx    := box.new(s.fBar - 2, s.fTop, bar_index + 8, s.fBot, border_color = color.new(col, 30), bgcolor = color.new(col, 75), text = "FVG", text_size = size.small, text_color = col, text_halign = text.align_left)
+        s.plan     := planNew(s, col)
     // Return a plain value so the if/else above is not the function's return value
     s.state
 
@@ -336,7 +375,7 @@ run(Setup s, float brLvl, string brName) =>
                 s.chochLn   := na
                 s.chochLb   := na
                 s.fvgBx     := na
-                s.planLn    := na
+                s.plan      := na
                 s.evSweep   := true
                 s.changed   := bar_index
                 label.new(s.extBar, s.ext, "Sweep " + s.lvlName + (s.cBig ? " 🐋" : ""), style = b ? label.style_label_up : label.style_label_down, color = color.new(col, 100), textcolor = col, size = size.small, tooltip = "Stops " + (b ? "below " : "above ") + s.lvlName + " " + fmt(s.lvlPx) + " were taken" + (s.cBig ? "\nBig player volume" : "") + "\nNext: wait for CHoCH")
@@ -388,19 +427,19 @@ run(Setup s, float brLvl, string brName) =>
                 s.evEntry  := true
                 s.changed  := bar_index
                 s.fvgBx.set_right(bar_index)
-                s.planLn.delete()
-                s.planLn := na
+                planDelete(s.plan)
+                s.plan   := na
                 s.riskBx := box.new(bar_index, math.max(s.entry, s.sl), bar_index + 1, math.min(s.entry, s.sl), border_width = 0, bgcolor = color.new(sellCol, 80))
                 s.rewBx  := box.new(bar_index, math.max(s.entry, s.tp), bar_index + 1, math.min(s.entry, s.tp), border_width = 0, bgcolor = color.new(buyCol, 80))
-                float plan = math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
-                label.new(bar_index, b ? low : high, b ? "BUY" : "SELL", style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(math.abs(s.entry - s.sl), "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(plan, "0.0") + "R)\nAfter sweep of " + s.lvlName)
+                float planR = math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
+                label.new(bar_index, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(math.abs(s.entry - s.sl), "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
         else if b ? high >= s.tp : low <= s.tp
             cancel(s, "Missed: price reached the target without a retrace", false)
         else if bar_index - s.readyBar > entryWin
             cancel(s, "Expired: no retrace into the FVG", false)
         else
-            s.fvgBx.set_right(bar_index + 1)
-            s.planLn.set_x2(bar_index + 1)
+            s.fvgBx.set_right(bar_index + 8)
+            planMove(s.plan)
 
     // 4 · In trade: stop is checked on the entry bar too (worst case)
     if s.state == 4
@@ -440,9 +479,13 @@ if buyS.evWin or buyS.evLoss
     wins   += buyS.evWin ? 1 : 0
     totR   += buyS.resR
 
+// Redraw live levels on the last bar so the drawing limit never drops an old 4H level
 if barstate.islast
     for lv in lvls
-        lv.lb.set_x(bar_index + 3)
+        lv.ln.delete()
+        lv.lb.delete()
+        lv.ln := line.new(lv.t, lv.price, time, lv.price, xloc = xloc.bar_time, extend = extend.right, color = color.new(lvlCol, 20))
+        lv.lb := label.new(bar_index + 3, lv.price, lv.name, style = label.style_label_left, color = color.new(color.black, 100), textcolor = lvlCol, size = size.small)
 
 // ───────────────────────── Alerts ─────────────────────────
 alertcondition(sellS.evReady, "SELL limit ready", "{{ticker}} SELL setup ready: sweep, CHoCH and FVG done. Check entry, stop and target on the chart.")
@@ -460,50 +503,33 @@ if sellS.evEntry
 if buyS.evEntry
     alert(syminfo.ticker + " BUY filled " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp), alert.freq_once_per_bar_close)
 
-// ───────────────────────── Checklist ─────────────────────────
-panelPosition = switch panelPos
-    "Top right"   => position.top_right
-    "Bottom left" => position.bottom_left
-    "Top left"    => position.top_left
-    => position.bottom_right
+// ───────────────────────── Status next to price ─────────────────────────
+// A label to the right of the last candle, so it moves with the chart instead of covering it
+var label statusLb = na
 
-var table panel = table.new(panelPosition, 2, 9, bgcolor = color.new(color.black, 20))
-
-row(int r, string k, string v, color c) =>
-    table.cell(panel, 0, r, k, text_color = color.silver, text_size = size.small, text_halign = text.align_left)
-    table.cell(panel, 1, r, v, text_color = c, text_size = size.small, text_halign = text.align_left)
-
-if showPanel and barstate.islast
+if showStatus and barstate.islast
     // Show the setup that is furthest along (an open trade always wins)
     bool   pickBuy = buyS.state == 4 or (sellS.state != 4 and (buyS.state > sellS.state or (buyS.state == sellS.state and buyS.changed > sellS.changed)))
     Setup  a       = pickBuy ? buyS : sellS
     bool   b       = a.isBuy
-    color  col     = b ? buyCol : sellCol
     string side    = b ? "BUY" : "SELL"
     int    st      = a.state
 
-    string head   = st == 0 ? "No setup" : side + " setup"
-    string status = st == 0 ? "NO TRADE" : st <= 2 ? "GET READY" : st == 3 ? side + " LIMIT" : "IN TRADE"
-    color  stCol  = st == 0 ? color.gray : st <= 2 ? color.orange : col
-
-    string sw = st >= 1 ? "✓ " + a.lvlName + " " + fmt(a.lvlPx) : "… waiting"
-    string ch = st >= 2 ? "✓" : st == 1 ? (na(a.choch) ? "… waiting for a swing" : "… close " + (b ? "above " : "below ") + fmt(a.choch)) : "…"
-    string fv = st >= 3 ? "✓ " + fmt(a.fBot) + " – " + fmt(a.fTop) : st == 2 ? "… waiting" : "…"
-    string en = st == 3 ? side + " LIMIT " + fmt(a.entry) : st == 4 ? "FILLED " + fmt(a.entry) : "—"
-    string rk = st >= 3 ? fmt(a.sl) + " / " + fmt(a.tp) + " (" + str.tostring(math.abs(a.tp - a.entry) / math.abs(a.entry - a.sl), "0.0") + "R)" : "—"
-
     [hiP, hiN] = nearestLvl(true, close)
     [loP, loN] = nearestLvl(false, close)
-    string liq  = (na(hiP) ? "▲ —" : "▲ " + hiN + " " + fmt(hiP)) + "   " + (na(loP) ? "▼ —" : "▼ " + loN + " " + fmt(loP))
     string note = sellS.noteBar >= buyS.noteBar ? sellS.note : buyS.note
-    string hist = trades == 0 ? "No trades on chart yet" : str.tostring(trades) + " trades · " + str.tostring(100.0 * wins / trades, "0") + "% win · " + (totR >= 0 ? "+" : "") + str.tostring(totR, "0.0") + "R"
+    string chTxt = na(a.choch) ? "… CHoCH: waiting for a swing" : "… CHoCH: close " + (b ? "above " : "below ") + fmt(a.choch)
 
-    row(0, head, status, stCol)
-    row(1, "1 · Sweep", sw, st >= 1 ? col : color.gray)
-    row(2, "2 · CHoCH", ch, st >= 2 ? col : st == 1 ? color.orange : color.gray)
-    row(3, "3 · FVG", fv, st >= 3 ? col : st == 2 ? color.orange : color.gray)
-    row(4, "4 · Entry", en, st >= 3 ? col : color.gray)
-    row(5, "Stop / Target", rk, st >= 3 ? color.white : color.gray)
-    row(6, "Liquidity", liq, color.white)
-    row(7, "Note", note, color.silver)
-    row(8, "History", hist, totR >= 0 ? buyCol : sellCol)
+    string txt = switch st
+        0 => "NO TRADE\nWait for a sweep of:" + (na(hiP) ? "" : "\n▲ " + hiN + " " + fmt(hiP)) + (na(loP) ? "" : "\n▼ " + loN + " " + fmt(loP)) + (sellS.noteBar + buyS.noteBar > 0 ? "\nLast: " + note : "")
+        1 => "GET READY · " + side + "\n✓ Sweep " + a.lvlName + "\n" + chTxt
+        2 => "GET READY · " + side + "\n✓ Sweep " + a.lvlName + "\n✓ CHoCH\n… waiting for an FVG"
+        3 => side + " LIMIT " + fmt(a.entry) + "\nSL " + fmt(a.sl) + "   TP " + fmt(a.tp) + "\n✓ Sweep " + a.lvlName + "  ✓ CHoCH  ✓ FVG"
+        => "IN TRADE · " + side + " " + fmt(a.entry) + "\nSL " + fmt(a.sl) + "   TP " + fmt(a.tp)
+
+    string tip  = chartSec > 300 ? "\n(entries are built for 1m–5m charts)" : ""
+    string hist = trades == 0 ? "" : "\nHistory: " + str.tostring(trades) + " trades · " + str.tostring(100.0 * wins / trades, "0") + "% win · " + (totR >= 0 ? "+" : "") + str.tostring(totR, "0.0") + "R"
+    color  bg   = st == 0 ? color.new(color.gray, 15) : st <= 2 ? color.new(color.orange, 10) : b ? buyCol : sellCol
+
+    label.delete(statusLb)
+    statusLb := label.new(bar_index + 15, close, txt + tip + hist, style = label.style_label_left, color = bg, textcolor = color.white, size = size.small, textalign = text.align_left)
