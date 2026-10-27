@@ -1,0 +1,361 @@
+//@version=6
+// ═══════════════════════════════════════════════════════════════════════
+//  Stop Hunt & Reversal
+//  Minimal helper for NQ / MNQ / ES / MES futures.
+//
+//  Shows only three things:
+//   ✕      Stop hunt: price ran through a liquidity level (PDH/PDL,
+//          overnight high/low, swing high/low) and closed back inside.
+//          🐋 is added when the sweep bar has big-player volume.
+//   REV    Reversal confirmed: after a stop hunt, price broke the last
+//          minor swing in the opposite direction. Stop = sweep extreme,
+//          target = next untaken liquidity level.
+//   ●      Big-player volume bar (no sweep).
+//
+//  This is a decision aid, not a trading system. Always use a stop.
+// ═══════════════════════════════════════════════════════════════════════
+indicator("Stop Hunt & Reversal", shorttitle = "Stop Hunt", overlay = true, max_labels_count = 300, max_lines_count = 300)
+
+// ───────────────────────── Inputs ─────────────────────────
+grpLvl = "Liquidity levels"
+showPD    = input.bool(true, "Previous day high/low (PDH/PDL)", group = grpLvl)
+showON    = input.bool(true, "Overnight high/low (ONH/ONL)", group = grpLvl, tooltip = "Globex high/low from 18:00 to the RTH open, New York time. Needs an intraday chart with extended hours.")
+showSwing = input.bool(true, "Swing highs/lows", group = grpLvl)
+swingLen  = input.int(10, "Swing strength", minval = 2, group = grpLvl, tooltip = "Bars on each side of a swing. Higher = fewer, more important levels.")
+maxSwings = input.int(3, "Swing levels kept per side", minval = 1, maxval = 10, group = grpLvl)
+rthSess   = input.session("0930-1600", "RTH session (New York)", group = grpLvl)
+
+grpSig = "Signals"
+minSweepVol = input.float(1.2, "Min sweep volume (× average)", minval = 0, step = 0.1, group = grpSig, tooltip = "A sweep counts only if the bar's volume is at least this multiple of the average. 0 = no filter.")
+bigVolMult  = input.float(2.5, "Big player volume (× average)", minval = 1, step = 0.1, group = grpSig)
+volLen      = input.int(20, "Volume average length", minval = 1, group = grpSig)
+mssLen      = input.int(2, "Structure break sensitivity", minval = 1, maxval = 10, group = grpSig, tooltip = "Size of the minor swing that must break to confirm a reversal. Lower = faster, higher = stricter.")
+confirmBars = input.int(20, "Max bars to confirm a reversal", minval = 1, group = grpSig)
+showStops   = input.bool(true, "Draw stop level on reversals", group = grpSig)
+showBigVol  = input.bool(true, "Mark big player volume", group = grpSig)
+
+grpDisp = "Display"
+showVwap  = input.bool(false, "Show VWAP", group = grpDisp)
+showPanel = input.bool(true, "Show panel", group = grpDisp)
+panelPos  = input.string("Bottom right", "Panel position", options = ["Bottom right", "Top right", "Bottom left", "Top left"], group = grpDisp)
+bullCol   = input.color(#089981, "Bullish", group = grpDisp)
+bearCol   = input.color(#F23645, "Bearish", group = grpDisp)
+lvlCol    = input.color(#787B86, "Levels", group = grpDisp)
+
+// ───────────────────────── Sessions ─────────────────────────
+NY = "America/New_York"
+intraday = timeframe.isintraday
+rthTime  = time(timeframe.period, rthSess, NY)
+inRTH    = intraday and not na(rthTime)
+rthStart = inRTH and (not inRTH[1] or session.isfirstbar)
+newDay   = timeframe.change("D")
+
+// Overnight range: from the start of the trading day (18:00) until the RTH open
+var float accHigh    = na
+var float accLow     = na
+var int   accHighBar = na
+var int   accLowBar  = na
+var bool  rthSeen    = false
+
+if session.isfirstbar
+    accHigh    := inRTH ? na : high
+    accLow     := inRTH ? na : low
+    accHighBar := bar_index
+    accLowBar  := bar_index
+    rthSeen    := false
+else if not inRTH and not rthSeen
+    if na(accHigh) or high > accHigh
+        accHigh    := high
+        accHighBar := bar_index
+    if na(accLow) or low < accLow
+        accLow    := low
+        accLowBar := bar_index
+
+// ───────────────────────── Core values ─────────────────────────
+vwapLine = ta.vwap(hlc3)
+
+vol        = nz(volume)
+volAvg     = ta.sma(vol, volLen)
+volRel     = volAvg > 0 ? vol / volAvg : 0.0
+bigVol     = volRel >= bigVolMult
+sweepVolOk = volAvg > 0 ? volRel >= minSweepVol : true
+
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead = barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1], lookahead = barmerge.lookahead_on)
+
+ph  = ta.pivothigh(high, swingLen, swingLen)
+pl  = ta.pivotlow(low, swingLen, swingLen)
+mph = ta.pivothigh(high, mssLen, mssLen)
+mpl = ta.pivotlow(low, mssLen, mssLen)
+
+var float lastMinorHigh = na
+var float lastMinorLow  = na
+if not na(mph)
+    lastMinorHigh := mph
+if not na(mpl)
+    lastMinorLow := mpl
+
+// ───────────────────────── Liquidity levels ─────────────────────────
+type Liq
+    float  price
+    string name
+    bool   isHigh
+    bool   key
+    line   ln
+    label  lb
+
+var array<Liq> levels = array.new<Liq>()
+
+newLevel(float price, string name, bool isHigh, bool key, int startBar) =>
+    line ln = line.new(startBar, price, bar_index, price, extend = extend.right, color = key ? lvlCol : color.new(lvlCol, 45), style = key ? line.style_solid : line.style_dotted, width = 1)
+    label lb = key ? label.new(bar_index + 2, price, name, style = label.style_label_left, color = color.new(color.black, 100), textcolor = lvlCol, size = size.small) : na
+    Liq.new(price, name, isHigh, key, ln, lb)
+
+// Stop tracking a level and leave its line where it ended
+freeze(Liq l, bool taken) =>
+    l.ln.set_extend(extend.none)
+    l.ln.set_x2(bar_index)
+    if taken
+        l.ln.set_style(line.style_dashed)
+        l.ln.set_color(color.new(lvlCol, 70))
+    if not na(l.lb)
+        l.lb.delete()
+
+dropByName(array<Liq> arr, string nm) =>
+    int n = arr.size()
+    if n > 0
+        for i = n - 1 to 0
+            Liq l = arr.get(i)
+            if l.name == nm
+                freeze(l, false)
+                arr.remove(i)
+
+// Keep only the newest swing levels on one side
+trimSwings(array<Liq> arr, bool hi, int maxN) =>
+    int n   = arr.size()
+    int cnt = 0
+    if n > 0
+        for i = n - 1 to 0
+            Liq l = arr.get(i)
+            if not l.key and l.isHigh == hi
+                cnt += 1
+                if cnt > maxN
+                    l.ln.delete()
+                    arr.remove(i)
+
+// Closest untaken level above (buy-side) or below (sell-side) a price
+nearestLevel(array<Liq> arr, float px, bool above) =>
+    float  best = na
+    string nm   = ""
+    for l in arr
+        if above and l.isHigh and l.price > px and (na(best) or l.price < best)
+            best := l.price
+            nm   := l.name
+        else if not above and not l.isHigh and l.price < px and (na(best) or l.price > best)
+            best := l.price
+            nm   := l.name
+    [best, nm]
+
+if showPD and newDay and not na(pdh) and not na(pdl)
+    dropByName(levels, "PDH")
+    dropByName(levels, "PDL")
+    levels.push(newLevel(pdh, "PDH", true, true, bar_index))
+    levels.push(newLevel(pdl, "PDL", false, true, bar_index))
+
+if showON and rthStart and not na(accHigh) and not na(accLow)
+    dropByName(levels, "ONH")
+    dropByName(levels, "ONL")
+    levels.push(newLevel(accHigh, "ONH", true, true, accHighBar))
+    levels.push(newLevel(accLow, "ONL", false, true, accLowBar))
+
+if rthStart
+    rthSeen := true
+
+if showSwing and not na(ph)
+    levels.push(newLevel(ph, "Swing high", true, false, bar_index - swingLen))
+    trimSwings(levels, true, maxSwings)
+if showSwing and not na(pl)
+    levels.push(newLevel(pl, "Swing low", false, false, bar_index - swingLen))
+    trimSwings(levels, false, maxSwings)
+
+// ───────────────────────── Stop hunts ─────────────────────────
+// A level is "taken" once price trades through it. If the bar closes back
+// inside with enough volume, it was a stop hunt.
+bool   sweptHigh = false
+bool   sweptLow  = false
+string hiName    = ""
+string loName    = ""
+bool   hiKey     = false
+bool   loKey     = false
+
+nLv = levels.size()
+if nLv > 0
+    for i = nLv - 1 to 0
+        Liq l = levels.get(i)
+        bool hit = l.isHigh ? high > l.price : low < l.price
+        if hit
+            bool rejected = l.isHigh ? close < l.price : close > l.price
+            if rejected and sweepVolOk
+                if l.isHigh
+                    sweptHigh := true
+                    if l.key or hiName == ""
+                        hiName := l.name
+                        hiKey  := l.key
+                else
+                    sweptLow := true
+                    if l.key or loName == ""
+                        loName := l.name
+                        loKey  := l.key
+            // Keep a faded stub for key levels, drop swing lines to stay minimal
+            if l.key
+                freeze(l, true)
+            else
+                l.ln.delete()
+            levels.remove(i)
+
+whaleTxt = bigVol ? " 🐋" : ""
+if sweptHigh
+    label.new(bar_index, high, (hiKey ? hiName + " ✕" : "✕") + whaleTxt, style = label.style_label_down, color = color.new(bearCol, 100), textcolor = bearCol, size = size.small, tooltip = "Stop hunt above " + hiName + "\nVolume " + str.tostring(volRel, "0.0") + "× average" + (bigVol ? " — big player" : "") + "\nWatch for a bearish reversal.")
+if sweptLow
+    label.new(bar_index, low, (loKey ? loName + " ✕" : "✕") + whaleTxt, style = label.style_label_up, color = color.new(bullCol, 100), textcolor = bullCol, size = size.small, tooltip = "Stop hunt below " + loName + "\nVolume " + str.tostring(volRel, "0.0") + "× average" + (bigVol ? " — big player" : "") + "\nWatch for a bullish reversal.")
+
+// ───────────────────────── Reversal confirmation ─────────────────────────
+// After a stop hunt, wait for price to break the last minor swing the other way.
+var bool   bearPending = false
+var float  bearStop    = na
+var float  bearMss     = na
+var int    bearBar     = na
+var string bearName    = ""
+var bool   bullPending = false
+var float  bullStop    = na
+var float  bullMss     = na
+var int    bullBar     = na
+var string bullName    = ""
+
+if sweptHigh
+    bearPending := true
+    bearStop    := high
+    bearMss     := nz(lastMinorLow, low)
+    bearBar     := bar_index
+    bearName    := hiName
+if sweptLow
+    bullPending := true
+    bullStop    := low
+    bullMss     := nz(lastMinorHigh, high)
+    bullBar     := bar_index
+    bullName    := loName
+
+// A new extreme that still closes back inside moves the stop; a close beyond it kills the setup
+if bearPending and bar_index > bearBar and high > bearStop
+    if close > bearStop
+        bearPending := false
+    else
+        bearStop := high
+if bullPending and bar_index > bullBar and low < bullStop
+    if close < bullStop
+        bullPending := false
+    else
+        bullStop := low
+
+if bearPending and bar_index - bearBar > confirmBars
+    bearPending := false
+if bullPending and bar_index - bullBar > confirmBars
+    bullPending := false
+
+bearRev = bearPending and close < bearMss
+bullRev = bullPending and close > bullMss
+
+var string lastSig   = "—"
+var color  lastCol   = color.gray
+var int    lastBar   = na
+var float  lastStop  = na
+var float  lastTgt   = na
+var string lastTgtNm = ""
+
+if bearRev
+    bearPending := false
+    [tgt, tgtName] = nearestLevel(levels, close, false)
+    tgtTxt = na(tgt) ? "" : "\nTarget: " + tgtName + " " + str.tostring(tgt, format.mintick)
+    label.new(bar_index, high, "REV ▼", style = label.style_label_down, color = bearCol, textcolor = color.white, size = size.small, tooltip = "Bearish reversal after " + bearName + " stop hunt\nStop: " + str.tostring(bearStop, format.mintick) + tgtTxt)
+    if showStops
+        line.new(bearBar, bearStop, bar_index + 5, bearStop, color = color.new(bearCol, 30), style = line.style_dotted)
+        label.new(bar_index + 5, bearStop, "SL", style = label.style_label_left, color = color.new(bearCol, 100), textcolor = bearCol, size = size.tiny)
+    lastSig   := "REV ▼ after " + bearName + " stop hunt"
+    lastCol   := bearCol
+    lastBar   := bar_index
+    lastStop  := bearStop
+    lastTgt   := tgt
+    lastTgtNm := tgtName
+    alert(syminfo.ticker + " REV ▼ after " + bearName + " stop hunt | Price " + str.tostring(close, format.mintick) + " | Stop " + str.tostring(bearStop, format.mintick) + (na(tgt) ? "" : " | Target " + tgtName + " " + str.tostring(tgt, format.mintick)), alert.freq_once_per_bar_close)
+
+if bullRev
+    bullPending := false
+    [tgt, tgtName] = nearestLevel(levels, close, true)
+    tgtTxt = na(tgt) ? "" : "\nTarget: " + tgtName + " " + str.tostring(tgt, format.mintick)
+    label.new(bar_index, low, "REV ▲", style = label.style_label_up, color = bullCol, textcolor = color.white, size = size.small, tooltip = "Bullish reversal after " + bullName + " stop hunt\nStop: " + str.tostring(bullStop, format.mintick) + tgtTxt)
+    if showStops
+        line.new(bullBar, bullStop, bar_index + 5, bullStop, color = color.new(bullCol, 30), style = line.style_dotted)
+        label.new(bar_index + 5, bullStop, "SL", style = label.style_label_left, color = color.new(bullCol, 100), textcolor = bullCol, size = size.tiny)
+    lastSig   := "REV ▲ after " + bullName + " stop hunt"
+    lastCol   := bullCol
+    lastBar   := bar_index
+    lastStop  := bullStop
+    lastTgt   := tgt
+    lastTgtNm := tgtName
+    alert(syminfo.ticker + " REV ▲ after " + bullName + " stop hunt | Price " + str.tostring(close, format.mintick) + " | Stop " + str.tostring(bullStop, format.mintick) + (na(tgt) ? "" : " | Target " + tgtName + " " + str.tostring(tgt, format.mintick)), alert.freq_once_per_bar_close)
+
+if sweptHigh
+    alert(syminfo.ticker + " stop hunt above " + hiName + whaleTxt + " | Price " + str.tostring(close, format.mintick) + " | Watch for REV ▼", alert.freq_once_per_bar_close)
+if sweptLow
+    alert(syminfo.ticker + " stop hunt below " + loName + whaleTxt + " | Price " + str.tostring(close, format.mintick) + " | Watch for REV ▲", alert.freq_once_per_bar_close)
+
+// ───────────────────────── Drawing ─────────────────────────
+plot(showVwap ? vwapLine : na, "VWAP", color = color.new(#9C27B0, 0), linewidth = 2)
+
+bigBuy  = showBigVol and bigVol and not sweptHigh and not sweptLow and close >= hl2
+bigSell = showBigVol and bigVol and not sweptHigh and not sweptLow and close < hl2
+plotshape(bigSell, title = "Big player — sellers", style = shape.circle, location = location.abovebar, color = color.new(bearCol, 20), size = size.tiny)
+plotshape(bigBuy, title = "Big player — buyers", style = shape.circle, location = location.belowbar, color = color.new(bullCol, 20), size = size.tiny)
+
+if barstate.islast
+    for l in levels
+        if not na(l.lb)
+            l.lb.set_x(bar_index + 2)
+
+// ───────────────────────── Alerts ─────────────────────────
+alertcondition(bearRev, "REV ▼ Bearish reversal", "{{ticker}} REV ▼ bearish reversal after a stop hunt. Price {{close}}")
+alertcondition(bullRev, "REV ▲ Bullish reversal", "{{ticker}} REV ▲ bullish reversal after a stop hunt. Price {{close}}")
+alertcondition(sweptHigh, "✕ Stop hunt above a high", "{{ticker}} stops above a high were taken. Watch for REV ▼. Price {{close}}")
+alertcondition(sweptLow, "✕ Stop hunt below a low", "{{ticker}} stops below a low were taken. Watch for REV ▲. Price {{close}}")
+alertcondition(bigVol, "● Big player volume", "{{ticker}} big player volume. Price {{close}}")
+
+// ───────────────────────── Panel ─────────────────────────
+panelPosition = switch panelPos
+    "Top right"   => position.top_right
+    "Bottom left" => position.bottom_left
+    "Top left"    => position.top_left
+    => position.bottom_right
+
+var table panel = table.new(panelPosition, 2, 6, bgcolor = color.new(color.black, 25))
+
+row(int r, string k, string v, color c) =>
+    table.cell(panel, 0, r, k, text_color = color.silver, text_size = size.small, text_halign = text.align_left)
+    table.cell(panel, 1, r, v, text_color = c, text_size = size.small, text_halign = text.align_left)
+
+if showPanel and barstate.islast
+    string setupTxt = "None — waiting for a stop hunt"
+    color  setupCol = color.gray
+    if bearPending and (not bullPending or bearBar >= bullBar)
+        setupTxt := "▼ " + bearName + " taken · confirm below " + str.tostring(bearMss, format.mintick)
+        setupCol := bearCol
+    else if bullPending
+        setupTxt := "▲ " + bullName + " taken · confirm above " + str.tostring(bullMss, format.mintick)
+        setupCol := bullCol
+    agoTxt = na(lastBar) ? "" : " · " + str.tostring(bar_index - lastBar) + " bars ago"
+
+    row(0, "VWAP", close >= vwapLine ? "Above ▲" : "Below ▼", close >= vwapLine ? bullCol : bearCol)
+    row(1, "Setup", setupTxt, setupCol)
+    row(2, "Last signal", lastSig + agoTxt, lastCol)
+    row(3, "Stop", na(lastStop) ? "—" : str.tostring(lastStop, format.mintick), color.white)
+    row(4, "Target", na(lastTgt) ? "—" : lastTgtNm + " " + str.tostring(lastTgt, format.mintick), color.white)
+    row(5, "Volume", str.tostring(volRel, "0.0") + "× avg" + (bigVol ? " 🐋" : ""), bigVol ? color.yellow : color.white)
