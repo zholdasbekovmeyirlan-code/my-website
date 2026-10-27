@@ -1,0 +1,330 @@
+//@version=6
+// ═══════════════════════════════════════════════════════════════════════
+//  NQ Көмекші — Бұрылыс пен Ірі ойыншы
+//  NQ1! / MNQ1! / ES1! / MES1! фьючерстеріне арналған көмекші индикатор.
+//
+//  Не көрсетеді:
+//   • Тренд: EMA 9/21 + VWAP.
+//   • ⚠ Стоп аулау: баға маңызды деңгейден (PDH/PDL, ONH/ONL, соңғы
+//     шың/түп) асып кетіп, қайта ішке жабылса — ірі ойыншы стоптарды
+//     жинап, бағытты бұруы мүмкін.
+//   • Дивергенция: баға жаңа шың жасайды, ал RSI жасамайды — қозғалыс
+//     күші әлсіреп барады.
+//   • 🐋 Жұтылу: көлем өте үлкен, бірақ шам денесі кішкентай — ірі
+//     ойыншы қарсы жақтың тапсырыстарын «жұтып» жатыр.
+//   • Панель: тренд, RSI, көлем, кім басым, бұрылыс қаупі.
+//
+//  ЕСКЕРТУ: бұл тек көмекші құрал. Ешбір индикатор 100% дұрыс болжамайды.
+//  Әрқашан стоп-лосс қойып, тәуекелді басқарыңыз.
+// ═══════════════════════════════════════════════════════════════════════
+indicator("NQ Көмекші — Бұрылыс пен Ірі ойыншы", shorttitle = "NQ Көмекші", overlay = true, max_labels_count = 500, max_lines_count = 200)
+
+// ───────────────────────── Баптаулар ─────────────────────────
+grpTrend = "Тренд"
+emaFastLen = input.int(9, "Жылдам EMA", minval = 1, group = grpTrend)
+emaSlowLen = input.int(21, "Баяу EMA", minval = 1, group = grpTrend)
+showEmas   = input.bool(true, "EMA сызықтарын көрсету", group = grpTrend)
+showVwap   = input.bool(true, "VWAP көрсету", group = grpTrend)
+vwapMode   = input.string("Сауда күні (18:00)", "VWAP басталуы", options = ["Сауда күні (18:00)", "RTH (09:30)"], group = grpTrend, tooltip = "Сауда күні — TradingView-тің стандартты VWAP-ы сияқты. RTH — Нью-Йорк ашылуынан бастап есептеледі.")
+
+grpRev = "Бұрылыс белгілері"
+showSweep  = input.bool(true, "⚠ Стоп аулауды көрсету", group = grpRev, tooltip = "Баға деңгейден асып кетіп, қайта ішке жабылған шам. Көбіне ірі ойыншы стоптарды жинағанда болады.")
+showDiv    = input.bool(true, "RSI дивергенциясын көрсету", group = grpRev)
+rsiLen     = input.int(14, "RSI ұзындығы", minval = 2, group = grpRev)
+rsiOB      = input.int(70, "RSI: артық сатып алынған", minval = 50, maxval = 100, group = grpRev)
+rsiOS      = input.int(30, "RSI: артық сатылған", minval = 0, maxval = 50, group = grpRev)
+pivL       = input.int(5, "Шың/түп: сол жақтағы шамдар", minval = 1, group = grpRev)
+pivR       = input.int(3, "Шың/түп: оң жақтағы шамдар", minval = 1, group = grpRev, tooltip = "Шың/түп осынша шамнан кейін расталады. Аз болса — жылдам, бірақ жалған сигнал көбірек.")
+divMaxBars = input.int(60, "Дивергенция: шыңдар арасы (макс. шам)", minval = 5, group = grpRev)
+stretchAtr = input.float(2.0, "VWAP-тан алшақтық шегі (ATR)", minval = 0.5, step = 0.25, group = grpRev, tooltip = "Баға VWAP-тан осынша ATR алыстаса, «тым созылды» деп есептеледі.")
+
+grpWhale = "Ірі ойыншы"
+showWhale  = input.bool(true, "🐋 Жұтылу белгілерін көрсету", group = grpWhale)
+colorBars  = input.bool(true, "Үлкен көлемді шамдарды бояу", group = grpWhale)
+volLen     = input.int(20, "Орташа көлем ұзындығы", minval = 1, group = grpWhale)
+volMult    = input.float(2.0, "Үлкен көлем шегі (× орташа)", minval = 1.0, step = 0.1, group = grpWhale)
+absorbBody = input.float(0.35, "Жұтылу: дене / диапазон (макс.)", minval = 0.05, maxval = 1.0, step = 0.05, group = grpWhale, tooltip = "Көлем үлкен, ал шам денесі бүкіл диапазонның осы бөлігінен кіші болса — жұтылу.")
+
+grpLvl = "Деңгейлер"
+showPD       = input.bool(true, "Кешегі High/Low (PDH/PDL)", group = grpLvl)
+showON       = input.bool(true, "Түнгі сессия High/Low (ONH/ONL)", group = grpLvl, tooltip = "18:00-ден 09:30-ға дейінгі (Нью-Йорк) ең биік/ең төмен баға. Тек минуттық графикте, толық (ETH) сессияда көрінеді.")
+showOpenZone = input.bool(true, "RTH ашылуының алғашқы 15 минутын белгілеу", group = grpLvl)
+rthSess      = input.session("0930-1600", "Негізгі сессия (RTH, Нью-Йорк уақыты)", group = grpLvl)
+
+grpPanel = "Панель"
+showPanel  = input.bool(true, "Ақпарат панелін көрсету", group = grpPanel)
+panelPos   = input.string("Жоғарғы оң", "Панель орны", options = ["Жоғарғы оң", "Жоғарғы сол", "Төменгі оң", "Төменгі сол"], group = grpPanel)
+riskWindow = input.int(10, "Қауіп есебі: соңғы N шам", minval = 1, group = grpPanel)
+
+// ───────────────────────── Сессиялар ─────────────────────────
+NY = "America/New_York"
+intraday = timeframe.isintraday
+rthTime  = time(timeframe.period, rthSess, NY)
+inRTH    = intraday and not na(rthTime)
+rthStart = inRTH and (not inRTH[1] or session.isfirstbar)
+
+// Түнгі сессия: сауда күні басталғаннан (18:00) RTH ашылғанға дейін
+var float onHigh       = na
+var float onLow        = na
+var float accHigh      = na
+var float accLow       = na
+var bool  rthSeen      = false
+var int   rthStartTime = na
+
+if session.isfirstbar
+    accHigh := inRTH ? na : high
+    accLow  := inRTH ? na : low
+    rthSeen := false
+else if not inRTH and not rthSeen
+    accHigh := math.max(nz(accHigh, high), high)
+    accLow  := math.min(nz(accLow, low), low)
+
+if rthStart
+    onHigh       := accHigh
+    onLow        := accLow
+    rthSeen      := true
+    rthStartTime := time
+
+inOpenZone = inRTH and not na(rthStartTime) and time - rthStartTime < 15 * 60 * 1000
+
+// ───────────────────────── Негізгі есептеулер ─────────────────────────
+emaFast  = ta.ema(close, emaFastLen)
+emaSlow  = ta.ema(close, emaSlowLen)
+vwapDay  = ta.vwap(hlc3)
+vwapRth  = ta.vwap(hlc3, rthStart)
+vwapLine = vwapMode == "RTH (09:30)" and intraday ? vwapRth : vwapDay
+rsi      = ta.rsi(close, rsiLen)
+atrVal   = ta.atr(14)
+
+vol      = nz(volume)
+volAvg   = ta.sma(vol, volLen)
+volRatio = volAvg > 0 ? vol / volAvg : 0.0
+barRange = math.max(high - low, syminfo.mintick)
+bodyFrac = math.abs(close - open) / barRange
+upWick   = high - math.max(open, close)
+dnWick   = math.min(open, close) - low
+
+trendUp   = emaFast > emaSlow and close > vwapLine
+trendDown = emaFast < emaSlow and close < vwapLine
+
+rsiHot      = rsi >= rsiOB
+rsiCold     = rsi <= rsiOS
+vwapDist    = atrVal > 0 ? (close - vwapLine) / atrVal : 0.0
+stretchedUp = vwapDist >= stretchAtr
+stretchedDn = vwapDist <= -stretchAtr
+
+// ───────────────────────── Деңгейлер ─────────────────────────
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead = barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1], lookahead = barmerge.lookahead_on)
+
+lvlPDH = showPD ? pdh : na
+lvlPDL = showPD ? pdl : na
+lvlONH = showON and rthSeen ? onHigh : na
+lvlONL = showON and rthSeen ? onLow : na
+
+// ───────────────────────── Стоп аулау (ликвидтілік жинау) ─────────────────────────
+ph = ta.pivothigh(high, pivL, pivR)
+pl = ta.pivotlow(low, pivL, pivR)
+
+var float swingHigh = na
+var float swingLow  = na
+
+// Деңгейден жоғары шығып, қайта астына жабылды
+sweptAbove(float lvl) => not na(lvl) and high > lvl and close < lvl and high[1] <= lvl
+// Деңгейден төмен түсіп, қайта үстіне жабылды
+sweptBelow(float lvl) => not na(lvl) and low < lvl and close > lvl and low[1] >= lvl
+
+sweepSwingHi = sweptAbove(swingHigh)
+sweepPDH     = sweptAbove(lvlPDH)
+sweepONH     = sweptAbove(lvlONH)
+sweepSwingLo = sweptBelow(swingLow)
+sweepPDL     = sweptBelow(lvlPDL)
+sweepONL     = sweptBelow(lvlONL)
+
+bearSweep = sweepSwingHi or sweepPDH or sweepONH
+bullSweep = sweepSwingLo or sweepPDL or sweepONL
+bearSweepName = sweepPDH ? "PDH" : sweepONH ? "ONH" : "Шың"
+bullSweepName = sweepPDL ? "PDL" : sweepONL ? "ONL" : "Түп"
+bearSweepDesc = sweepPDH ? "кешегі максимумнан (PDH)" : sweepONH ? "түнгі максимумнан (ONH)" : "соңғы шыңнан"
+bullSweepDesc = sweepPDL ? "кешегі минимумнан (PDL)" : sweepONL ? "түнгі минимумнан (ONL)" : "соңғы түптен"
+
+// Жиналған немесе бұзылған деңгей енді жарамсыз; жаңа шың/түп расталғанда жаңартамыз
+if sweepSwingHi or close > swingHigh
+    swingHigh := na
+if sweepSwingLo or close < swingLow
+    swingLow := na
+if not na(ph)
+    swingHigh := ph
+if not na(pl)
+    swingLow := pl
+
+// ───────────────────────── RSI дивергенциясы ─────────────────────────
+var float prevPhPrice = na
+var float prevPhRsi   = na
+var int   prevPhBar   = na
+var float prevPlPrice = na
+var float prevPlRsi   = na
+var int   prevPlBar   = na
+
+bearDiv = false
+bullDiv = false
+
+if not na(ph)
+    pivBar = bar_index - pivR
+    pivRsi = rsi[pivR]
+    if not na(prevPhPrice) and pivBar - prevPhBar <= divMaxBars and ph > prevPhPrice and pivRsi < prevPhRsi and prevPhRsi > 50
+        bearDiv := true
+        if showDiv
+            line.new(prevPhBar, prevPhPrice, pivBar, ph, color = color.new(color.red, 20), width = 2)
+            label.new(pivBar, ph, "Дивергенция ▼", style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.tiny, tooltip = "Баға жаңа шың жасады, бірақ RSI жасамады — көтерілу күші әлсіреп барады. Төмен бұрылуы мүмкін.")
+    prevPhPrice := ph
+    prevPhRsi   := pivRsi
+    prevPhBar   := pivBar
+
+if not na(pl)
+    pivBar = bar_index - pivR
+    pivRsi = rsi[pivR]
+    if not na(prevPlPrice) and pivBar - prevPlBar <= divMaxBars and pl < prevPlPrice and pivRsi > prevPlRsi and prevPlRsi < 50
+        bullDiv := true
+        if showDiv
+            line.new(prevPlBar, prevPlPrice, pivBar, pl, color = color.new(color.lime, 20), width = 2)
+            label.new(pivBar, pl, "Дивергенция ▲", style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.tiny, tooltip = "Баға жаңа түп жасады, бірақ RSI жасамады — құлау күші әлсіреп барады. Жоғары бұрылуы мүмкін.")
+    prevPlPrice := pl
+    prevPlRsi   := pivRsi
+    prevPlBar   := pivBar
+
+// ───────────────────────── Ірі ойыншы ─────────────────────────
+bigVol     = volRatio >= volMult
+absorption = bigVol and bodyFrac <= absorbBody
+absorbBear = absorption and upWick >= dnWick   // жоғарыда ірі сатушы алушыларды жұтып жатыр
+absorbBull = absorption and dnWick > upWick    // төменде ірі алушы сатушыларды жұтып жатыр
+
+// Шамның қай жерде жабылғанына қарап, алушы/сатушы көлемін шамамен бөлеміз
+buyVol   = high > low ? vol * (close - low) / (high - low) : vol / 2
+delta    = buyVol - (vol - buyVol)
+sumDelta = math.sum(delta, riskWindow)
+sumVol   = math.sum(vol, riskWindow)
+deltaPct = sumVol > 0 ? 100 * sumDelta / sumVol : 0.0
+
+// ───────────────────────── Бұрылыс қаупі ─────────────────────────
+HIGH_RISK = 4
+
+recent(bool cond) => nz(ta.barssince(cond), 100000) < riskWindow
+
+recentBearSweep  = recent(bearSweep)
+recentBullSweep  = recent(bullSweep)
+recentBearDiv    = recent(bearDiv)
+recentBullDiv    = recent(bullDiv)
+recentAbsorbBear = recent(absorbBear)
+recentAbsorbBull = recent(absorbBull)
+
+// Жоғарыдан төмен бұрылу белгілері
+bearScore = (recentBearSweep ? 2 : 0) + (recentBearDiv ? 2 : 0) + (recentAbsorbBear ? 2 : 0) + (rsiHot ? 1 : 0) + (stretchedUp ? 1 : 0)
+// Төменнен жоғары бұрылу белгілері
+bullScore = (recentBullSweep ? 2 : 0) + (recentBullDiv ? 2 : 0) + (recentAbsorbBull ? 2 : 0) + (rsiCold ? 1 : 0) + (stretchedDn ? 1 : 0)
+
+bearRiskAlert = bearScore >= HIGH_RISK and bearScore[1] < HIGH_RISK
+bullRiskAlert = bullScore >= HIGH_RISK and bullScore[1] < HIGH_RISK
+
+// ───────────────────────── Сызу ─────────────────────────
+plot(showEmas ? emaFast : na, "Жылдам EMA", color = color.new(color.aqua, 10))
+plot(showEmas ? emaSlow : na, "Баяу EMA", color = color.new(color.orange, 10))
+plot(showVwap ? vwapLine : na, "VWAP", color = color.new(color.purple, 0), linewidth = 2)
+
+// Күн ауысқанда сызық үзілсін
+plot(showPD and pdh == pdh[1] ? pdh : na, "PDH", color = color.new(color.red, 40), style = plot.style_linebr)
+plot(showPD and pdl == pdl[1] ? pdl : na, "PDL", color = color.new(color.green, 40), style = plot.style_linebr)
+plot(lvlONH, "ONH", color = color.new(color.fuchsia, 40), style = plot.style_linebr)
+plot(lvlONL, "ONL", color = color.new(color.teal, 40), style = plot.style_linebr)
+
+if showSweep and bearSweep
+    label.new(bar_index, high, "⚠ " + bearSweepName + " · стоп аулау", style = label.style_label_down, color = color.new(color.red, 10), textcolor = color.white, size = size.small, tooltip = "Баға " + bearSweepDesc + " жоғары шығып, қайта астына жабылды. Ірі ойыншы стоптарды жинап, бағаны төмен бұруы мүмкін.")
+if showSweep and bullSweep
+    label.new(bar_index, low, "⚠ " + bullSweepName + " · стоп аулау", style = label.style_label_up, color = color.new(color.green, 10), textcolor = color.white, size = size.small, tooltip = "Баға " + bullSweepDesc + " төмен түсіп, қайта үстіне жабылды. Ірі ойыншы стоптарды жинап, бағаны жоғары бұруы мүмкін.")
+
+plotshape(showWhale and absorbBear, title = "🐋 Ірі сатушы жұтуда", style = shape.diamond, location = location.abovebar, color = color.orange, text = "🐋", textcolor = color.orange, size = size.tiny)
+plotshape(showWhale and absorbBull, title = "🐋 Ірі алушы жұтуда", style = shape.diamond, location = location.belowbar, color = color.teal, text = "🐋", textcolor = color.teal, size = size.tiny)
+
+barcolor(colorBars and bigVol ? (absorption ? color.yellow : close >= open ? color.lime : color.fuchsia) : na, title = "Үлкен көлем")
+bgcolor(showOpenZone and inOpenZone ? color.new(color.yellow, 90) : na, title = "RTH ашылуы")
+
+// ───────────────────────── Соңғы белгі ─────────────────────────
+var string lastWarn    = "—"
+var int    lastWarnBar = na
+var color  lastWarnCol = color.gray
+
+if absorbBear or absorbBull
+    lastWarn    := absorbBear ? "🐋 Ірі сатушы жұтуда" : "🐋 Ірі алушы жұтуда"
+    lastWarnBar := bar_index
+    lastWarnCol := absorbBear ? color.orange : color.teal
+if bearDiv or bullDiv
+    lastWarn    := bearDiv ? "Дивергенция ▼" : "Дивергенция ▲"
+    lastWarnBar := bar_index
+    lastWarnCol := bearDiv ? color.red : color.lime
+if bearSweep or bullSweep
+    lastWarn    := bearSweep ? "⚠ " + bearSweepName + " стоп аулау ▼" : "⚠ " + bullSweepName + " стоп аулау ▲"
+    lastWarnBar := bar_index
+    lastWarnCol := bearSweep ? color.red : color.lime
+
+// ───────────────────────── Ескертулер (Alerts) ─────────────────────────
+alertcondition(bearSweep, "⚠ Стоп аулау ▼", "{{ticker}}: жоғарғы деңгейде стоп аулау — төмен бұрылуы мүмкін. Баға: {{close}}")
+alertcondition(bullSweep, "⚠ Стоп аулау ▲", "{{ticker}}: төменгі деңгейде стоп аулау — жоғары бұрылуы мүмкін. Баға: {{close}}")
+alertcondition(bearDiv, "Дивергенция ▼", "{{ticker}}: RSI аю дивергенциясы — көтерілу әлсіреп барады. Баға: {{close}}")
+alertcondition(bullDiv, "Дивергенция ▲", "{{ticker}}: RSI бұқа дивергенциясы — құлау әлсіреп барады. Баға: {{close}}")
+alertcondition(absorption, "🐋 Ірі ойыншы", "{{ticker}}: үлкен көлеммен жұтылу шамы. Баға: {{close}}")
+alertcondition(bearRiskAlert, "Бұрылыс қаупі ЖОҒАРЫ ▼", "{{ticker}}: төмен бұрылу қаупі жоғары! Баға: {{close}}")
+alertcondition(bullRiskAlert, "Бұрылыс қаупі ЖОҒАРЫ ▲", "{{ticker}}: жоғары бұрылу қаупі жоғары! Баға: {{close}}")
+
+// Бір alert жасап, «Any alert() function call» таңдасаңыз — бәрі бір хабарламада келеді
+string msg = ""
+if bearSweep
+    msg += "⚠ " + bearSweepName + " стоп аулау — төмен бұрылуы мүмкін. "
+if bullSweep
+    msg += "⚠ " + bullSweepName + " стоп аулау — жоғары бұрылуы мүмкін. "
+if bearDiv
+    msg += "Дивергенция ▼. "
+if bullDiv
+    msg += "Дивергенция ▲. "
+if absorbBear
+    msg += "🐋 Ірі сатушы жұтуда. "
+if absorbBull
+    msg += "🐋 Ірі алушы жұтуда. "
+if bearRiskAlert
+    msg += "Төмен бұрылу қаупі ЖОҒАРЫ! "
+if bullRiskAlert
+    msg += "Жоғары бұрылу қаупі ЖОҒАРЫ! "
+if msg != ""
+    alert(syminfo.ticker + " " + str.tostring(close, format.mintick) + ": " + msg, alert.freq_once_per_bar_close)
+
+// ───────────────────────── Ақпарат панелі ─────────────────────────
+panelPosition = switch panelPos
+    "Жоғарғы сол" => position.top_left
+    "Төменгі оң"  => position.bottom_right
+    "Төменгі сол" => position.bottom_left
+    => position.top_right
+
+var table panel = table.new(panelPosition, 2, 9, bgcolor = color.new(#131722, 10), frame_color = color.new(color.gray, 50), frame_width = 1, border_color = color.new(color.gray, 70), border_width = 1)
+
+row(int r, string k, string v, color c) =>
+    table.cell(panel, 0, r, k, text_color = color.silver, text_size = size.small, text_halign = text.align_left)
+    table.cell(panel, 1, r, v, text_color = c, text_size = size.small, text_halign = text.align_left)
+
+riskText(int score) => score >= HIGH_RISK ? "ЖОҒАРЫ" : score >= 2 ? "ОРТАША" : "ТӨМЕН"
+
+if showPanel and barstate.islast
+    maxScore = math.max(bearScore, bullScore)
+    riskDir  = bearScore > bullScore ? " ▼ төмен" : bullScore > bearScore ? " ▲ жоғары" : ""
+    riskCol  = maxScore >= HIGH_RISK ? color.red : maxScore >= 2 ? color.orange : color.lime
+    deltaTxt = deltaPct >= 0 ? "Алушылар +" + str.tostring(deltaPct, "0") + "%" : "Сатушылар " + str.tostring(deltaPct, "0") + "%"
+    agoTxt   = na(lastWarnBar) ? "" : " · " + str.tostring(bar_index - lastWarnBar) + " шам бұрын"
+    sessTxt  = inOpenZone ? "RTH ашылуы — абай бол!" : inRTH ? "Негізгі сессия (RTH)" : intraday ? "Түнгі сессия (ETH)" : "—"
+
+    row(0, "NQ Көмекші", syminfo.ticker + " · " + timeframe.period, color.white)
+    row(1, "Тренд", trendUp ? "ЖОҒАРЫ ▲" : trendDown ? "ТӨМЕН ▼" : "АРАЛАС ↔", trendUp ? color.lime : trendDown ? color.red : color.gray)
+    row(2, "RSI", str.tostring(rsi, "0.0") + (rsiHot ? " · артық алынған" : rsiCold ? " · артық сатылған" : ""), rsiHot ? color.orange : rsiCold ? color.aqua : color.white)
+    row(3, "Көлем", str.tostring(volRatio, "0.0") + "× орташа", bigVol ? color.yellow : color.white)
+    row(4, "Кім басым (" + str.tostring(riskWindow) + " шам)", deltaTxt, deltaPct >= 0 ? color.lime : color.red)
+    row(5, "VWAP-тан", (vwapDist >= 0 ? "+" : "") + str.tostring(vwapDist, "0.0") + " ATR", stretchedUp or stretchedDn ? color.orange : color.white)
+    row(6, "Соңғы белгі", lastWarn + agoTxt, lastWarnCol)
+    row(7, "Бұрылыс қаупі", riskText(maxScore) + (maxScore >= 2 ? riskDir : ""), riskCol)
+    row(8, "Сессия", sessTxt, inOpenZone ? color.yellow : color.white)
