@@ -10,6 +10,10 @@
 //  Everything is decided on closed candles and drawn once, so nothing
 //  moves while a candle is forming.
 //
+//  Filters against the most common losers: trend (EMA 50 on 4H by default),
+//  New York session only, no late fills (limit cancelled after 12 bars, after
+//  a 1R move away, or once the opposite liquidity is taken), breakeven at +1R.
+//
 //  Decision aid only. Past signals are not a guarantee.
 // ═══════════════════════════════════════════════════════════════════════
 // scale.right pins every drawing to the price scale of the candles; on its own scale
@@ -39,14 +43,21 @@ slBuf     = input.int(4, "Stop buffer beyond the sweep (ticks)", minval = 0, gro
 tpMode    = input.string("Fixed R:R", "Target", options = ["Fixed R:R", "Opposite liquidity"], group = grpTrd)
 rr        = input.float(2.0, "R:R (fixed, or minimum for liquidity target)", minval = 0.5, step = 0.5, group = grpTrd)
 maxRisk   = input.float(0, "Max stop size in points (0 = off)", minval = 0, step = 1, group = grpTrd)
-entryWin  = input.int(30, "Max bars waiting for the retrace", minval = 1, group = grpTrd)
-useWin    = input.bool(false, "Only enter inside", inline = "w", group = grpTrd)
-tradeWin  = input.session("0830-1100", "", inline = "w", group = grpTrd, tooltip = "New York time")
+entryWin  = input.int(12, "Max bars waiting for the retrace", minval = 1, group = grpTrd, tooltip = "A late fill after the move is mostly over loses more often, so the limit is cancelled after this many bars.")
+useBE     = input.bool(true, "Move stop to breakeven at +1R", group = grpTrd)
 
-grpDsp  = "Display"
-buyCol  = input.color(#089981, "Buy", group = grpDsp)
-sellCol = input.color(#F23645, "Sell", group = grpDsp)
-lvlCol  = input.color(#787B86, "Levels", group = grpDsp)
+grpFlt    = "4 · Filters"
+trendMode = input.string("4H EMA 50", "Trend filter", options = ["Off", "1H EMA 50", "4H EMA 50"], group = grpFlt, tooltip = "Sell only below the EMA, buy only above it. Sweeps against the trend were the most common losers.")
+useWin    = input.bool(true, "Only trade inside", inline = "w", group = grpFlt)
+tradeWin  = input.session("0930-1600", "", inline = "w", group = grpFlt, tooltip = "New York time. 0930-1100 = NY morning only.")
+useDisp   = input.bool(false, "Require a strong CHoCH candle", inline = "d", group = grpFlt)
+dispX     = input.float(1.5, "× average body", minval = 1, step = 0.1, inline = "d", group = grpFlt, tooltip = "The candle that breaks structure must have a body at least this many times the average body (displacement).")
+
+grpDsp    = "Display"
+showStats = input.bool(true, "Show results on this chart", group = grpDsp)
+buyCol    = input.color(#089981, "Buy", group = grpDsp)
+sellCol   = input.color(#F23645, "Sell", group = grpDsp)
+lvlCol    = input.color(#787B86, "Levels", group = grpDsp)
 
 // ───────────────────────── Core values ─────────────────────────
 tick     = syminfo.mintick
@@ -62,6 +73,16 @@ ahead    = time + DRAW_LEN * barMs
 
 volAvg = ta.sma(nz(volume), 20)
 bigVol = volAvg > 0 and nz(volume) >= bigVolX * volAvg
+
+// Trend filter: EMA 50 of the last closed 1H / 4H candle
+ema1H    = request.security(syminfo.tickerid, "60", ta.ema(close, 50)[1], lookahead = barmerge.lookahead_on)
+ema4H    = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead = barmerge.lookahead_on)
+trendEma = trendMode == "1H EMA 50" ? ema1H : trendMode == "4H EMA 50" ? ema4H : na
+sellOk   = na(trendEma) or close < trendEma
+buyOk    = na(trendEma) or close > trendEma
+
+avgBody = ta.sma(math.abs(close - open), 20)
+strong  = not useDisp or math.abs(close - open) >= dispX * avgBody
 
 bearFvg = high < low[2] and low[2] - high >= minFvg * tick
 bullFvg = low > high[2] and low - high[2] >= minFvg * tick
@@ -221,6 +242,8 @@ type Setup
     float  sl
     float  tp
     int    entryBar
+    float  risk
+    bool   beOn    = false
     float  resR
     line   chochLn
     label  chochLb
@@ -231,6 +254,7 @@ type Setup
     bool   evSweep = false
     bool   evReady = false
     bool   evEntry = false
+    bool   evExit  = false
 
 planNew(Setup s, color col) =>
     int    x2   = ahead
@@ -286,13 +310,23 @@ ready(Setup s) =>
                 why := "R:R to " + lnm + " is below " + str.tostring(rr, "0.0")
     if maxRisk > 0 and risk > maxRisk
         why := "Stop too big: " + str.tostring(risk, "0.00") + " pts"
+    // Trend and time filters drop the setup quietly so the chart stays clean
+    bool quiet = false
+    if why == "" and not (b ? buyOk : sellOk)
+        why   := "Against the trend filter"
+        quiet := true
+    else if why == "" and not inWin
+        why   := "Outside the trading window"
+        quiet := true
     if why != ""
-        cancel(s, why, true)
+        cancel(s, why, not quiet)
     else
         s.state    := 3
         s.entry    := e
         s.sl       := stop
         s.tp       := t
+        s.risk     := risk
+        s.beOn     := false
         s.readyBar := bar_index
         s.evReady  := true
         s.fvgBx    := box.new(s.fT, s.fTop, ahead, s.fBot, xloc = xloc.bar_time, border_color = color.new(col, 30), bgcolor = color.new(col, 75), text = "FVG", text_size = size.small, text_color = col, text_halign = text.align_left)
@@ -300,7 +334,7 @@ ready(Setup s) =>
     // Return a plain value so the if/else above is not the function's return value
     s.state
 
-run(Setup s, float brLvl, string brName) =>
+run(Setup s, float brLvl, string brName, bool oppTaken) =>
     bool  b   = s.isBuy
     color col = b ? buyCol : sellCol
     float xt  = b ? low : high
@@ -354,6 +388,8 @@ run(Setup s, float brLvl, string brName) =>
     if s.state == 1 or s.state == 2
         if b ? close < s.ext : close > s.ext
             cancel(s, "Sweep failed: price accepted beyond " + s.lvlName, false)
+        else if oppTaken
+            cancel(s, "Late: the opposite liquidity was taken first", false)
         else
             if b ? low < s.ext : high > s.ext
                 s.ext    := xt
@@ -370,7 +406,7 @@ run(Setup s, float brLvl, string brName) =>
                 s.fTop := na
                 s.fBot := na
             if s.state == 1
-                if not na(s.choch) and (b ? close > s.choch : close < s.choch)
+                if not na(s.choch) and (b ? close > s.choch : close < s.choch) and strong
                     s.state    := 2
                     s.chochBar := bar_index
                     s.chochLn  := line.new(s.chochFromT, s.choch, time, s.choch, xloc = xloc.bar_time, color = col, style = line.style_dashed)
@@ -388,7 +424,7 @@ run(Setup s, float brLvl, string brName) =>
         bool filled = bar_index > s.readyBar and (b ? low <= s.entry : high >= s.entry)
         if filled
             if not inWin
-                cancel(s, "Outside the trading window", true)
+                cancel(s, "Outside the trading window", false)
             else
                 s.state    := 4
                 s.entryBar := bar_index
@@ -400,8 +436,8 @@ run(Setup s, float brLvl, string brName) =>
                 s.rewBx  := box.new(time, math.max(s.entry, s.tp), ahead, math.min(s.entry, s.tp), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(buyCol, 80))
                 float planR = math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
                 label.new(time, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(math.abs(s.entry - s.sl), "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
-        else if b ? high >= s.tp : low <= s.tp
-            cancel(s, "Missed: price reached the target without a retrace", false)
+        else if oppTaken or (b ? high >= s.entry + s.risk : low <= s.entry - s.risk)
+            cancel(s, "Late: price moved 1R or took the opposite liquidity before the retrace", false)
         else if bar_index - s.readyBar > entryWin
             cancel(s, "Expired: no retrace into the FVG", false)
 
@@ -410,18 +446,24 @@ run(Setup s, float brLvl, string brName) =>
         bool hitSL = b ? low <= s.sl : high >= s.sl
         bool hitTP = bar_index > s.entryBar and (b ? high >= s.tp : low <= s.tp)
         if hitSL or hitTP
-            s.resR  := hitSL ? -1.0 : math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
-            s.state := 0
+            s.resR   := hitSL ? (s.beOn ? 0.0 : -1.0) : math.abs(s.tp - s.entry) / s.risk
+            s.state  := 0
+            s.evExit := true
             if bar_index - s.entryBar < DRAW_LEN
                 s.riskBx.set_right(time)
                 s.rewBx.set_right(time)
-            label.new(time, hitSL ? s.sl : s.tp, xloc = xloc.bar_time, text = hitSL ? "✗ −1R" : "✓ +" + str.tostring(s.resR, "0.0") + "R", style = label.style_label_left, color = color.new(col, 100), textcolor = hitSL ? sellCol : buyCol, size = size.small)
+            label.new(time, hitSL ? s.sl : s.tp, xloc = xloc.bar_time, text = s.resR > 0 ? "✓ +" + str.tostring(s.resR, "0.0") + "R" : s.resR == 0 ? "BE 0R" : "✗ −1R", style = label.style_label_left, color = color.new(col, 100), textcolor = s.resR > 0 ? buyCol : s.resR == 0 ? color.gray : sellCol, size = size.small)
+        else if useBE and not s.beOn and (b ? high >= s.entry + s.risk : low <= s.entry - s.risk)
+            // After +1R the stop moves to the entry price
+            s.beOn := true
+            s.sl   := s.entry
     s.state
 
 resetEvents(Setup s) =>
     s.evSweep := false
     s.evReady := false
     s.evEntry := false
+    s.evExit  := false
 
 var Setup sellS = Setup.new(false)
 var Setup buyS  = Setup.new(true)
@@ -462,15 +504,36 @@ if barstate.isconfirmed
                 lvls.remove(i)
 
     if sideMode != "Buy only"
-        run(sellS, brHi, brHiName)
+        run(sellS, brHi, brHiName, not na(brLo))
     if sideMode != "Sell only"
-        run(buyS, brLo, brLoName)
+        run(buyS, brLo, brLoName, not na(brHi))
 
 // Redraw live levels on the last candle so the drawing limit never drops an old 4H level
 if barstate.islast
     for lv in lvls
         eraseLvl(lv)
         drawLvl(lv)
+
+// ───────────────────────── Results on this chart ─────────────────────────
+var int   trades = 0
+var int   wins   = 0
+var int   losses = 0
+var float totR   = 0.0
+if sellS.evExit
+    trades += 1
+    wins   += sellS.resR > 0 ? 1 : 0
+    losses += sellS.resR < 0 ? 1 : 0
+    totR   += sellS.resR
+if buyS.evExit
+    trades += 1
+    wins   += buyS.resR > 0 ? 1 : 0
+    losses += buyS.resR < 0 ? 1 : 0
+    totR   += buyS.resR
+
+var table stats = table.new(position.bottom_right, 1, 1, bgcolor = color.new(color.black, 30))
+if showStats and barstate.islast
+    string res = trades == 0 ? "No trades on this chart yet" : str.tostring(trades) + " trades · win " + str.tostring(100.0 * wins / trades, "0") + "% · BE " + str.tostring(trades - wins - losses) + " · loss " + str.tostring(losses) + " · " + (totR >= 0 ? "+" : "") + str.tostring(totR, "0.0") + "R"
+    table.cell(stats, 0, 0, res, text_color = trades == 0 ? color.silver : totR >= 0 ? buyCol : sellCol, text_size = size.small)
 
 // ───────────────────────── Alerts ─────────────────────────
 alertcondition(sellS.evReady, "SELL limit ready", "{{ticker}} SELL setup ready: sweep, CHoCH and FVG done. Check entry, stop and target on the chart.")
