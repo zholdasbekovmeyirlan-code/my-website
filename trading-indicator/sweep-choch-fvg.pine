@@ -65,6 +65,7 @@ dispX     = input.float(1.5, "× average body", minval = 1, step = 0.1, inline =
 
 grpDsp    = "Display"
 showStats = input.bool(true, "Show results on this chart", group = grpDsp)
+showLab   = input.bool(true, "Research: test 12 variants on this chart", group = grpDsp, tooltip = "Runs the setup 12 ways at once (entry type × trend filter × NY hours) over the whole chart and compares the first and second half of the history.")
 buyCol    = input.color(#089981, "Buy", group = grpDsp)
 sellCol   = input.color(#F23645, "Sell", group = grpDsp)
 lvlCol    = input.color(#787B86, "Levels", group = grpDsp)
@@ -76,6 +77,9 @@ chartSec = timeframe.in_seconds()
 winTime  = time(timeframe.period, tradeWin, NY)
 pauseT   = time(timeframe.period, pauseWin, NY)
 inWin    = (not useWin or not na(winTime)) and not (usePause and not na(pauseT))
+paused   = usePause and not na(pauseT)
+inNY     = not na(time(timeframe.period, "0930-1600", NY))
+inAM     = not na(time(timeframe.period, "0930-1100", NY))
 DRAW_LEN = 15   // how far plan lines and boxes reach to the right, in bars
 // Every drawing is anchored to candle time, not bar number: bar numbers shift when
 // TradingView loads more history, which made drawings jump to other candles
@@ -565,6 +569,145 @@ resetEvents(Setup s) =>
     s.evEntry := false
     s.evExit  := false
 
+// ───────────────────────── Research: 12 silent variants ─────────────────────────
+// Each variant runs the same sweep → CHoCH → entry rules without drawing anything and
+// keeps score separately for the first and second half of the chart, so a variant that
+// only worked by luck in one period is easy to spot.
+type Sim
+    bool  isBuy
+    bool  conf          // true = confirmation entry, false = FVG limit
+    int   trend         // 0 = off, 1 = 1H EMA 50, 2 = 4H EMA 50
+    bool  amOnly        // true = 09:30-11:00, false = 09:30-16:00 New York
+    int   state = 0
+    float ext
+    int   extBar
+    int   sweepBar
+    float choch
+    int   chochBar
+    float fTop
+    float fBot
+    int   readyBar
+    float entry
+    float sl
+    float tp
+    float risk
+    int   entryBar
+    bool  beOn = false
+    int   n1 = 0
+    int   w1 = 0
+    float r1 = 0.0
+    int   n2 = 0
+    int   w2 = 0
+    float r2 = 0.0
+
+simRecord(Sim m, float res) =>
+    if bar_index < last_bar_index / 2
+        m.n1 := m.n1 + 1
+        m.w1 := m.w1 + (res > 0 ? 1 : 0)
+        m.r1 := m.r1 + res
+    else
+        m.n2 := m.n2 + 1
+        m.w2 := m.w2 + (res > 0 ? 1 : 0)
+        m.r2 := m.r2 + res
+    m.state := 0
+    m.state
+
+simEnter(Sim m, float e) =>
+    bool  b    = m.isBuy
+    float stop = b ? m.ext - slBuf * tick : m.ext + slBuf * tick
+    float risk = math.abs(e - stop)
+    bool  trOk = m.trend == 0 ? true : m.trend == 1 ? (na(ema1H) or (b ? close > ema1H : close < ema1H)) : (na(ema4H) or (b ? close > ema4H : close < ema4H))
+    bool  tmOk = (m.amOnly ? inAM : inNY) and not paused
+    if risk > 0 and trOk and tmOk and (maxRisk == 0 or risk <= maxRisk)
+        m.entry    := e
+        m.sl       := stop
+        m.risk     := risk
+        m.tp       := b ? e + rr * risk : e - rr * risk
+        m.beOn     := false
+        m.readyBar := bar_index
+        m.entryBar := bar_index
+        m.state    := m.conf ? 4 : 3
+    else
+        m.state := 0
+    m.state
+
+simStep(Sim m, bool swept, float sExt, int sExtBar, float sChoch, bool oppTaken) =>
+    bool  b  = m.isBuy
+    float xt = b ? low : high
+    if m.state == 4
+        bool after = bar_index > m.entryBar
+        bool hitSL = (after or not m.conf) and (b ? low <= m.sl : high >= m.sl)
+        bool hitTP = after and (b ? high >= m.tp : low <= m.tp)
+        if hitSL or hitTP
+            simRecord(m, hitSL ? (m.beOn ? 0.0 : -1.0) : math.abs(m.tp - m.entry) / m.risk)
+        else if useBE and after and not m.beOn and (b ? high >= m.entry + m.risk : low <= m.entry - m.risk)
+            m.beOn := true
+            m.sl   := m.entry
+    else if m.state == 3
+        if bar_index > m.readyBar and (b ? low <= m.entry : high >= m.entry)
+            m.state    := 4
+            m.entryBar := bar_index
+            if b ? low <= m.sl : high >= m.sl
+                simRecord(m, -1.0)
+        else if oppTaken or (b ? high >= m.entry + m.risk : low <= m.entry - m.risk) or bar_index - m.readyBar > entryWin
+            m.state := 0
+    if m.state == 0 and swept
+        m.state    := 1
+        m.ext      := sExt
+        m.extBar   := sExtBar
+        m.sweepBar := bar_index
+        m.choch    := sChoch
+        m.fTop     := na
+        m.fBot     := na
+    if m.state == 1 or m.state == 2
+        if (b ? close < m.ext : close > m.ext) or oppTaken
+            m.state := 0
+        else
+            if b ? low < m.ext : high > m.ext
+                m.ext    := xt
+                m.extBar := bar_index
+                m.fTop   := na
+                m.fBot   := na
+            if (b ? bullFvg : bearFvg) and bar_index - 2 >= m.extBar
+                m.fTop := b ? low : low[2]
+                m.fBot := b ? high[2] : high
+            if not na(m.fTop) and (b ? close < m.fBot : close > m.fTop)
+                m.fTop := na
+                m.fBot := na
+            if m.state == 1
+                if not na(m.choch) and (b ? close > m.choch : close < m.choch) and strong
+                    m.state    := 2
+                    m.chochBar := bar_index
+                    if m.conf
+                        simEnter(m, close)
+                else if bar_index - m.sweepBar > chochWin
+                    m.state := 0
+            if m.state == 2 and not m.conf
+                if not na(m.fTop)
+                    simEnter(m, entryMode == "FVG 50%" ? (m.fTop + m.fBot) / 2 : b ? m.fTop : m.fBot)
+                else if bar_index - m.chochBar > fvgWin
+                    m.state := 0
+    m.state
+
+// sims[2v] sells and sims[2v + 1] buys for variant v
+var array<Sim> sims = array.new<Sim>()
+if barstate.isfirst
+    for c = 0 to 1
+        for tr = 0 to 2
+            for am = 0 to 1
+                sims.push(Sim.new(false, c == 0, tr, am == 1))
+                sims.push(Sim.new(true, c == 0, tr, am == 1))
+
+// Sweep candidates shared by all variants (same rule as the main setup)
+var float hcLvl    = na
+var float hcExt    = na
+var int   hcExtBar = na
+var int   hcBar    = na
+var float lcLvl    = na
+var float lcExt    = na
+var int   lcExtBar = na
+var int   lcBar    = na
+
 var Setup sellS = Setup.new(false)
 var Setup buyS  = Setup.new(true)
 resetEvents(sellS)
@@ -617,6 +760,63 @@ if barstate.isconfirmed
     if sideMode != "Sell only"
         run(buyS, brLo, brLoName, not na(brHi))
 
+    if showLab
+        bool  swHi    = false
+        float swHiExt = na
+        int   swHiBar = na
+        float swHiCh  = na
+        if not na(brHi)
+            if na(hcLvl)
+                hcLvl    := brHi
+                hcExt    := high
+                hcExtBar := bar_index
+            else if brHi > hcLvl
+                hcLvl := brHi
+            hcBar := bar_index
+        if not na(hcLvl)
+            if high > hcExt
+                hcExt    := high
+                hcExtBar := bar_index
+            if close < hcLvl
+                swHi    := true
+                swHiExt := hcExt
+                swHiBar := hcExtBar
+                swHiCh  := not na(lastSLBar) and lastSLBar < hcExtBar ? lastSL : prevSL
+                hcLvl   := na
+            else if bar_index - hcBar >= sweepWin
+                hcLvl := na
+
+        bool  swLo    = false
+        float swLoExt = na
+        int   swLoBar = na
+        float swLoCh  = na
+        if not na(brLo)
+            if na(lcLvl)
+                lcLvl    := brLo
+                lcExt    := low
+                lcExtBar := bar_index
+            else if brLo < lcLvl
+                lcLvl := brLo
+            lcBar := bar_index
+        if not na(lcLvl)
+            if low < lcExt
+                lcExt    := low
+                lcExtBar := bar_index
+            if close > lcLvl
+                swLo    := true
+                swLoExt := lcExt
+                swLoBar := lcExtBar
+                swLoCh  := not na(lastSHBar) and lastSHBar < lcExtBar ? lastSH : prevSH
+                lcLvl   := na
+            else if bar_index - lcBar >= sweepWin
+                lcLvl := na
+
+        for m in sims
+            if m.isBuy
+                simStep(m, swLo, swLoExt, swLoBar, swLoCh, not na(brHi))
+            else
+                simStep(m, swHi, swHiExt, swHiBar, swHiCh, not na(brLo))
+
 // Redraw live levels on the last candle so the drawing limit never drops an old 4H level
 if barstate.islast
     for lv in lvls
@@ -663,3 +863,48 @@ if buyS.evEntry
     alert(syminfo.ticker + " BUY " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp) + " | after " + buyS.lvlName + " sweep", alert.freq_once_per_bar_close)
 else if buyS.evReady
     alert(syminfo.ticker + " BUY LIMIT " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp) + " | after " + buyS.lvlName + " sweep", alert.freq_once_per_bar_close)
+
+// ───────────────────────── Research table ─────────────────────────
+var table lab = table.new(position.middle_right, 6, 14, bgcolor = color.new(color.black, 20), border_color = color.new(color.gray, 70), border_width = 1)
+
+halfTxt(int n, int w, float r) => n == 0 ? "—" : str.tostring(n) + " · " + str.tostring(100.0 * w / n, "0") + "% · " + (r >= 0 ? "+" : "") + str.tostring(r, "0.0") + "R"
+
+if showLab and barstate.islast
+    // Best = profitable in both halves, highest total R
+    int   best  = -1
+    float bestR = 0.0
+    for v = 0 to 11
+        Sim a  = sims.get(2 * v)
+        Sim z  = sims.get(2 * v + 1)
+        float r1 = a.r1 + z.r1
+        float r2 = a.r2 + z.r2
+        if a.n1 + z.n1 > 0 and a.n2 + z.n2 > 0 and r1 > 0 and r2 > 0 and r1 + r2 > bestR
+            best  := v
+            bestR := r1 + r2
+    table.cell(lab, 0, 0, "Research", text_color = color.white, text_size = size.tiny)
+    table.cell(lab, 1, 0, str.tostring(rr, "0.0") + "R target", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 2, 0, useBE ? "BE at +1R" : "no BE", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 3, 0, "★ = profit in both halves", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 0, 1, "Entry", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 1, 1, "Trend", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 2, 1, "NY hours", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 3, 1, "1st half", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 4, 1, "2nd half", text_color = color.silver, text_size = size.tiny)
+    table.cell(lab, 5, 1, "Total", text_color = color.silver, text_size = size.tiny)
+    for v = 0 to 11
+        Sim   a   = sims.get(2 * v)
+        Sim   z   = sims.get(2 * v + 1)
+        int   n1  = a.n1 + z.n1
+        int   n2  = a.n2 + z.n2
+        float r1  = a.r1 + z.r1
+        float r2  = a.r2 + z.r2
+        float tot = r1 + r2
+        bool  isB = v == best
+        color bg  = isB ? color.new(buyCol, 55) : na
+        color fg  = n1 + n2 == 0 ? color.gray : tot > 0 ? buyCol : tot < 0 ? sellCol : color.silver
+        table.cell(lab, 0, v + 2, (isB ? "★ " : "") + (a.conf ? "Confirmation" : "FVG limit"), text_color = color.white, text_size = size.tiny, bgcolor = bg)
+        table.cell(lab, 1, v + 2, a.trend == 0 ? "Off" : a.trend == 1 ? "1H EMA 50" : "4H EMA 50", text_color = color.white, text_size = size.tiny, bgcolor = bg)
+        table.cell(lab, 2, v + 2, a.amOnly ? "0930-1100" : "0930-1600", text_color = color.white, text_size = size.tiny, bgcolor = bg)
+        table.cell(lab, 3, v + 2, halfTxt(n1, a.w1 + z.w1, r1), text_color = r1 > 0 ? buyCol : r1 < 0 ? sellCol : color.silver, text_size = size.tiny, bgcolor = bg)
+        table.cell(lab, 4, v + 2, halfTxt(n2, a.w2 + z.w2, r2), text_color = r2 > 0 ? buyCol : r2 < 0 ? sellCol : color.silver, text_size = size.tiny, bgcolor = bg)
+        table.cell(lab, 5, v + 2, n1 + n2 == 0 ? "—" : (tot >= 0 ? "+" : "") + str.tostring(tot, "0.0") + "R", text_color = fg, text_size = size.tiny, bgcolor = bg)
