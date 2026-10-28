@@ -64,11 +64,14 @@ useDisp   = input.bool(false, "Require a strong CHoCH candle", inline = "d", gro
 dispX     = input.float(1.5, "× average body", minval = 1, step = 0.1, inline = "d", group = grpFlt, tooltip = "The candle that breaks structure must have a body at least this many times the average body (displacement).")
 
 grpDsp    = "Display"
-showStats = input.bool(true, "Show results on this chart", group = grpDsp)
-showLab   = input.bool(true, "Research: test 12 variants on this chart", group = grpDsp, tooltip = "Runs the setup 12 ways at once (entry type × trend filter × NY hours) over the whole chart and compares the first and second half of the history.")
-buyCol    = input.color(#089981, "Buy", group = grpDsp)
-sellCol   = input.color(#F23645, "Sell", group = grpDsp)
-lvlCol    = input.color(#787B86, "Levels", group = grpDsp)
+showStats = input.bool(true, "Dashboard", group = grpDsp, tooltip = "Trend, session, what to do now, nearest liquidity and results.")
+showTrend = input.bool(true, "Trend line (EMA 50 of the trend filter)", group = grpDsp)
+colorBars = input.bool(true, "Color candles by trend", group = grpDsp)
+shadeAM   = input.bool(true, "Shade the NY morning (09:30-11:00)", group = grpDsp)
+showLab   = input.bool(false, "Research: test 12 variants on this chart", group = grpDsp, tooltip = "Runs the setup 12 ways at once (entry type × trend filter × NY hours) over the whole chart and compares the first and second half of the history.")
+buyCol    = input.color(#26A69A, "Buy", group = grpDsp)
+sellCol   = input.color(#EF5350, "Sell", group = grpDsp)
+lvlCol    = input.color(#8C9BAB, "Levels", group = grpDsp)
 
 // ───────────────────────── Core values ─────────────────────────
 tick     = syminfo.mintick
@@ -220,10 +223,10 @@ type Lvl
 
 var array<Lvl> lvls = array.new<Lvl>()
 
-// Line from the swing candle to the right, name written at the swing itself
+// Dotted line from the candle that made the level, with a name and price tag on the right
 drawLvl(Lvl lv) =>
-    lv.ln := line.new(lv.t, lv.price, time, lv.price, xloc = xloc.bar_time, extend = extend.right, color = color.new(lvlCol, 20))
-    lv.lb := label.new(lv.t, lv.price, lv.name, xloc = xloc.bar_time, style = lv.isHigh ? label.style_label_lower_left : label.style_label_upper_left, color = color.new(color.black, 100), textcolor = lvlCol, size = size.small)
+    lv.ln := line.new(lv.t, lv.price, time, lv.price, xloc = xloc.bar_time, extend = extend.right, color = color.new(lvlCol, 30), style = line.style_dotted, width = 1)
+    lv.lb := label.new(time + 3 * barMs, lv.price, lv.name + "  " + fmt(lv.price), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(lvlCol, 82), textcolor = lvlCol, size = size.small)
 
 eraseLvl(Lvl lv) =>
     lv.ln.delete()
@@ -231,7 +234,7 @@ eraseLvl(Lvl lv) =>
 
 // Keep only the latest swing high and low per timeframe
 addLvl(float price, bool isHigh, string tf, int rank, int t) =>
-    string nm = tf + (isHigh ? " High" : " Low")
+    string nm = tf == "PD" ? (isHigh ? "PDH" : "PDL") : tf + (isHigh ? " H" : " L")
     // Drop the previous level of this timeframe and side
     int n = lvls.size()
     if n > 0
@@ -318,6 +321,8 @@ type Setup
     Plan   plan
     box    riskBx
     box    rewBx
+    label  tpTag
+    label  slTag
     bool   evSweep = false
     bool   evReady = false
     bool   evEntry = false
@@ -397,10 +402,12 @@ openTrade(Setup s, color col) =>
     if not na(s.plan)
         planDelete(s.plan)
     s.plan   := na
-    s.riskBx := box.new(time, math.max(s.entry, s.sl), ahead, math.min(s.entry, s.sl), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(sellCol, 80))
-    s.rewBx  := box.new(time, math.max(s.entry, s.tp), ahead, math.min(s.entry, s.tp), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(buyCol, 80))
+    s.riskBx := box.new(time, math.max(s.entry, s.sl), ahead, math.min(s.entry, s.sl), xloc = xloc.bar_time, border_color = color.new(sellCol, 55), border_width = 1, bgcolor = color.new(sellCol, 85))
+    s.rewBx  := box.new(time, math.max(s.entry, s.tp), ahead, math.min(s.entry, s.tp), xloc = xloc.bar_time, border_color = color.new(buyCol, 55), border_width = 1, bgcolor = color.new(buyCol, 85))
     float planR = math.abs(s.tp - s.entry) / s.risk
-    label.new(time, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(s.risk, "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
+    s.tpTag  := label.new(ahead, s.tp, "TP " + fmt(s.tp) + " · +" + str.tostring(planR, "0.0") + "R", xloc = xloc.bar_time, style = label.style_label_left, color = color.new(buyCol, 80), textcolor = buyCol, size = size.small)
+    s.slTag  := label.new(ahead, s.sl, "SL " + fmt(s.sl), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(sellCol, 80), textcolor = sellCol, size = size.small)
+    label.new(time, b ? low : high, (b ? "▲ BUY  " : "▼ SELL  ") + fmt(s.entry), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(s.risk, "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
     s.state
 
 // FVG found after CHoCH: work out the limit order or reject it
@@ -488,7 +495,7 @@ run(Setup s, float brLvl, string brName, bool oppTaken) =>
                 s.fvgBx     := na
                 s.plan      := na
                 s.evSweep   := true
-                label.new(s.extT, s.ext, "Sweep " + s.lvlName + (s.cBig ? " 🐋" : ""), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = color.new(col, 100), textcolor = col, size = size.small, tooltip = "Stops " + (b ? "below " : "above ") + s.lvlName + " " + fmt(s.lvlPx) + " were taken" + (s.cBig ? "\nBig player volume" : "") + "\nNext: wait for CHoCH")
+                label.new(s.extT, s.ext, "✕ " + s.lvlName + (s.cBig ? " 🐋" : ""), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = color.new(col, 100), textcolor = color.new(col, 15), size = size.small, tooltip = "Stops " + (b ? "below " : "above ") + s.lvlName + " " + fmt(s.lvlPx) + " were taken" + (s.cBig ? "\nBig player volume" : "") + "\nNext: wait for CHoCH")
                 s.cLvl := na
             else if bar_index - s.cBar >= sweepWin
                 s.cLvl := na
@@ -556,6 +563,8 @@ run(Setup s, float brLvl, string brName, bool oppTaken) =>
             if bar_index - s.entryBar < DRAW_LEN
                 s.riskBx.set_right(time)
                 s.rewBx.set_right(time)
+                s.tpTag.set_x(time)
+                s.slTag.set_x(time)
             label.new(time, hitSL ? s.sl : s.tp, xloc = xloc.bar_time, text = s.resR > 0 ? "✓ +" + str.tostring(s.resR, "0.0") + "R" : s.resR == 0 ? "BE 0R" : "✗ −1R", style = label.style_label_left, color = color.new(col, 100), textcolor = s.resR > 0 ? buyCol : s.resR == 0 ? color.gray : sellCol, size = size.small)
         else if useBE and after and not s.beOn and (b ? high >= s.entry + s.risk : low <= s.entry - s.risk)
             // After +1R the stop moves to the entry price
@@ -841,12 +850,49 @@ if buyS.evExit
     losses += buyS.resR < 0 ? 1 : 0
     totR   += buyS.resR
 
-var table stats = table.new(position.bottom_right, 1, 1, bgcolor = color.new(color.black, 30))
+// ───────────────────────── Trend and session visuals ─────────────────────────
+trendUp = not na(trendEma) and close > trendEma
+trendDn = not na(trendEma) and close < trendEma
+plot(showTrend ? trendEma : na, "Trend EMA", color = trendUp ? color.new(buyCol, 25) : color.new(sellCol, 25), linewidth = 2)
+barcolor(colorBars ? (trendUp ? buyCol : trendDn ? sellCol : na) : na, title = "Trend candles")
+bgcolor(shadeAM and inAM ? color.new(#FFB74D, 93) : na, title = "NY morning")
+
+// ───────────────────────── Dashboard ─────────────────────────
+var table dash = table.new(position.bottom_right, 2, 6, bgcolor = color.new(#131722, 12), frame_color = color.new(color.gray, 70), frame_width = 1, border_color = color.new(color.gray, 88), border_width = 1)
+
+dashRow(int r, string k, string v, color c) =>
+    table.cell(dash, 0, r, k, text_color = color.new(color.white, 40), text_size = size.small, text_halign = text.align_left)
+    table.cell(dash, 1, r, v, text_color = c, text_size = size.small, text_halign = text.align_left)
+
 if showStats and barstate.islast
-    string res = trades == 0 ? "No trades on this chart yet" : str.tostring(trades) + " trades · win " + str.tostring(100.0 * wins / trades, "0") + "% · BE " + str.tostring(trades - wins - losses) + " · loss " + str.tostring(losses) + " · " + (totR >= 0 ? "+" : "") + str.tostring(totR, "0.0") + "R"
-    bool   stopNow = maxDayLoss > 0 and dayLosses >= maxDayLoss
-    string today   = maxDayLoss == 0 ? "" : stopNow ? "\n⛔ " + str.tostring(dayLosses) + " losses today: stop trading for today" : "\nToday: " + str.tostring(dayLosses) + "/" + str.tostring(maxDayLoss) + " losses"
-    table.cell(stats, 0, 0, res + today, text_color = stopNow ? sellCol : trades == 0 ? color.silver : totR >= 0 ? buyCol : sellCol, text_size = size.small, text_halign = text.align_left)
+    // The setup that is furthest along (an open trade always wins)
+    bool   pickBuy = buyS.state == 4 or (sellS.state != 4 and buyS.state > sellS.state)
+    Setup  a       = pickBuy ? buyS : sellS
+    string side    = a.isBuy ? "BUY" : "SELL"
+    color  sideCol = a.isBuy ? buyCol : sellCol
+
+    string trTxt = na(trendEma) ? "Off" : trendUp ? "▲ Bullish · buys only" : "▼ Bearish · sells only"
+    color  trCol = na(trendEma) ? color.silver : trendUp ? buyCol : sellCol
+    string seTxt = paused ? "News pause" : inAM ? "● NY morning" : inNY ? "NY afternoon" : "Outside NY · wait"
+    color  seCol = paused ? sellCol : inAM ? #FFB74D : inNY ? color.silver : color.gray
+
+    string nowTxt = dayLocked ? "⛔ Daily loss limit · stop for today" : a.state == 4 ? side + " active · SL " + fmt(a.sl) + " · TP " + fmt(a.tp) : a.state == 3 ? side + " LIMIT " + fmt(a.entry) + " · SL " + fmt(a.sl) + " · TP " + fmt(a.tp) : a.state == 2 ? "✕ " + a.lvlName + " swept · CHoCH done · wait FVG" : a.state == 1 ? "✕ " + a.lvlName + " swept · wait CHoCH" + (na(a.choch) ? "" : " (" + (a.isBuy ? "above " : "below ") + fmt(a.choch) + ")") : "Wait for a liquidity sweep"
+    color  nowCol = dayLocked ? sellCol : a.state >= 3 ? sideCol : a.state >= 1 ? #FFB74D : color.silver
+
+    [hiP, hiN] = nearestLvl(true, close)
+    [loP, loN] = nearestLvl(false, close)
+    string lqTxt = (na(hiP) ? "" : "▲ " + hiN + " " + fmt(hiP)) + (na(hiP) or na(loP) ? "" : "   ") + (na(loP) ? "" : "▼ " + loN + " " + fmt(loP))
+
+    string res    = trades == 0 ? "No trades on this chart yet" : str.tostring(trades) + " trades · win " + str.tostring(100.0 * wins / trades, "0") + "% · " + (totR >= 0 ? "+" : "") + str.tostring(totR, "0.0") + "R"
+    color  resCol = trades == 0 ? color.silver : totR >= 0 ? buyCol : sellCol
+    string today  = maxDayLoss == 0 ? "No daily limit" : str.tostring(dayLosses) + " / " + str.tostring(maxDayLoss) + " losses"
+
+    dashRow(0, "Trend", trTxt, trCol)
+    dashRow(1, "Session", seTxt, seCol)
+    dashRow(2, "Now", nowTxt, nowCol)
+    dashRow(3, "Liquidity", lqTxt == "" ? "—" : lqTxt, color.silver)
+    dashRow(4, "Results", res, resCol)
+    dashRow(5, "Today", today, dayLocked ? sellCol : color.silver)
 
 // ───────────────────────── Alerts ─────────────────────────
 alertcondition(sellS.evEntry, "SELL", "{{ticker}} SELL: liquidity sweep and CHoCH confirmed. Check stop and target on the chart. Price {{close}}")
