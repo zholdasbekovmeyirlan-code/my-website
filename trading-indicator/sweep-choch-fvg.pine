@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 //  Sweep CHoCH FVG Entry
 //  Top-down model for NQ / MNQ / ES / MES, built for 1m–5m entries:
-//    1. Liquidity: the latest 4H and 1H swing high / low
+//    1. Liquidity: Asia / London / previous-day high & low, latest 4H and 1H swings
 //    2. Sweep: price takes the level and closes back inside
 //    3. CHoCH: structure breaks the other way
 //    4. FVG: limit entry on the retrace into the gap
@@ -12,7 +12,8 @@
 //
 //  Filters against the most common losers: trend (EMA 50 on 4H by default),
 //  New York session only, no late fills (limit cancelled after 12 bars, after
-//  a 1R move away, or once the opposite liquidity is taken), breakeven at +1R.
+//  a 1R move away, or once the opposite liquidity is taken), breakeven at +1R,
+//  stop for the day after 2 losses, optional news pause.
 //
 //  Decision aid only. Past signals are not a guarantee.
 // ═══════════════════════════════════════════════════════════════════════
@@ -21,7 +22,11 @@
 indicator("Sweep CHoCH FVG Entry", shorttitle = "SCF Entry", overlay = true, scale = scale.right, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 500)
 
 // ───────────────────────── Inputs ─────────────────────────
-grpHtf = "1 · Liquidity (higher timeframes)"
+grpHtf = "1 · Liquidity"
+useSes  = input.bool(true, "Asia / London high & low", group = grpHtf, tooltip = "The session highs and lows that New York usually sweeps.")
+asiaSes = input.session("2000-0000", "Asia (New York time)", group = grpHtf)
+londSes = input.session("0200-0500", "London (New York time)", group = grpHtf)
+usePD   = input.bool(true, "Previous day high & low", group = grpHtf)
 useA   = input.bool(true, "Timeframe A", inline = "a", group = grpHtf)
 htfA   = input.timeframe("240", "", inline = "a", group = grpHtf)
 useB   = input.bool(true, "Timeframe B", inline = "b", group = grpHtf)
@@ -50,6 +55,9 @@ grpFlt    = "4 · Filters"
 trendMode = input.string("4H EMA 50", "Trend filter", options = ["Off", "1H EMA 50", "4H EMA 50"], group = grpFlt, tooltip = "Sell only below the EMA, buy only above it. Sweeps against the trend were the most common losers.")
 useWin    = input.bool(true, "Only trade inside", inline = "w", group = grpFlt)
 tradeWin  = input.session("0930-1600", "", inline = "w", group = grpFlt, tooltip = "New York time. 0930-1100 = NY morning only.")
+usePause  = input.bool(false, "News pause", inline = "p", group = grpFlt)
+pauseWin  = input.session("1345-1500", "", inline = "p", group = grpFlt, tooltip = "New York time. No new entries inside this window, e.g. 1345-1500 on FOMC day, 0825-0900 on CPI / NFP days.")
+maxDayLoss = input.int(2, "Stop for the day after N losses (0 = off)", minval = 0, group = grpFlt)
 useDisp   = input.bool(false, "Require a strong CHoCH candle", inline = "d", group = grpFlt)
 dispX     = input.float(1.5, "× average body", minval = 1, step = 0.1, inline = "d", group = grpFlt, tooltip = "The candle that breaks structure must have a body at least this many times the average body (displacement).")
 
@@ -64,7 +72,8 @@ tick     = syminfo.mintick
 NY       = "America/New_York"
 chartSec = timeframe.in_seconds()
 winTime  = time(timeframe.period, tradeWin, NY)
-inWin    = not useWin or not na(winTime)
+pauseT   = time(timeframe.period, pauseWin, NY)
+inWin    = (not useWin or not na(winTime)) and not (usePause and not na(pauseT))
 DRAW_LEN = 15   // how far plan lines and boxes reach to the right, in bars
 // Every drawing is anchored to candle time, not bar number: bar numbers shift when
 // TradingView loads more history, which made drawings jump to other candles
@@ -140,6 +149,58 @@ aName = tfName(htfA)
 bName = tfName(htfB)
 aRank = timeframe.in_seconds(htfA) >= timeframe.in_seconds(htfB) ? 2 : 1
 bRank = 3 - aRank
+
+// Asia and London ranges, New York time; the levels are added when each session ends
+intra  = timeframe.isintraday
+asiaT  = time(timeframe.period, asiaSes, NY)
+londT  = time(timeframe.period, londSes, NY)
+inAsia = intra and not na(asiaT)
+inLond = intra and not na(londT)
+var float asH  = na
+var float asL  = na
+var int   asHT = na
+var int   asLT = na
+var float lnH  = na
+var float lnL  = na
+var int   lnHT = na
+var int   lnLT = na
+if inAsia and not inAsia[1]
+    asH  := high
+    asL  := low
+    asHT := time
+    asLT := time
+else if inAsia
+    if high > asH
+        asH  := high
+        asHT := time
+    if low < asL
+        asL  := low
+        asLT := time
+if inLond and not inLond[1]
+    lnH  := high
+    lnL  := low
+    lnHT := time
+    lnLT := time
+else if inLond
+    if high > lnH
+        lnH  := high
+        lnHT := time
+    if low < lnL
+        lnL  := low
+        lnLT := time
+asiaEnd = inAsia[1] and not inAsia
+londEnd = inLond[1] and not inLond
+
+// Previous trading day high / low (the futures day starts at 18:00 New York)
+newDay = timeframe.change("D")
+pdh    = request.security(syminfo.tickerid, "D", high[1], lookahead = barmerge.lookahead_on)
+pdl    = request.security(syminfo.tickerid, "D", low[1], lookahead = barmerge.lookahead_on)
+
+// Daily loss limit: losses are counted after each trade closes, reset every trading day
+var int dayLosses = 0
+if newDay
+    dayLosses := 0
+dayLocked = maxDayLoss > 0 and dayLosses >= maxDayLoss
 
 type Lvl
     float  price
@@ -318,6 +379,8 @@ ready(Setup s) =>
     else if why == "" and not inWin
         why   := "Outside the trading window"
         quiet := true
+    else if why == "" and dayLocked
+        why := "Daily loss limit reached: " + str.tostring(dayLosses) + " losses today"
     if why != ""
         cancel(s, why, not quiet)
     else
@@ -472,6 +535,15 @@ resetEvents(buyS)
 
 // ───────────────────────── Run on closed candles only ─────────────────────────
 if barstate.isconfirmed
+    if useSes and asiaEnd and not na(asH)
+        addLvl(asH, true, "Asia", 3, asHT)
+        addLvl(asL, false, "Asia", 3, asLT)
+    if useSes and londEnd and not na(lnH)
+        addLvl(lnH, true, "London", 4, lnHT)
+        addLvl(lnL, false, "London", 4, lnLT)
+    if usePD and newDay and not na(pdh) and not na(pdl)
+        addLvl(pdh, true, "PD", 5, time)
+        addLvl(pdl, false, "PD", 5, time)
     if aOn and aNew
         if not na(aHigh)
             addLvl(aHigh, true, aName, aRank, aTime)
@@ -520,11 +592,13 @@ var int   wins   = 0
 var int   losses = 0
 var float totR   = 0.0
 if sellS.evExit
+    dayLosses += sellS.resR < 0 ? 1 : 0
     trades += 1
     wins   += sellS.resR > 0 ? 1 : 0
     losses += sellS.resR < 0 ? 1 : 0
     totR   += sellS.resR
 if buyS.evExit
+    dayLosses += buyS.resR < 0 ? 1 : 0
     trades += 1
     wins   += buyS.resR > 0 ? 1 : 0
     losses += buyS.resR < 0 ? 1 : 0
@@ -533,20 +607,6 @@ if buyS.evExit
 var table stats = table.new(position.bottom_right, 1, 1, bgcolor = color.new(color.black, 30))
 if showStats and barstate.islast
     string res = trades == 0 ? "No trades on this chart yet" : str.tostring(trades) + " trades · win " + str.tostring(100.0 * wins / trades, "0") + "% · BE " + str.tostring(trades - wins - losses) + " · loss " + str.tostring(losses) + " · " + (totR >= 0 ? "+" : "") + str.tostring(totR, "0.0") + "R"
-    table.cell(stats, 0, 0, res, text_color = trades == 0 ? color.silver : totR >= 0 ? buyCol : sellCol, text_size = size.small)
-
-// ───────────────────────── Alerts ─────────────────────────
-alertcondition(sellS.evReady, "SELL limit ready", "{{ticker}} SELL setup ready: sweep, CHoCH and FVG done. Check entry, stop and target on the chart.")
-alertcondition(buyS.evReady, "BUY limit ready", "{{ticker}} BUY setup ready: sweep, CHoCH and FVG done. Check entry, stop and target on the chart.")
-alertcondition(sellS.evEntry, "SELL filled", "{{ticker}} SELL limit filled at the FVG. Price {{close}}")
-alertcondition(buyS.evEntry, "BUY filled", "{{ticker}} BUY limit filled at the FVG. Price {{close}}")
-alertcondition(sellS.evSweep or buyS.evSweep, "Liquidity sweep", "{{ticker}} higher-timeframe liquidity was swept. Watch for CHoCH. Price {{close}}")
-
-if sellS.evReady
-    alert(syminfo.ticker + " SELL LIMIT " + fmt(sellS.entry) + " | SL " + fmt(sellS.sl) + " | TP " + fmt(sellS.tp) + " | after " + sellS.lvlName + " sweep", alert.freq_once_per_bar_close)
-if buyS.evReady
-    alert(syminfo.ticker + " BUY LIMIT " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp) + " | after " + buyS.lvlName + " sweep", alert.freq_once_per_bar_close)
-if sellS.evEntry
-    alert(syminfo.ticker + " SELL filled " + fmt(sellS.entry) + " | SL " + fmt(sellS.sl) + " | TP " + fmt(sellS.tp), alert.freq_once_per_bar_close)
-if buyS.evEntry
-    alert(syminfo.ticker + " BUY filled " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp), alert.freq_once_per_bar_close)
+    bool   stopNow = maxDayLoss > 0 and dayLosses >= maxDayLoss
+    string today   = maxDayLoss == 0 ? "" : stopNow ? "\n⛔ " + str.tostring(dayLosses) + " losses today: stop trading for today" : "\nToday: " + str.tostring(dayLosses) + "/" + str.tostring(maxDayLoss) + " losses"
+    table.cell(stats, 0, 0, res + today, text_color = stopNow ? sellCol : trades == 0 ? color.silver : totR >= 0 ? buyCol : sellCol, text_size = size.small, text_halign = text.align_left)
