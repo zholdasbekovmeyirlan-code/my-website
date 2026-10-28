@@ -5,7 +5,8 @@
 //    1. Liquidity: Asia / London / previous-day high & low, latest 4H and 1H swings
 //    2. Sweep: price takes the level and closes back inside
 //    3. CHoCH: structure breaks the other way
-//    4. FVG: limit entry on the retrace into the gap
+//    4. Entry: BUY / SELL at the close of the CHoCH candle (default),
+//       or a limit on the retrace into the FVG
 //
 //  Everything is decided on closed candles and drawn once, so nothing
 //  moves while a candle is forming.
@@ -43,7 +44,8 @@ bigVolX  = input.float(2.0, "Big player volume (× average)", minval = 1, step =
 
 grpTrd    = "3 · Entry, stop, target"
 sideMode  = input.string("Both", "Trade direction", options = ["Both", "Buy only", "Sell only"], group = grpTrd, tooltip = "Set this from your 4H / 1H bias to hide the other side.")
-entryMode = input.string("FVG edge", "Entry", options = ["FVG edge", "FVG 50%"], group = grpTrd)
+entryType = input.string("Confirmation", "Entry type", options = ["Confirmation", "FVG limit"], group = grpTrd, tooltip = "Confirmation: BUY / SELL at the close of the CHoCH candle right after the sweep. FVG limit: wait for price to come back into the FVG.")
+entryMode = input.string("FVG edge", "FVG limit price", options = ["FVG edge", "FVG 50%"], group = grpTrd)
 slBuf     = input.int(4, "Stop buffer beyond the sweep (ticks)", minval = 0, group = grpTrd)
 tpMode    = input.string("Fixed R:R", "Target", options = ["Fixed R:R", "Opposite liquidity"], group = grpTrd)
 rr        = input.float(2.0, "R:R (fixed, or minimum for liquidity target)", minval = 0.5, step = 0.5, group = grpTrd)
@@ -353,15 +355,13 @@ cancel(Setup s, string why, bool mark) =>
     if mark
         label.new(time, s.isBuy ? low : high, "NO TRADE", xloc = xloc.bar_time, style = s.isBuy ? label.style_label_up : label.style_label_down, color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny, tooltip = why)
 
-// FVG found after CHoCH: work out the limit order or reject it
-ready(Setup s) =>
-    bool   b    = s.isBuy
-    color  col  = b ? buyCol : sellCol
-    float  e    = entryMode == "FVG 50%" ? (s.fTop + s.fBot) / 2 : b ? s.fTop : s.fBot
-    float  stop = b ? s.ext - slBuf * tick : s.ext + slBuf * tick
-    float  risk = math.abs(e - stop)
-    float  t    = b ? e + rr * risk : e - rr * risk
-    string why  = ""
+// Rules every new trade must pass: target, stop size, trend, session, daily limit.
+// Returns the rejection reason ("" = ok), whether to reject quietly, the target and the risk.
+planCheck(bool b, float e, float stop) =>
+    float  risk  = math.abs(e - stop)
+    float  t     = b ? e + rr * risk : e - rr * risk
+    string why   = ""
+    bool   quiet = false
     if tpMode == "Opposite liquidity"
         [lp, lnm] = nearestLvl(b, e)
         if not na(lp)
@@ -372,7 +372,6 @@ ready(Setup s) =>
     if maxRisk > 0 and risk > maxRisk
         why := "Stop too big: " + str.tostring(risk, "0.00") + " pts"
     // Trend and time filters drop the setup quietly so the chart stays clean
-    bool quiet = false
     if why == "" and not (b ? buyOk : sellOk)
         why   := "Against the trend filter"
         quiet := true
@@ -381,6 +380,32 @@ ready(Setup s) =>
         quiet := true
     else if why == "" and dayLocked
         why := "Daily loss limit reached: " + str.tostring(dayLosses) + " losses today"
+    [why, quiet, t, risk]
+
+// Position boxes and the BUY / SELL label on the entry candle
+openTrade(Setup s, color col) =>
+    bool b = s.isBuy
+    s.state    := 4
+    s.entryBar := bar_index
+    s.evEntry  := true
+    if not na(s.fvgBx)
+        s.fvgBx.set_right(time)
+    if not na(s.plan)
+        planDelete(s.plan)
+    s.plan   := na
+    s.riskBx := box.new(time, math.max(s.entry, s.sl), ahead, math.min(s.entry, s.sl), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(sellCol, 80))
+    s.rewBx  := box.new(time, math.max(s.entry, s.tp), ahead, math.min(s.entry, s.tp), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(buyCol, 80))
+    float planR = math.abs(s.tp - s.entry) / s.risk
+    label.new(time, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(s.risk, "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
+    s.state
+
+// FVG found after CHoCH: work out the limit order or reject it
+ready(Setup s) =>
+    bool  b    = s.isBuy
+    color col  = b ? buyCol : sellCol
+    float e    = entryMode == "FVG 50%" ? (s.fTop + s.fBot) / 2 : b ? s.fTop : s.fBot
+    float stop = b ? s.ext - slBuf * tick : s.ext + slBuf * tick
+    [why, quiet, t, risk] = planCheck(b, e, stop)
     if why != ""
         cancel(s, why, not quiet)
     else
@@ -395,6 +420,23 @@ ready(Setup s) =>
         s.fvgBx    := box.new(s.fT, s.fTop, ahead, s.fBot, xloc = xloc.bar_time, border_color = color.new(col, 30), bgcolor = color.new(col, 75), text = "FVG", text_size = size.small, text_color = col, text_halign = text.align_left)
         s.plan     := planNew(s, col)
     // Return a plain value so the if/else above is not the function's return value
+    s.state
+
+// CHoCH confirmed the sweep: enter at the close of this candle, or reject it
+confirm(Setup s, color col) =>
+    bool  b    = s.isBuy
+    float stop = b ? s.ext - slBuf * tick : s.ext + slBuf * tick
+    [why, quiet, t, risk] = planCheck(b, close, stop)
+    if why != ""
+        cancel(s, why, not quiet)
+    else
+        s.entry    := close
+        s.sl       := stop
+        s.tp       := t
+        s.risk     := risk
+        s.beOn     := false
+        s.readyBar := bar_index
+        openTrade(s, col)
     s.state
 
 run(Setup s, float brLvl, string brName, bool oppTaken) =>
@@ -474,6 +516,8 @@ run(Setup s, float brLvl, string brName, bool oppTaken) =>
                     s.chochBar := bar_index
                     s.chochLn  := line.new(s.chochFromT, s.choch, time, s.choch, xloc = xloc.bar_time, color = col, style = line.style_dashed)
                     s.chochLb  := label.new(s.chochFromT, s.choch, "CHoCH", xloc = xloc.bar_time, style = b ? label.style_label_lower_left : label.style_label_upper_left, color = color.new(col, 100), textcolor = col, size = size.tiny)
+                    if entryType == "Confirmation"
+                        confirm(s, col)
                 else if bar_index - s.sweepBar > chochWin
                     cancel(s, "No CHoCH after the " + s.lvlName + " sweep", false)
             if s.state == 2
@@ -489,25 +533,18 @@ run(Setup s, float brLvl, string brName, bool oppTaken) =>
             if not inWin
                 cancel(s, "Outside the trading window", false)
             else
-                s.state    := 4
-                s.entryBar := bar_index
-                s.evEntry  := true
-                s.fvgBx.set_right(time)
-                planDelete(s.plan)
-                s.plan   := na
-                s.riskBx := box.new(time, math.max(s.entry, s.sl), ahead, math.min(s.entry, s.sl), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(sellCol, 80))
-                s.rewBx  := box.new(time, math.max(s.entry, s.tp), ahead, math.min(s.entry, s.tp), xloc = xloc.bar_time, border_width = 0, bgcolor = color.new(buyCol, 80))
-                float planR = math.abs(s.tp - s.entry) / math.abs(s.entry - s.sl)
-                label.new(time, b ? low : high, (b ? "BUY " : "SELL ") + fmt(s.entry), xloc = xloc.bar_time, style = b ? label.style_label_up : label.style_label_down, color = col, textcolor = color.white, size = size.normal, tooltip = (b ? "BUY" : "SELL") + " @ " + fmt(s.entry) + "\nStop " + fmt(s.sl) + " (" + str.tostring(math.abs(s.entry - s.sl), "0.00") + " pts)\nTarget " + fmt(s.tp) + " (" + str.tostring(planR, "0.0") + "R)\nAfter sweep of " + s.lvlName)
+                openTrade(s, col)
         else if oppTaken or (b ? high >= s.entry + s.risk : low <= s.entry - s.risk)
             cancel(s, "Late: price moved 1R or took the opposite liquidity before the retrace", false)
         else if bar_index - s.readyBar > entryWin
             cancel(s, "Expired: no retrace into the FVG", false)
 
-    // 4 · In trade: stop is checked on the entry bar too (worst case)
+    // 4 · In trade. A limit fill checks the stop on its own candle (worst case);
+    // an entry at the close can only be stopped from the next candle
     if s.state == 4
-        bool hitSL = b ? low <= s.sl : high >= s.sl
-        bool hitTP = bar_index > s.entryBar and (b ? high >= s.tp : low <= s.tp)
+        bool after = bar_index > s.entryBar
+        bool hitSL = (after or entryType == "FVG limit") and (b ? low <= s.sl : high >= s.sl)
+        bool hitTP = after and (b ? high >= s.tp : low <= s.tp)
         if hitSL or hitTP
             s.resR   := hitSL ? (s.beOn ? 0.0 : -1.0) : math.abs(s.tp - s.entry) / s.risk
             s.state  := 0
@@ -516,7 +553,7 @@ run(Setup s, float brLvl, string brName, bool oppTaken) =>
                 s.riskBx.set_right(time)
                 s.rewBx.set_right(time)
             label.new(time, hitSL ? s.sl : s.tp, xloc = xloc.bar_time, text = s.resR > 0 ? "✓ +" + str.tostring(s.resR, "0.0") + "R" : s.resR == 0 ? "BE 0R" : "✗ −1R", style = label.style_label_left, color = color.new(col, 100), textcolor = s.resR > 0 ? buyCol : s.resR == 0 ? color.gray : sellCol, size = size.small)
-        else if useBE and not s.beOn and (b ? high >= s.entry + s.risk : low <= s.entry - s.risk)
+        else if useBE and after and not s.beOn and (b ? high >= s.entry + s.risk : low <= s.entry - s.risk)
             // After +1R the stop moves to the entry price
             s.beOn := true
             s.sl   := s.entry
@@ -610,3 +647,19 @@ if showStats and barstate.islast
     bool   stopNow = maxDayLoss > 0 and dayLosses >= maxDayLoss
     string today   = maxDayLoss == 0 ? "" : stopNow ? "\n⛔ " + str.tostring(dayLosses) + " losses today: stop trading for today" : "\nToday: " + str.tostring(dayLosses) + "/" + str.tostring(maxDayLoss) + " losses"
     table.cell(stats, 0, 0, res + today, text_color = stopNow ? sellCol : trades == 0 ? color.silver : totR >= 0 ? buyCol : sellCol, text_size = size.small, text_halign = text.align_left)
+
+// ───────────────────────── Alerts ─────────────────────────
+alertcondition(sellS.evEntry, "SELL", "{{ticker}} SELL: liquidity sweep and CHoCH confirmed. Check stop and target on the chart. Price {{close}}")
+alertcondition(buyS.evEntry, "BUY", "{{ticker}} BUY: liquidity sweep and CHoCH confirmed. Check stop and target on the chart. Price {{close}}")
+alertcondition(sellS.evReady, "SELL limit ready (FVG limit mode)", "{{ticker}} SELL limit ready at the FVG. Check entry, stop and target on the chart.")
+alertcondition(buyS.evReady, "BUY limit ready (FVG limit mode)", "{{ticker}} BUY limit ready at the FVG. Check entry, stop and target on the chart.")
+alertcondition(sellS.evSweep or buyS.evSweep, "Liquidity sweep", "{{ticker}} liquidity was swept. Watch for CHoCH. Price {{close}}")
+
+if sellS.evEntry
+    alert(syminfo.ticker + " SELL " + fmt(sellS.entry) + " | SL " + fmt(sellS.sl) + " | TP " + fmt(sellS.tp) + " | after " + sellS.lvlName + " sweep", alert.freq_once_per_bar_close)
+else if sellS.evReady
+    alert(syminfo.ticker + " SELL LIMIT " + fmt(sellS.entry) + " | SL " + fmt(sellS.sl) + " | TP " + fmt(sellS.tp) + " | after " + sellS.lvlName + " sweep", alert.freq_once_per_bar_close)
+if buyS.evEntry
+    alert(syminfo.ticker + " BUY " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp) + " | after " + buyS.lvlName + " sweep", alert.freq_once_per_bar_close)
+else if buyS.evReady
+    alert(syminfo.ticker + " BUY LIMIT " + fmt(buyS.entry) + " | SL " + fmt(buyS.sl) + " | TP " + fmt(buyS.tp) + " | after " + buyS.lvlName + " sweep", alert.freq_once_per_bar_close)
